@@ -1,0 +1,117 @@
+/* ========================================= */
+/* HEADER & TICKER TAPE CSS (header.css)     */
+/* ========================================= */
+
+/* --- TOP TICKER TAPE --- */
+.price-ticker-wrapper { 
+    background: rgba(0, 0, 0, 0.8); 
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 229, 255, 0.2); 
+    height: 35px; 
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    box-shadow: 0 2px 15px rgba(0, 229, 255, 0.1);
+}
+
+.ticker-move { 
+    display: inline-block; 
+    animation: marquee 30s linear infinite; 
+    padding-left: 100%; 
+    white-space: nowrap;
+}
+
+.ticker-item { 
+    display: inline-block; 
+    margin-right: 40px; 
+    cursor: pointer; 
+    font-family: 'JetBrains Mono', monospace; 
+    font-size: 0.8rem;
+    color: #00FF9D;
+}
+
+.ticker-item:hover { 
+    color: #00E5FF; 
+    text-shadow: 0 0 10px #00E5FF; 
+}
+
+.ticker-item span:first-child { 
+    color: #8E9BAE; 
+    font-family: 'Inter', sans-serif; 
+    font-weight: 700;
+    margin-right: 8px;
+}
+
+.price-val, .change-val { font-weight: 700; }
+.up { color: #00FF9D !important; text-shadow: 0 0 12px #00FF9D; } 
+.down { color: #FF007F !important; text-shadow: 0 0 12px #FF007F; }
+
+@keyframes marquee { 
+    0% { transform: translateX(0); } 
+    100% { transform: translateX(-100%); } 
+}
+
+/* --- NAVIGATION BAR --- */
+.navbar { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 0 25px; 
+    background: rgba(5, 12, 25, 0.6); 
+    backdrop-filter: blur(20px); 
+    border-bottom: 1px solid rgba(0, 229, 255, 0.2); 
+    height: 70px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    position: relative;
+    z-index: 10;
+}
+
+.nav-logo { display: flex; align-items: center; gap: 15px; cursor: pointer; }
+.nav-logo h2 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; color: #fff; }
+.accent { color: #00E5FF; text-shadow: 0 0 12px #00E5FF; }
+
+.nav-center { display: flex; align-items: center; gap: 40px; }
+.nav-links { display: flex; gap: 20px; }
+.nav-links a { text-decoration: none; font-weight: bold; transition: all 0.3s ease; }
+.nav-links a:hover { color: #fff !important; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
+
+/* --- SEARCH BAR --- */
+.nav-search { margin: 0; display: flex; gap: 5px; position: relative; }
+.nav-search input {
+    background: rgba(15, 23, 42, 0.6); 
+    border: 1px solid #334155; 
+    color: white;
+    padding: 8px 16px; 
+    border-radius: 8px; 
+    font-family: 'Inter', sans-serif; 
+    outline: none;
+    width: 260px; 
+    transition: all 0.3s ease;
+}
+.nav-search input:focus { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+
+.btn { background: #38bdf8; color: #041027; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+.btn:hover { background: #00E5FF; box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
+
+.suggestions-box { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid #334155; z-index: 1000; border-radius: 0 0 8px 8px; display: none; }
+.suggestion-item { padding: 10px; cursor: pointer; color: white; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background: #38bdf8; color: #041027; }
+
+/* --- MOBILE NAV & HAMBURGER --- */
+.hamburger-btn { display: none; background: none; border: none; color: #00E5FF; font-size: 1.8rem; cursor: pointer; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5); }
+
+@media screen and (max-width: 1150px) {
+    .navbar { flex-direction: column; height: auto; padding: 15px; gap: 15px; }
+    .nav-logo { width: 100%; justify-content: center; }
+    .nav-center { flex-direction: column; width: 100%; gap: 15px; align-items: center; }
+    .nav-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin: 0; }
+    .nav-search { width: 100%; justify-content: center; }
+    .nav-search input { width: 100%; max-width: 600px; }
+    .nav-auth { width: 100%; display: flex; justify-content: center; margin-top: 5px; }
+}
+
+@media screen and (max-width: 768px) {
+    .nav-logo { justify-content: space-between; } 
+    .hamburger-btn { display: block; }
+}

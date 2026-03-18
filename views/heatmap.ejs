@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Sector Heatmap | StockPulse AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    
+    <style>
+        .nav-center { display: flex; align-items: center; gap: 40px; }
+        .nav-search input {
+            background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border, #334155); color: white;
+            padding: 8px 16px; border-radius: 8px; font-family: 'Inter', sans-serif; outline: none; width: 260px;
+        }
+        .nav-search input:focus { border-color: var(--accent, #38bdf8); }
+        .btn { background: var(--accent); color: var(--bg-dark); border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none;}
+        
+        /* Heatmap Specific */
+        .heatmap-container {
+            background: var(--card-bg, #1e293b); padding: 25px; border-radius: 16px;
+            border: 1px solid var(--border, #334155); margin-top: 10px; height: 75vh;
+            display: flex; flex-direction: column;
+        }
+        
+        /* Make main panel wider by overriding grid */
+        .main-wrapper.wide { grid-template-columns: 280px 1fr; } 
+    </style>
+</head>
+<body>
+
+    <div class="price-ticker-wrapper">
+        <div class="ticker-move">
+            <div class="ticker-item" data-ticker="RELIANCE.NS"><span>RELIANCE</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+            <div class="ticker-item" data-ticker="TCS.NS"><span>TCS</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+            <div class="ticker-item" data-ticker="HDFCBANK.NS"><span>HDFC BANK</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-logo" onclick="window.location.href='/'"><h2>StockPulse <span class="accent">AI</span></h2></div>
+        <div class="nav-center">
+            <div class="nav-links">
+                <a href="/" style="color:var(--text-muted); text-decoration:none; margin-right:20px;">Home</a>
+                <a href="/predict?ticker=RELIANCE.NS" style="color:var(--text-muted); text-decoration:none; margin-right:20px;">Predict Price</a>
+                <a href="/macro" style="color:var(--text-muted); text-decoration:none; margin-right:20px;">Macro Explorer</a>
+                <a href="/heatmap" style="color:white; font-weight:bold; text-decoration:none;">Sector Heatmap</a>
+            </div>
+            <form action="/predict" method="GET" class="nav-search" style="margin: 0;">
+                <input type="text" name="ticker" placeholder="Search Ticker (e.g. INFY.NS)..." required>
+            </form>
+        </div>
+        <div class="nav-auth">
+            <% if (user) { %>
+                <span style="margin-right: 15px; font-size: 0.85rem; color: var(--text-muted);">ID: <span style="color:white;"><%= user.username %></span></span>
+                <a href="/logout" class="btn" style="background: var(--border); color: var(--text-muted);">Logout</a>
+            <% } else { %>
+                <a href="/auth" class="btn">Login/Register</a>
+            <% } %>
+        </div>
+    </nav>
+
+    <div class="main-wrapper wide">
+        <aside class="ticker-sidebar">
+            <div class="sidebar-header">Market Watch</div>
+            <div class="vertical-scroll-container">
+                <div class="ticker-list-item" onclick="window.location.href='/predict?ticker=AAPL'"><span class="symbol">AAPL</span> <span class="price"><span class="price-val">$--</span></span></div>
+                <div class="ticker-list-item" onclick="window.location.href='/predict?ticker=TSLA'"><span class="symbol">TSLA</span> <span class="price"><span class="price-val">$--</span></span></div>
+                <div class="ticker-list-item" onclick="window.location.href='/predict?ticker=NVDA'"><span class="symbol">NVDA</span> <span class="price"><span class="price-val">$--</span></span></div>
+                <div class="ticker-list-item" onclick="window.location.href='/predict?ticker=SBIN.NS'"><span class="symbol">SBI</span> <span class="price"><span class="price-val">₹--</span></span></div>
+            </div>
+        </aside>
+
+        <main class="content-panel">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
+                <div>
+                    <h1 style="margin: 0; font-size: 2.2rem;">Live Market <span class="accent">Heatmap</span></h1>
+                    <p style="color: #94a3b8; margin-top: 5px;">Visualizing Market Cap (Size) & Daily Momentum (Color)</p>
+                </div>
+                <div id="status-text" style="color: #f59e0b; font-weight: bold; animation: pulse 1.5s infinite;">
+                    Generating Map...
+                </div>
+            </div>
+
+            <div class="heatmap-container">
+                <div id="treemapChart" style="flex-grow: 1; width: 100%;"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function loadHeatmap() {
+            try {
+                const response = await fetch('/api/heatmap-data');
+                const data = await response.json();
+
+                if(data.error) {
+                    document.getElementById('status-text').innerText = "Error loading data.";
+                    return;
+                }
+
+                document.getElementById('status-text').innerText = "Live";
+                document.getElementById('status-text').style.color = "#22c55e";
+                document.getElementById('status-text').style.animation = "none";
+
+                var options = {
+                    series: data,
+                    legend: { show: false },
+                    chart: { 
+                        type: 'treemap', 
+                        height: '100%', 
+                        background: 'transparent',
+                        toolbar: { show: false }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        style: {
+                            fontSize: '15px',
+                            fontFamily: 'JetBrains Mono',
+                            fontWeight: 'bold',
+                            colors: ['#ffffff']
+                        },
+                        // This injects the Ticker Name and the % Change right into the box!
+                        formatter: function(text, op) {
+                            const change = op.w.config.series[op.seriesIndex].data[op.dataPointIndex].change;
+                            const sign = change > 0 ? '+' : '';
+                            return [text, sign + change + '%'];
+                        }
+                    },
+                    plotOptions: {
+                        treemap: {
+                            enableShades: true,
+                            shadeIntensity: 0.3,
+                            useFillColorAsBg: true,
+                            // Styles the outer sector containers
+                            colorScale: {
+                                ranges: [] // Overridden by our Python custom colors
+                            }
+                        }
+                    },
+                    stroke: { colors: ['#0f172a'], width: 2 },
+                    tooltip: {
+                        theme: 'dark',
+                        y: { formatter: function(val) { return "Relative Size: " + val } }
+                    }
+                };
+
+                var chart = new ApexCharts(document.querySelector("#treemapChart"), options);
+                chart.render();
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('status-text').innerText = "Connection Failed.";
+            }
+        }
+
+        loadHeatmap();
+    </script>
+</body>
+</html>

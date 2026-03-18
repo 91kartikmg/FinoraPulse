@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Country Macro Explorer | StockPulse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    <style>
+        .macro-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
+        .chart-box {
+            background: var(--card-bg, #1e293b); padding: 20px; border-radius: 16px;
+            border: 1px solid var(--border, #334155); height: 350px; display: flex; flex-direction: column;
+        }
+        .search-bar input {
+            background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border, #334155); color: white;
+            padding: 10px 15px; border-radius: 8px; font-family: 'Inter', sans-serif; outline: none;
+        }
+        .search-bar input:focus { border-color: var(--accent, #38bdf8); }
+        .btn { background: var(--accent, #38bdf8); color: var(--bg-dark, #041027); border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        
+        /* NEW SCREENER UI */
+        .screener-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 15px;
+        }
+        .screener-card {
+            background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 12px;
+            display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s;
+        }
+        .screener-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+        .screener-sector { font-size: 0.7rem; color: #a855f7; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
+        .screener-company { font-size: 1rem; font-weight: 700; color: #f8fafc; margin-bottom: 10px; }
+        .screener-data { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+   <%- include('partials/header') %>
+
+    <div class="main-wrapper">
+        <aside class="ticker-sidebar">
+            <%- include('partials/global') %>
+        </aside>
+
+        <main class="content-panel">
+            <div class="macro-header">
+                <div>
+                    <h1 style="margin:0; font-size: 2.2rem;">Macro Explorer: <span class="accent"><%= country %></span></h1>
+                    <p style="color:var(--text-muted); margin-top:5px;">Economic Health & Sector Screener</p>
+                </div>
+                <form action="/macro" method="GET" class="search-bar" style="display: flex; gap: 10px;">
+                    <input type="text" name="country" placeholder="ISO Code (e.g. IN, JP)..." value="<%= country %>" style="width: 180px;">
+                    <button type="submit" class="btn">Search</button>
+                </form>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <h3 style="margin-top:0; color:var(--text-muted);">Total GDP (USD)</h3>
+                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="gdpTotalChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <h3 style="margin-top:0; color:var(--text-muted);">Growth vs. Inflation (%)</h3>
+                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="historyChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <h3 style="margin-top:0; color:var(--text-muted);">Unemployment Rate (%)</h3>
+                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="unemploymentChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <h3 style="margin-top:0; color:var(--text-muted);">10-Year Gov Bond Yield (%)</h3>
+                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="bondChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <h3 style="margin-top:0; color:var(--text-muted);">Currency Strength <br><span id="currency-pair-label" style="font-size:0.8rem; color:#a855f7;"></span></h3>
+                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="currencyChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <h3 style="margin-top:0; color:var(--text-muted);">Detailed Export Sectors</h3>
+                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="advancedExportChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="stat-card" style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border);">
+                <h3 style="margin:0; color:var(--text-main);">Export Leaders (Live Screener)</h3>
+                <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">These publicly traded companies dominate the top export sectors driving this country's GDP.</p>
+                
+                <div class="screener-grid" id="screener-target">
+                    <div style="color:var(--text-muted); font-style: italic;">Scanning market for leading stocks...</div>
+                </div>
+            </div>
+            
+            <div style="height: 40px;"></div>
+        </main>
+
+        <aside class="side-panel right">
+            <div class="sidebar-header" style="padding: 0 0 15px 0; border-bottom: none;">Sponsors</div>
+            <div class="ad-placeholder" style="background: rgba(0,0,0,0.2);"><span>Ad Slot</span><span style="font-size: 0.65rem; margin-top: 5px;">300 x 250</span></div>
+        </aside>
+
+    </div>
+
+    <script>
+        const targetCountry = "<%= country %>";
+
+        async function loadMacro() {
+            try {
+                const response = await fetch(`/api/macro-explorer?country=${targetCountry}`);
+                const data = await response.json();
+
+                if (data.error) { alert("Error loading data. Check country code."); return; }
+
+                // 1. Total GDP
+                const ctxGdpTotal = document.getElementById('gdpTotalChart').getContext('2d');
+                new Chart(ctxGdpTotal, {
+                    type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Total GDP (USD)', data: data.gdp_total_trend, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
+                    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { let value = context.parsed.y; if (value >= 1e12) return 'Total GDP: $' + (value / 1e12).toFixed(2) + 'T'; if (value >= 1e9) return 'Total GDP: $' + (value / 1e9).toFixed(2) + 'B'; return 'Total GDP: $' + value; }}}}, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: function(value) { if (value >= 1e12) return '$' + (value / 1e12).toFixed(1) + 'T'; if (value >= 1e9) return '$' + (value / 1e9).toFixed(1) + 'B'; return '$' + value; }}}} }
+                });
+
+                // 2. Growth vs Inflation
+                const ctxHistory = document.getElementById('historyChart').getContext('2d');
+                new Chart(ctxHistory, {
+                    type: 'line', data: { labels: data.history_years, datasets: [ { label: 'GDP Growth (%)', data: data.gdp_trend, borderColor: '#22c55e', borderWidth: 3, tension: 0.3, fill: false, pointRadius: 4 }, { label: 'Inflation (%)', data: data.inflation_trend, borderColor: '#ef4444', borderWidth: 3, borderDash: [5, 5], tension: 0.3, fill: false, pointRadius: 4 } ]},
+                    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                });
+
+                // 3. Unemployment
+                if(data.unemployment_trend && data.unemployment_trend.length > 0) {
+                    const ctxUnemp = document.getElementById('unemploymentChart').getContext('2d');
+                    new Chart(ctxUnemp, {
+                        type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Unemployment Rate (%)', data: data.unemployment_trend, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                    });
+                }
+
+                // 4. Bond Yield
+                if(data.bond_trend && data.bond_trend.length > 0 && data.bond_trend.some(val => val !== null)) {
+                    const ctxBond = document.getElementById('bondChart').getContext('2d');
+                    new Chart(ctxBond, {
+                        type: 'line', data: { labels: data.history_years, datasets: [{ label: '10-Year Bond Yield (%)', data: data.bond_trend, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                    });
+                }
+
+                // 5. Currency Chart
+                if(data.currency_trend && data.currency_trend.length > 0) {
+                    document.getElementById('currency-pair-label').innerText = "(" + data.currency_pair + ")";
+                    const ctxCurr = document.getElementById('currencyChart').getContext('2d');
+                    new Chart(ctxCurr, {
+                        type: 'line', data: { labels: data.history_years, datasets: [{ label: data.currency_pair, data: data.currency_trend, borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                    });
+                }
+
+                // 6. NEW: ADVANCED HORIZONTAL BAR CHART
+                if(data.advanced_exports && data.advanced_exports.length > 0) {
+                    const expLabels = data.advanced_exports.map(e => e.sector);
+                    const expValues = data.advanced_exports.map(e => e.pct);
+                    
+                    const ctxAdvExp = document.getElementById('advancedExportChart').getContext('2d');
+                    new Chart(ctxAdvExp, {
+                        type: 'bar', // Horizontal bar is better for reading long sector names
+                        data: { 
+                            labels: expLabels, 
+                            datasets: [{ 
+                                label: '% of Total Exports', 
+                                data: expValues, 
+                                backgroundColor: '#38bdf8',
+                                borderRadius: 4
+                            }] 
+                        },
+                        options: { 
+                            indexAxis: 'y', // Makes it horizontal
+                            responsive: true, maintainAspectRatio: false, 
+                            plugins: { legend: { display: false } },
+                            scales: { 
+                                x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, 
+                                y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { weight: 'bold' } } } 
+                            }
+                        }
+                    });
+                }
+
+                // 7. NEW: RENDER AI SCREENER CARDS
+                const screenerTarget = document.getElementById('screener-target');
+                if(data.screener && data.screener.length > 0) {
+                    screenerTarget.innerHTML = ''; // Clear loading text
+                    const sym = (targetCountry === 'IN') ? '₹' : (targetCountry === 'JP' ? '¥' : '$');
+                    
+                    data.screener.forEach(stock => {
+                        const isUp = stock.change >= 0;
+                        const colorClass = isUp ? 'up' : 'down';
+                        const sign = isUp ? '+' : '';
+                        
+                        // We wrap the card in an anchor tag so clicking it takes them straight to the prediction page!
+                        screenerTarget.innerHTML += `
+                            <div class="screener-card" onclick="window.location.href='/predict?ticker=${stock.ticker}'">
+                                <div class="screener-sector">${stock.sector}</div>
+                                <div class="screener-company">${stock.company}</div>
+                                <div class="screener-data">
+                                    <span style="color:var(--text-muted)">${stock.ticker}</span>
+                                    <span>
+                                        ${sym}${stock.price.toFixed(2)} 
+                                        <span class="${colorClass}" style="margin-left:5px;">${sign}${stock.change}%</span>
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    screenerTarget.innerHTML = `<div style="color:var(--text-muted);">Could not fetch live market data at this moment.</div>`;
+                }
+
+            } catch (err) { console.error(err); }
+        }
+        loadMacro();
+    </script>
+
+    <script>
+        function updateMarketWatch() {
+            fetch('/api/market').then(res => res.json()).then(data => {
+                document.querySelectorAll('.ticker-item').forEach(el => {
+                    const ticker = el.getAttribute('data-ticker');
+                    if (data[ticker]) {
+                        const priceEl = el.querySelector('.price-val'); const changeEl = el.querySelector('.change-val');
+                        const sym = (ticker.includes('.NS') || ticker.includes('.BO')) ? '₹' : '$';
+                        const change = data[ticker].change; const isUp = change >= 0; 
+                        if (priceEl) { priceEl.innerText = sym + data[ticker].price.toFixed(2); priceEl.className = 'price-val ' + (isUp ? 'up' : 'down'); }
+                        if (changeEl) { changeEl.innerText = (isUp ? '▲ ' : '▼ ') + Math.abs(change).toFixed(2) + '%'; changeEl.className = 'change-val ' + (isUp ? 'up' : 'down'); }
+                    }
+                });
+            }).catch(err => console.log("Market sync paused..."));
+        }
+        updateMarketWatch(); setInterval(updateMarketWatch, 1000);
+    </script>
+    <script>
+    // Hamburger Menu Toggle Logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.querySelector('.ticker-sidebar');
+        
+        if(menuBtn && sidebar) {
+            menuBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent click from triggering the logo link
+                sidebar.classList.toggle('open');
+            });
+
+            // Optional: Close the sidebar if the user clicks anywhere else on the screen
+            document.addEventListener('click', (e) => {
+                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuBtn) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>

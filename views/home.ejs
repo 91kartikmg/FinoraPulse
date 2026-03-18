@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockPulse AI | Professional Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+
+    <style>
+    @keyframes active-scan {
+        0% { left: 0%; opacity: 0; }
+        5% { opacity: 1; }
+        95% { opacity: 1; }
+        100% { left: 100%; opacity: 0; }
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.7); }
+        70% { transform: scale(1.2); opacity: 0.8; box-shadow: 0 0 0 10px rgba(0, 255, 65, 0); }
+        100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); }
+    }
+</style>
+<style>
+    .terminal-row {
+        display: flex; 
+        justify-content: space-between; 
+        padding: 10px; 
+        margin: 2px -10px; 
+        border-radius: 4px; 
+        text-decoration: none; 
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+    .terminal-row:hover {
+        background: rgba(0, 255, 65, 0.05);
+        border: 1px solid rgba(0, 255, 65, 0.3);
+        transform: translateX(5px);
+    }
+</style>
+<style>
+    /* Ultra Scanning Effect CSS */
+    .ultra-scanner {
+        background: linear-gradient(90deg, transparent 0%, rgba(0, 255, 65, 0.02) 80%, rgba(0, 255, 65, 0.3) 100%);
+        border-right: 2px solid #00FF41;
+        box-shadow: 5px 0 25px rgba(0, 255, 65, 0.5);
+        animation: radar-sweep 4s linear infinite;
+    }
+
+    @keyframes radar-sweep {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    /* Make the chart cursor look like a crosshair */
+    #tv-chart {
+        cursor: crosshair;
+    }
+</style>
+</head>
+<body>
+    
+    <%- include('partials/header') %>
+    
+    <div class="main-wrapper">
+      
+        <%- include('partials/sidebar') %>
+
+        <main class="content-panel" style="background: #080a0c; color: #e2e8f0; padding: 24px; font-family: 'Inter', sans-serif;">
+    
+    <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+        <div style="position: relative;">
+            <h1 style="font-family: 'JetBrains Mono', monospace; font-size: 2.5rem; font-weight: 800; letter-spacing: -2px; margin: 0; color: #fff; text-transform: uppercase;">
+                Finora <span style="color: #00FF41; text-shadow: 0 0 15px rgba(0, 255, 65, 0.4);">Pulse</span>
+            </h1>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
+                <span style="height: 8px; width: 8px; background: #00FF41; border-radius: 50%; box-shadow: 0 0 10px #00FF41;"></span>
+                <span style="font-size: 0.75rem; color: #64748b; font-family: 'JetBrains Mono'; letter-spacing: 1px;">LIVE_MARKET_FEED // Ticker_Active</span>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+            <div style="text-align: right; border-right: 2px solid #1e293b; padding-right: 15px;">
+                <div style="color: #64748b; font-size: 0.7rem;">AI_SENTIMENT</div>
+                <div style="color: #00FF41; font-family: 'JetBrains Mono'; font-weight: bold;">STRONG_BUY</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="color: #64748b; font-size: 0.7rem;">PREDICTION_CONFIDENCE</div>
+                <div style="color: #fff; font-family: 'JetBrains Mono'; font-weight: bold;">98.2%</div>
+            </div>
+        </div>
+    </header>
+
+    <div style="position: relative; background: #0d1117; border: 1px solid #1e293b; border-radius: 12px; height: 500px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+        
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10rem; font-weight: 900; color: rgba(255,255,255,0.01); pointer-events: none; user-select: none; z-index: 1;">
+            SP_AI
+        </div>
+
+        <div id="tv-chart" style="position: absolute; width: 100%; height: 100%; z-index: 2;"></div>
+
+        <div class="ultra-scanner" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></div>
+
+        <div style="position: absolute; top: 20px; left: 20px; font-family: 'JetBrains Mono'; font-size: 0.75rem; color: #64748b; background: rgba(13, 17, 23, 0.8); padding: 10px; border: 1px solid #1e293b; border-radius: 6px; z-index: 20; pointer-events: none;">
+            <div style="color: #00E5FF; font-weight: bold; margin-bottom: 5px;">MARKET_PULSE_DETECTOR</div>
+            <div>CURRENT_TICK: <span id="live-tick-price" style="color:#fff">LOADING...</span></div>
+            <div>TREND_MOMENTUM: <span style="color:#00FF41">ACCELERATING</span></div>
+        </div>
+    </div>
+
+    <div id="dynamic-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px;">
+        </div>
+
+</main>
+
+
+
+        <aside class="side-panel right">
+            <%- include('partials/global') %>
+        </aside>
+        
+    </div>
+
+    <script>
+    async function updateMarketData() {
+        try {
+            const response = await fetch('/api/market');
+            const data = await response.json();
+
+            const container = document.getElementById('dynamic-cards');
+            
+            // Helper function to create rows
+            const createRow = (item) => `
+                <a href="/predict?ticker=${item.original_ticker}" class="terminal-row">
+                    <span style="font-weight: bold; color: #fff; font-family: 'JetBrains Mono';">${item.symbol}</span>
+                    <span style="color: ${item.change >= 0 ? '#00FF41' : '#ff4d4d'}; font-family: 'JetBrains Mono';">
+                        ${item.change >= 0 ? '+' : ''}${item.change}%
+                    </span>
+                </a>
+            `;
+
+            container.innerHTML = `
+                <div style="background: #0d1117; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                    <div style="color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
+                        <span style="color: #00FF41;">●</span> Bullish_Stocks.exe
+                    </div>
+                    ${data.stocks.map(createRow).join('')}
+                </div>
+
+                <div style="background: #0d1117; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                    <div style="color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
+                        <span style="color: #00E5FF;">●</span> Asset_Sensors.bin
+                    </div>
+                    ${data.crypto.slice(0, 2).map(createRow).join('')}
+                    ${data.forex.slice(0, 1).map(createRow).join('')}
+                </div>
+
+                <div style="background: #0d1117; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; border-bottom: 3px solid #00FF41; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                    <div style="color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
+                        <span style="color: #FFD700;">●</span> Commodities.sys
+                    </div>
+                    ${data.metals.map(createRow).join('')}
+                    <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #1e293b;">
+                        <div style="font-size: 0.6rem; color: #475569;">AI_CONFIDENCE_CORE</div>
+                        <div style="color: #00FF41; font-family: 'JetBrains Mono'; font-size: 1.2rem;">94.82%</div>
+                    </div>
+                </div>
+            `;
+        } catch (e) { 
+            console.error("Terminal Data Linkage Failed:", e); 
+        }
+    }
+
+    setInterval(updateMarketData, 30000);
+    updateMarketData();
+</script>
+
+<script>
+    const container = document.getElementById("tv-chart");
+    const canvas = document.createElement("canvas");
+    container.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+
+    function resize() {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    // ======================
+    // Generate AI Data
+    // ======================
+    let historyData = [];
+    let prediction = [];
+    let price = 150;
+
+    // Pre-fill history
+    for(let i=0; i<80; i++) {
+        price += (Math.random() - 0.45) * 4;
+        historyData.push(price);
+    }
+
+    // Pre-fill prediction
+    let last = historyData[historyData.length-1];
+    for(let i=0; i<40; i++) {
+        last += (Math.random() - 0.40) * 5;
+        prediction.push(last);
+    }
+
+    // ======================
+    // Draw Advanced Graph
+    // ======================
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Advanced Layout Margins
+        const paddingX = 40;       // Left margin
+        const paddingRight = 70;   // Right margin for Price Labels
+        const paddingY = 40;       // Top/Bottom margin
+
+        const all = [...historyData, ...prediction];
+        const min = Math.min(...all) - 2; // Add breathing room below
+        const max = Math.max(...all) + 2; // Add breathing room above
+
+        function y(v) {
+            return canvas.height - paddingY - ((v - min) / (max - min)) * (canvas.height - paddingY * 2);
+        }
+
+        const step = (canvas.width - paddingX - paddingRight) / (historyData.length + prediction.length - 1);
+
+        // 1. Draw Horizontal Grid & Price Y-Axis
+        ctx.fillStyle = "#8E9BAE";
+        ctx.font = "11px 'JetBrains Mono', monospace";
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "left";
+
+        for(let i=0; i<=5; i++) {
+            let gy = paddingY + i * (canvas.height - paddingY * 2) / 5;
+            let priceVal = max - (i / 5) * (max - min);
+
+            // Draw line
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+            ctx.lineWidth = 1;
+            ctx.moveTo(paddingX, gy);
+            ctx.lineTo(canvas.width - paddingRight, gy);
+            ctx.stroke();
+
+            // Draw Dollar Price
+            ctx.fillText("$" + priceVal.toFixed(2), canvas.width - paddingRight + 15, gy);
+        }
+
+        // 2. Draw Vertical Grid & Time X-Axis
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        let now = new Date();
+        
+        for(let i=0; i<=6; i++) {
+            let gx = paddingX + i * (canvas.width - paddingX - paddingRight) / 6;
+            
+            // Draw line
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+            ctx.moveTo(gx, paddingY);
+            ctx.lineTo(gx, canvas.height - paddingY);
+            ctx.stroke();
+
+            // Draw Time (Simulating past & future minutes)
+            let timeOffset = new Date(now.getTime() - (4 - i) * 60000); 
+            let timeStr = timeOffset.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            ctx.fillText(timeStr, gx, canvas.height - paddingY + 15);
+        }
+
+        // 3. Draw History Area Fill (Premium Gradient Effect)
+        let gradient = ctx.createLinearGradient(0, paddingY, 0, canvas.height - paddingY);
+        gradient.addColorStop(0, "rgba(0, 229, 255, 0.3)");
+        gradient.addColorStop(1, "rgba(0, 229, 255, 0.0)");
+
+        ctx.beginPath();
+        ctx.moveTo(paddingX, canvas.height - paddingY); // Start at bottom left
+        historyData.forEach((v, i) => {
+            ctx.lineTo(paddingX + i * step, y(v));
+        });
+        ctx.lineTo(paddingX + (historyData.length - 1) * step, canvas.height - paddingY); // End at bottom right
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // 4. Draw History Line (Solid Cyan)
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "#00E5FF";
+        ctx.shadowColor = "rgba(0, 229, 255, 0.5)";
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        historyData.forEach((v, i) => {
+            let px = paddingX + i * step;
+            let py = y(v);
+            if(i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+        ctx.shadowBlur = 0; // Reset shadow
+
+        // 5. Draw AI Prediction Line (Dashed Green)
+        ctx.strokeStyle = "#00FF41";
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        
+        let startX = paddingX + (historyData.length - 1) * step;
+        let startY = y(historyData[historyData.length - 1]);
+        
+        prediction.forEach((v, i) => {
+            let px = paddingX + (i + historyData.length - 1) * step;
+            let py = y(v);
+            if(i === 0) ctx.moveTo(startX, startY);
+            else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset dash
+
+        // 6. Draw Live Data Node (Glowing Pulse Point)
+        ctx.beginPath();
+        ctx.arc(startX, startY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#00FF41";
+        ctx.shadowColor = "#00FF41";
+        ctx.shadowBlur = 15;
+        ctx.fill();
+        
+        // Inner white dot
+        ctx.beginPath();
+        ctx.arc(startX, startY, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.shadowBlur = 0;
+        ctx.fill();
+
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    // ======================
+    // Live AI Tick Engine
+    // ======================
+    setInterval(() => {
+        // Shift prediction into history
+        historyData.push(prediction.shift());
+
+        // Generate new future prediction point
+        let last = historyData[historyData.length - 1];
+        let next = last + (Math.random() - 0.40) * 4;
+        prediction.push(next);
+
+        // Remove oldest history point
+        historyData.shift();
+
+        // Update the HUD UI
+        document.getElementById("live-tick-price").innerText = "$" + next.toFixed(2);
+    }, 1500);
+
+</script>
+</body>
+</html>

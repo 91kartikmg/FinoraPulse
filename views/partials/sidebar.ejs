@@ -1,0 +1,197 @@
+<aside class="ticker-sidebar">
+    <div class="sidebar-header">Global Market Watch</div>
+    <div class="accordion-container">
+        
+        <div class="acc-item">
+            <button class="acc-btn" onclick="toggleAcc('equities')">📈 Equities <span class="arrow">▾</span></button>
+            <div id="equities" class="acc-content"></div>
+        </div>
+
+        <div class="acc-item">
+            <button class="acc-btn" onclick="toggleAcc('crypto')">🪙 Crypto <span class="arrow">▾</span></button>
+            <div id="crypto" class="acc-content"></div>
+        </div>
+        
+        <div class="acc-item">
+            <button class="acc-btn" onclick="toggleAcc('forex')">💱 Forex <span class="arrow">▾</span></button>
+            <div id="forex" class="acc-content"></div>
+        </div>
+        
+        <div class="acc-item">
+            <button class="acc-btn" onclick="toggleAcc('commodities')">🛢️ Commodities <span class="arrow">▾</span></button>
+            <div id="commodities" class="acc-content"></div>
+        </div>
+
+        <div class="acc-item">
+            <button class="acc-btn" onclick="toggleAcc('indices')">📊 Indices <span class="arrow">▾</span></button>
+            <div id="indices" class="acc-content"></div>
+        </div>
+        
+        <div class="acc-item">
+            <button class="acc-btn" onclick="toggleAcc('etfs')">🧺 ETFs <span class="arrow">▾</span></button>
+            <div id="etfs" class="acc-content"></div>
+        </div>
+        
+        <div class="acc-item">
+            <button class="acc-btn" onclick="toggleAcc('bonds')">📜 Bonds & Rates <span class="arrow">▾</span></button>
+            <div id="bonds" class="acc-content"></div>
+        </div>
+
+    </div>
+</aside>
+
+<script>
+    // 1. ACCORDION CLICK LOGIC
+    function toggleAcc(id) {
+        const content = document.getElementById(id);
+        const allContent = document.querySelectorAll('.acc-content');
+        allContent.forEach(item => { if(item.id !== id) item.classList.remove('show'); });
+        content.classList.toggle('show');
+    }
+
+    function toggleNestedAcc(id, event) {
+        if(event) event.stopPropagation(); 
+        const content = document.getElementById(id);
+        const allContent = document.querySelectorAll('.nested-acc-content');
+        allContent.forEach(item => { if(item.id !== id) item.classList.remove('nested-show'); });
+        content.classList.toggle('nested-show');
+    }
+
+    // 2. MASSIVE DATA ARRAYS
+    const globalEquities = [
+        { country: "USA", flag: "🇺🇸", id: "eq-usa", companies: [ { t: "AAPL", n: "Apple Inc." }, { t: "MSFT", n: "Microsoft" }, { t: "NVDA", n: "NVIDIA Corp" }, { t: "AMZN", n: "Amazon" }, { t: "META", n: "Meta Platforms" }, { t: "GOOGL", n: "Alphabet" }, { t: "TSLA", n: "Tesla Inc." }, { t: "BRK-B", n: "Berkshire" }, { t: "LLY", n: "Eli Lilly" }, { t: "AVGO", n: "Broadcom" }, { t: "JPM", n: "JPMorgan" }, { t: "V", n: "Visa" }, { t: "UNH", n: "UnitedHealth" }, { t: "MA", n: "Mastercard" }, { t: "XOM", n: "Exxon Mobil" }, { t: "JNJ", n: "Johnson & Johnson" }, { t: "PG", n: "Procter & Gamble" }, { t: "HD", n: "Home Depot" }, { t: "COST", n: "Costco" }, { t: "MRK", n: "Merck" } ] },
+        { country: "India", flag: "🇮🇳", id: "eq-india", companies: [ { t: "RELIANCE.NS", n: "Reliance" }, { t: "TCS.NS", n: "TCS" }, { t: "HDFCBANK.NS", n: "HDFC Bank" }, { t: "ICICIBANK.NS", n: "ICICI Bank" }, { t: "INFY.NS", n: "Infosys" }, { t: "SBIN.NS", n: "State Bank" }, { t: "BHARTIARTL.NS", n: "Bharti Airtel" }, { t: "ITC.NS", n: "ITC Ltd" }, { t: "HINDUNILVR.NS", n: "HUL" }, { t: "L&T.NS", n: "Larsen & Toubro" }, { t: "BAJFINANCE.NS", n: "Bajaj Finance" }, { t: "HCLTECH.NS", n: "HCL Tech" } ] },
+        { country: "UK", flag: "🇬🇧", id: "eq-uk", companies: [ { t: "AZN.L", n: "AstraZeneca" }, { t: "SHEL.L", n: "Shell" }, { t: "HSBA.L", n: "HSBC" }, { t: "ULVR.L", n: "Unilever" }, { t: "BP.L", n: "BP" } ] },
+        { country: "Canada", flag: "🇨🇦", id: "eq-can", companies: [ { t: "RY.TO", n: "Royal Bank of Canada" }, { t: "TD.TO", n: "TD Bank" }, { t: "SHOP.TO", n: "Shopify" } ] },
+        { country: "Australia", flag: "🇦🇺", id: "eq-aus", companies: [ { t: "BHP.AX", n: "BHP Group" }, { t: "CBA.AX", n: "Commonwealth Bank" }, { t: "CSL.AX", n: "CSL Limited" } ] },
+        { country: "Germany", flag: "🇩🇪", id: "eq-ger", companies: [ { t: "SAP.DE", n: "SAP" }, { t: "SIE.DE", n: "Siemens" }, { t: "ALV.DE", n: "Allianz" } ] },
+        { country: "Japan", flag: "🇯🇵", id: "eq-jpn", companies: [ { t: "7203.T", n: "Toyota" }, { t: "6758.T", n: "Sony" }, { t: "8306.T", n: "MUFG" } ] },
+        { country: "China", flag: "🇨🇳", id: "eq-chn", companies: [ { t: "0700.HK", n: "Tencent" }, { t: "9988.HK", n: "Alibaba" }, { t: "3690.HK", n: "Meituan" } ] }
+    ];
+
+    const globalCrypto = [
+        { t: "BTC-USD", n: "Bitcoin (BTC)" }, { t: "ETH-USD", n: "Ethereum (ETH)" }, { t: "USDT-USD", n: "Tether (USDT)" }, 
+        { t: "BNB-USD", n: "BNB (BNB)" }, { t: "SOL-USD", n: "Solana (SOL)" }, { t: "XRP-USD", n: "XRP (XRP)" }, 
+        { t: "USDC-USD", n: "USDC (USDC)" }, { t: "ADA-USD", n: "Cardano (ADA)" }, { t: "AVAX-USD", n: "Avalanche (AVAX)" }, 
+        { t: "DOGE-USD", n: "Dogecoin (DOGE)" }, { t: "TRX-USD", n: "TRON (TRX)" }, { t: "DOT-USD", n: "Polkadot (DOT)" }, 
+        { t: "LINK-USD", n: "Chainlink (LINK)" }, { t: "MATIC-USD", n: "Polygon (MATIC)" }
+    ];
+
+    const globalForex = [
+        { category: "Major Pairs", id: "fx-majors", pairs: [ { t: "EURUSD=X", n: "EUR / USD" }, { t: "GBPUSD=X", n: "GBP / USD" }, { t: "USDJPY=X", n: "USD / JPY" }, { t: "USDCHF=X", n: "USD / CHF" }, { t: "AUDUSD=X", n: "AUD / USD" }, { t: "USDCAD=X", n: "USD / CAD" } ] },
+        { category: "Minor Crosses", id: "fx-minors", pairs: [ { t: "EURGBP=X", n: "EUR / GBP" }, { t: "EURJPY=X", n: "EUR / JPY" }, { t: "GBPJPY=X", n: "GBP / JPY" }, { t: "EURCHF=X", n: "EUR / CHF" }, { t: "EURAUD=X", n: "EUR / AUD" } ] },
+        { category: "Exotic Pairs", id: "fx-exotics", pairs: [ { t: "INR=X", n: "USD / INR" }, { t: "USDCNY=X", n: "USD / CNY" }, { t: "USDMXN=X", n: "USD / MXN" }, { t: "USDZAR=X", n: "USD / ZAR" }, { t: "USDSGD=X", n: "USD / SGD" } ] }
+    ];
+
+    const globalCommodities = [
+        { category: "Metals", id: "com-metals", assets: [ { t: "GC=F", n: "Gold" }, { t: "SI=F", n: "Silver" }, { t: "HG=F", n: "Copper" }, { t: "PL=F", n: "Platinum" } ] },
+        { category: "Energy", id: "com-energy", assets: [ { t: "CL=F", n: "Crude Oil (WTI)" }, { t: "BZ=F", n: "Brent Crude" }, { t: "NG=F", n: "Natural Gas" } ] },
+        { category: "Agriculture", id: "com-agri", assets: [ { t: "ZC=F", n: "Corn" }, { t: "ZW=F", n: "Wheat" }, { t: "ZS=F", n: "Soybeans" }, { t: "KC=F", n: "Coffee" } ] }
+    ];
+
+    const globalIndices = [
+        { category: "Americas", id: "idx-am", assets: [ { t: "^GSPC", n: "S&P 500" }, { t: "^DJI", n: "Dow Jones" }, { t: "^IXIC", n: "Nasdaq" }, { t: "^VIX", n: "Volatility Index" } ] },
+        { category: "Asia-Pacific", id: "idx-ap", assets: [ { t: "^NSEI", n: "Nifty 50" }, { t: "^BSESN", n: "Sensex" }, { t: "^N225", n: "Nikkei 225" }, { t: "000001.SS", n: "Shanghai Comp" } ] },
+        { category: "Europe", id: "idx-eu", assets: [ { t: "^FTSE", n: "FTSE 100" }, { t: "^GDAXI", n: "DAX" }, { t: "^FCHI", n: "CAC 40" } ] }
+    ];
+
+    const globalETFs = [
+        { category: "Broad Market", id: "etf-broad", assets: [ { t: "SPY", n: "S&P 500 ETF" }, { t: "QQQ", n: "Invesco QQQ" }, { t: "DIA", n: "Dow Jones ETF" } ] },
+        { category: "Sectors", id: "etf-sector", assets: [ { t: "XLK", n: "Tech Sector" }, { t: "XLF", n: "Financial Sector" }, { t: "XLV", n: "Healthcare" } ] }
+    ];
+
+    const globalBonds = [
+        { category: "US Treasuries", id: "bnd-us", assets: [ { t: "^TNX", n: "US 10-Year Yield" }, { t: "^TYX", n: "US 30-Year Yield" }, { t: "^FVX", n: "US 5-Year Yield" } ] },
+        { category: "Global Yields", id: "bnd-global", assets: [ { t: "IN10YT=RR", n: "India 10-Year" }, { t: "GB10YT=RR", n: "UK 10-Year" }, { t: "DE10YT=RR", n: "Germany 10-Year" } ] }
+    ];
+
+    // 3. INJECTION LOGIC
+    function renderSidebarData() {
+        const eqContainer = document.getElementById('equities');
+        if(eqContainer) {
+            eqContainer.innerHTML = globalEquities.map(region => `
+                <div class="nested-acc-item">
+                    <button class="nested-acc-btn" onclick="toggleNestedAcc('${region.id}', event)">${region.flag} ${region.country} <span class="arrow">▾</span></button>
+                    <div id="${region.id}" class="nested-acc-content">${region.companies.map(c => `<a href="/predict?ticker=${c.t}">${c.n}</a>`).join('')}</div>
+                </div>
+            `).join('');
+        }
+
+        const cryptoContainer = document.getElementById('crypto');
+        if(cryptoContainer) { cryptoContainer.innerHTML = globalCrypto.map(c => `<a href="/predict?ticker=${c.t}">${c.n}</a>`).join(''); }
+
+        const forexContainer = document.getElementById('forex');
+        if(forexContainer) {
+            forexContainer.innerHTML = globalForex.map(group => `
+                <div class="nested-acc-item">
+                    <button class="nested-acc-btn" onclick="toggleNestedAcc('${group.id}', event)">${group.category} <span class="arrow">▾</span></button>
+                    <div id="${group.id}" class="nested-acc-content">${group.pairs.map(p => `<a href="/predict?ticker=${p.t}">${p.n}</a>`).join('')}</div>
+                </div>
+            `).join('');
+        }
+
+        const commoditiesContainer = document.getElementById('commodities');
+        if(commoditiesContainer) {
+            commoditiesContainer.innerHTML = globalCommodities.map(group => `
+                <div class="nested-acc-item">
+                    <button class="nested-acc-btn" onclick="toggleNestedAcc('${group.id}', event)">${group.category} <span class="arrow">▾</span></button>
+                    <div id="${group.id}" class="nested-acc-content">${group.assets.map(a => `<a href="/predict?ticker=${a.t}">${a.n}</a>`).join('')}</div>
+                </div>
+            `).join('');
+        }
+
+        const indicesContainer = document.getElementById('indices');
+        if(indicesContainer) {
+            indicesContainer.innerHTML = globalIndices.map(group => `
+                <div class="nested-acc-item">
+                    <button class="nested-acc-btn" onclick="toggleNestedAcc('${group.id}', event)">${group.category} <span class="arrow">▾</span></button>
+                    <div id="${group.id}" class="nested-acc-content">${group.assets.map(a => `<a href="/predict?ticker=${a.t}">${a.n}</a>`).join('')}</div>
+                </div>
+            `).join('');
+        }
+
+        const etfsContainer = document.getElementById('etfs');
+        if(etfsContainer) {
+            etfsContainer.innerHTML = globalETFs.map(group => `
+                <div class="nested-acc-item">
+                    <button class="nested-acc-btn" onclick="toggleNestedAcc('${group.id}', event)">${group.category} <span class="arrow">▾</span></button>
+                    <div id="${group.id}" class="nested-acc-content">${group.assets.map(a => `<a href="/predict?ticker=${a.t}">${a.n}</a>`).join('')}</div>
+                </div>
+            `).join('');
+        }
+
+        const bondsContainer = document.getElementById('bonds');
+        if(bondsContainer) {
+            bondsContainer.innerHTML = globalBonds.map(group => `
+                <div class="nested-acc-item">
+                    <button class="nested-acc-btn" onclick="toggleNestedAcc('${group.id}', event)">${group.category} <span class="arrow">▾</span></button>
+                    <div id="${group.id}" class="nested-acc-content">${group.assets.map(a => `<a href="/predict?ticker=${a.t}">${a.n}</a>`).join('')}</div>
+                </div>
+            `).join('');
+        }
+    }
+
+    // FIRE ON LOAD
+    document.addEventListener('DOMContentLoaded', renderSidebarData);
+</script>
+<script>
+    // Hamburger Menu Toggle Logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.querySelector('.ticker-sidebar');
+        
+        if(menuBtn && sidebar) {
+            menuBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent click from triggering the logo link
+                sidebar.classList.toggle('open');
+            });
+
+            // Optional: Close the sidebar if the user clicks anywhere else on the screen
+            document.addEventListener('click', (e) => {
+                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuBtn) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        }
+    });
+</script>

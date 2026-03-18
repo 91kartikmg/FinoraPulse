@@ -1,0 +1,117 @@
+<link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
+
+<div class="price-ticker-wrapper">
+    <div class="ticker-move" id="header-ticker">
+        <div class="ticker-item" data-ticker="RELIANCE.NS" onclick="window.location.href='/predict?ticker=RELIANCE.NS'"><span>RELIANCE</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+        <div class="ticker-item" data-ticker="TCS.NS" onclick="window.location.href='/predict?ticker=TCS.NS'"><span>TCS</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+        <div class="ticker-item" data-ticker="BTC-USD" onclick="window.location.href='/predict?ticker=BTC-USD'"><span>BITCOIN</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
+        <div class="ticker-item" data-ticker="GC=F" onclick="window.location.href='/predict?ticker=GC=F'"><span>GOLD</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
+        <div class="ticker-item" data-ticker="^NSEI" onclick="window.location.href='/predict?ticker=^NSEI'"><span>NIFTY 50</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+    </div>
+</div>
+
+<nav class="navbar">
+    <div class="nav-logo" onclick="window.location.href='/'">
+        <button id="mobile-menu-btn" class="hamburger-btn">☰</button> 
+        <h2>Finora<span class="accent">Pulse</span></h2>
+    </div>
+    
+    <div class="nav-center">
+        <div class="nav-links">
+            <a href="/" style="color:white;">Home</a>
+            <a href="/predict?ticker=RELIANCE.NS" style="color:var(--text-muted, #8E9BAE);">Predict Price</a>
+            <a href="/macro" style="color:var(--text-muted, #8E9BAE);">Macro Explorer</a>
+        </div>
+        
+        <form action="/predict" method="GET" class="nav-search">
+            <div>
+                <input type="text" name="ticker" id="stockSearch" placeholder="Search Asset (e.g. AAPL, BTC-USD)..." autocomplete="off" required>
+                <div id="searchSuggestions" class="suggestions-box"></div>
+            </div>
+            <button type="submit" class="btn">Search</button>
+        </form>
+    </div>
+
+    <div class="nav-auth">
+        <% if (typeof user !== 'undefined' && user) { %>
+            <span style="margin-right: 15px; font-size: 0.85rem; color: var(--text-muted, #8E9BAE);">ID: <span style="color:white;"><%= user.username %></span></span>
+            <a href="/logout" class="btn" style="background: var(--border, #334155); color: var(--text-muted, #8E9BAE);">Logout</a>
+        <% } else { %>
+            <a href="/auth" class="btn">Login/Register</a>
+        <% } %>
+    </div>
+</nav>
+
+<script>
+    // 1. Synchronize Top Ticker
+    function updateHeaderMarketWatch() {
+        fetch('/api/market').then(res => res.json()).then(data => {
+            document.querySelectorAll('#header-ticker [data-ticker]').forEach(el => {
+                const ticker = el.getAttribute('data-ticker');
+                if (data[ticker]) {
+                    const priceEl = el.querySelector('.price-val'); 
+                    const changeEl = el.querySelector('.change-val');
+                    
+                    const isIndian = ticker.includes('.NS') || ticker.includes('.BO') || ticker === 'INR=X' || ticker === '^NSEI';
+                    const isEuro = ticker.includes('EUR');
+                    const isPound = ticker.includes('GBP');
+                    const isYen = ticker.includes('JPY');
+                    
+                    let sym = "$"; 
+                    if (isIndian) sym = "₹";
+                    if (isEuro) sym = "€";
+                    if (isPound) sym = "£";
+                    if (isYen) sym = "¥";
+                    if (ticker.includes('^')) sym = "";
+                    
+                    const change = data[ticker].change; 
+                    const isUp = change >= 0; 
+                    
+                    if (priceEl) { 
+                        priceEl.innerText = sym + data[ticker].price.toFixed(2); 
+                        priceEl.classList.remove('up', 'down'); 
+                        priceEl.classList.add(isUp ? 'up' : 'down'); 
+                    }
+                    if (changeEl) { 
+                        changeEl.innerText = (isUp ? '▲ ' : '▼ ') + Math.abs(change).toFixed(2) + '%'; 
+                        changeEl.classList.remove('up', 'down'); 
+                        changeEl.classList.add(isUp ? 'up' : 'down'); 
+                    }
+                }
+            });
+        }).catch(err => console.log("Market sync paused..."));
+    }
+    updateHeaderMarketWatch(); 
+    setInterval(updateHeaderMarketWatch, 5000);
+
+    // 2. Search Bar Auto-Suggest
+    const searchInput = document.getElementById('stockSearch');
+    const suggestionsBox = document.getElementById('searchSuggestions');
+
+    if(searchInput && suggestionsBox) {
+        searchInput.addEventListener('input', async (e) => {
+            const query = e.target.value;
+            if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
+
+            try {
+                const res = await fetch(`/api/search-suggest?q=${query}`);
+                const suggestions = await res.json();
+                
+                if (suggestions.length > 0) {
+                    suggestionsBox.innerHTML = suggestions.map(s => `
+                        <div class="suggestion-item" onclick="window.location.href='/predict?ticker=${s.symbol}'">
+                            <strong>${s.symbol}</strong> - ${s.name}
+                        </div>
+                    `).join('');
+                    suggestionsBox.style.display = 'block';
+                } else {
+                    suggestionsBox.style.display = 'none';
+                }
+            } catch (err) { console.error("Search error", err); }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target)) suggestionsBox.style.display = 'none';
+        });
+    }
+</script>

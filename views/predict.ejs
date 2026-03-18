@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicting <%= ticker %> | StockPulse AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+
+    <style>
+        /* TECHNICAL ANALYSIS STYLES */
+        .ta-section { background: #080a0c; border: 1px solid #1e293b; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); margin-top: 20px;}
+        .ta-dials { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .ta-card { background: #0d1117; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; text-align: center; }
+        .gauge-container { width: 100%; max-width: 200px; margin: 20px auto 10px; position: relative; }
+        .gauge-bg { 
+            width: 100%; padding-top: 50%; 
+            background: conic-gradient(from 270deg at 50% 100%, #FF007F 0deg, #ff4d4d 45deg, #e2e8f0 90deg, #00FF9D 135deg, #00C853 180deg, transparent 180deg); 
+            border-radius: 200px 200px 0 0; position: relative; 
+        }
+        .gauge-inner { position: absolute; top: 12px; left: 12px; right: 12px; bottom: 0; background: #0d1117; border-radius: 200px 200px 0 0; }
+        .gauge-needle {
+            position: absolute; bottom: 0; left: calc(50% - 2px); width: 4px; height: 95%; background: #fff; border-radius: 4px;
+            transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        .gauge-needle::after { content: ''; position: absolute; bottom: -6px; left: -4px; width: 12px; height: 12px; background: #fff; border-radius: 50%; }
+        .gauge-labels { display: flex; justify-content: space-between; font-size: 0.65rem; color: #64748b; font-weight: bold; margin-top: 5px; text-transform: uppercase; }
+        .ta-text { font-family: 'JetBrains Mono'; font-size: 1.2rem; font-weight: 800; margin-top: 15px; }
+
+        .ma-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+        .ma-card { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 15px; text-align: center; transition: all 0.3s; }
+        .ma-header { font-size: 0.75rem; color: #8E9BAE; font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
+        .ma-value { font-family: 'JetBrains Mono'; font-size: 1.1rem; color: #fff; font-weight: bold; margin-bottom: 5px; }
+        .ma-signal { font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        
+        /* ApexCharts Dark Theme Overrides */
+        .apexcharts-tooltip { background: #0d1117 !important; border: 1px solid #1e293b !important; box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important; }
+        .apexcharts-tooltip-title { background: #080a0c !important; border-bottom: 1px solid #1e293b !important; font-family: 'Inter', sans-serif !important; }
+        .apexcharts-tooltip-text { font-family: 'JetBrains Mono', monospace !important; color: #e2e8f0 !important; }
+        .apexcharts-toolbar { z-index: 10 !important; }
+        .apexcharts-menu { background: #0d1117 !important; border: 1px solid #1e293b !important; color: #fff !important;}
+    </style>
+</head> 
+<body>
+
+    <%- include('partials/header') %>
+
+    <div class="main-wrapper">
+        <%- include('partials/sidebar') %>
+
+        <main class="content-panel">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+                <h1 style="margin: 0; font-size: 2.5rem;"><%= ticker %></h1>
+                <div style="text-align: right;">
+                    <div class="tf-btn-group">
+                        <button class="tf-btn active" onclick="changeTimeframe('1h', this)">1 Hour</button>
+                        <button class="tf-btn" onclick="changeTimeframe('90m', this)">90 Min</button>
+                        <button class="tf-btn" onclick="changeTimeframe('1d', this)">1 Day</button>
+                        <button class="tf-btn" onclick="changeTimeframe('1wk', this)">1 Week</button>
+                    </div>
+                    <h4 id="forecast-title" style="margin: 0; color: #94a3b8;">4-Hour Forecast</h4>
+                    <h2 id="forecast-header" style="margin: 0; font-size: 2rem;"><span id="currency-symbol">₹</span><span id="forecast-val">0.00</span></h2>
+                    <div id="sync-status" style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">Connecting AI...</div>
+                </div>
+            </div>
+
+            <div class="hud-grid">
+                <div id="smart-trade-panel" class="hud-panel">
+                    <div class="hud-header">
+                        <div class="hud-badge">AI SETUP</div>
+                        <span id="setup-trend" style="font-weight: 800; font-size: 1.2rem; text-shadow: 0 0 10px;">CALCULATING...</span>
+                    </div>
+                    <div class="trade-data-group">
+                        <div class="trade-point">
+                            <span style="font-size: 0.7rem; color: #8E9BAE; letter-spacing: 1px; margin-bottom: 2px;">ENTRY PRICE</span>
+                            <span id="setup-entry" style="font-weight: bold; color: #fff; font-size: 1.1rem;">0.00</span>
+                        </div>
+                        <div class="trade-point">
+                            <span style="font-size: 0.7rem; color: #FF007F; letter-spacing: 1px; margin-bottom: 2px;">STOP-LOSS</span>
+                            <span id="setup-sl" style="font-weight: bold; color: #FF007F; font-size: 1.1rem;">0.00</span>
+                        </div>
+                        <div class="trade-point">
+                            <span style="font-size: 0.7rem; color: #00FF9D; letter-spacing: 1px; margin-bottom: 2px;">TAKE-PROFIT</span>
+                            <span id="setup-tp" style="font-weight: bold; color: #00FF9D; font-size: 1.1rem;">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ai-sim-panel" class="hud-panel" style="border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 0 20px rgba(168, 85, 247, 0.1), inset 0 0 10px rgba(168, 85, 247, 0.05);">
+                    <div class="hud-header">
+                        <div class="hud-badge" style="border-color: #a855f7; color: #a855f7; background: rgba(168, 85, 247, 0.1);">AI BACKTEST</div>
+                        <span style="font-weight: 800; font-size: 1.2rem; color: #fff;">Simulated ROI</span>
+                    </div>
+                    <div class="trade-data-group">
+                        <div class="trade-point">
+                            <span style="font-size: 0.7rem; color: #8E9BAE; letter-spacing: 1px; margin-bottom: 2px;">AI STRATEGY</span>
+                            <span id="sim-ai-roi" style="font-weight: bold; font-size: 1.1rem; color: #a855f7;">0.00%</span>
+                        </div>
+                        <div class="trade-point">
+                            <span style="font-size: 0.7rem; color: #8E9BAE; letter-spacing: 1px; margin-bottom: 2px;">BUY & HOLD</span>
+                            <span id="sim-market-roi" style="font-weight: bold; color: #fff; font-size: 1.1rem;">0.00%</span>
+                        </div>
+                        <div class="trade-point">
+                            <span style="font-size: 0.7rem; color: #00FF9D; letter-spacing: 1px; margin-bottom: 2px;">AI ALPHA</span>
+                            <span id="sim-alpha" style="font-weight: bold; color: #00FF9D; font-size: 1.1rem;">+0.00%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="fundamentals-header" style="border: none; padding-bottom: 0; color: #8E9BAE;">AI Projection Path</div>
+                <div style="position: relative; height: 400px; width: 100%;">
+                    <canvas id="liveChart"></canvas>
+                </div>
+            </div>
+
+            <div class="ai-metrics-bar">
+                <div class="metric-block">
+                    <span class="metric-label">Real-Time Price</span>
+                    <span class="metric-value" id="current-price-val">₹0.00</span>
+                </div>
+                <div class="metric-block">
+                    <span class="metric-label">AI Direction</span>
+                    <span class="metric-value" id="sentiment-val" style="color: #00E5FF;">Analyzing...</span>
+                </div>
+                <div class="metric-block">
+                    <span class="metric-label">Candle Psychology</span>
+                    <span class="metric-value" id="psy-val" style="color: #FF007F;">Scanning...</span>
+                </div>
+                <div class="metric-block">
+                    <span class="metric-label">Model Accuracy (Price / Dir)</span>
+                    <span class="metric-value">
+                        <span id="price-acc-val" style="color: #00E5FF;">0%</span> / 
+                        <span id="dir-acc-val" style="color: #00FF9D;">0%</span>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="ta-section">
+                <div class="fundamentals-header" style="text-align: center; margin-bottom: 25px; font-size: 1.5rem; border: none;">Technical Analysis</div>
+                
+                <div class="ta-dials">
+                    <div class="ta-card">
+                        <h4 style="margin:0; color:#e2e8f0; font-size: 0.8rem; text-transform: uppercase;">Short Term (5-20 MA)</h4>
+                        <div class="gauge-container">
+                            <div class="gauge-bg"><div class="gauge-inner"></div><div id="needle-short" class="gauge-needle"></div></div>
+                            <div class="gauge-labels"><span>Bear</span><span>Neutral</span><span>Bull</span></div>
+                        </div>
+                        <div id="text-short" class="ta-text" style="color: #8E9BAE;">Analyzing...</div>
+                    </div>
+                    <div class="ta-card">
+                        <h4 style="margin:0; color:#e2e8f0; font-size: 0.8rem; text-transform: uppercase;">Medium Term (50-100 MA)</h4>
+                        <div class="gauge-container">
+                            <div class="gauge-bg"><div class="gauge-inner"></div><div id="needle-medium" class="gauge-needle"></div></div>
+                            <div class="gauge-labels"><span>Bear</span><span>Neutral</span><span>Bull</span></div>
+                        </div>
+                        <div id="text-medium" class="ta-text" style="color: #8E9BAE;">Analyzing...</div>
+                    </div>
+                    <div class="ta-card">
+                        <h4 style="margin:0; color:#e2e8f0; font-size: 0.8rem; text-transform: uppercase;">Long Term (200 MA)</h4>
+                        <div class="gauge-container">
+                            <div class="gauge-bg"><div class="gauge-inner"></div><div id="needle-long" class="gauge-needle"></div></div>
+                            <div class="gauge-labels"><span>Bear</span><span>Neutral</span><span>Bull</span></div>
+                        </div>
+                        <div id="text-long" class="ta-text" style="color: #8E9BAE;">Analyzing...</div>
+                    </div>
+                </div>
+
+                <div class="fundamentals-header" style="text-align: center; margin-bottom: 15px; border:none; color: #8E9BAE;">Moving Averages Array</div>
+                <div class="ma-grid" id="ma-grid-target">
+                    <div style="text-align: center; color: #8E9BAE; grid-column: 1 / -1;">Calculating Technical Indicators...</div>
+                </div>
+            </div>
+
+            <div class="ta-section">
+                <div class="fundamentals-header" style="text-align: center; border: none;">Peer Valuation Graph (P/E vs ROCE)</div>
+                <div style="position: relative; height: 400px; width: 100%;">
+                    <canvas id="peerGraph"></canvas>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div class="fundamentals-container" style="margin-top: 0;">
+                    <div class="fundamentals-header">Asset Analysis</div>
+                    <div class="fundamentals-grid" id="fundamentals-target">
+                        <div class="loading-pulse">Retrieving Asset Data...</div>
+                    </div>
+                </div>
+
+                <div class="fundamentals-container" style="margin-top: 0;">
+                    <div class="fundamentals-header" style="display: flex; justify-content: space-between;">
+                        <span>Upcoming Catalysts</span>
+                        <span style="font-size: 0.8rem; color: #00E5FF;">TIMELINE</span>
+                    </div>
+                    <div class="catalyst-list" id="catalysts-target">
+                        <div class="loading-pulse">Scanning Event Calendar...</div>
+                    </div>
+                </div>
+
+                <div class="sentiment-container" style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: 100%;">
+                    <div class="fundamentals-header" style="display: flex; justify-content: space-between;">
+                        <span>AI Sentiment Engine</span>
+                        <span id="fg-state" style="font-weight: bold; color: #f59e0b;">Scanning Web...</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase;">
+                        <span>Extreme Fear (0)</span><span>Neutral (50)</span><span>Extreme Greed (100)</span>
+                    </div>
+                    <div style="height: 12px; background: #0f172a; border-radius: 6px; margin: 10px 0 20px 0; overflow: hidden; border: 1px solid #334155;">
+                        <div id="fg-bar" style="height: 100%; width: 50%; background: #f59e0b; transition: all 1s ease-in-out;"></div>
+                    </div>
+                    <div id="news-target" style="height: 190px; overflow-y: auto; padding-right: 10px;">
+                        <div class="loading-pulse">Running NLP on Latest Headlines...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fund-chart-container" id="advanced-fund-section" style="margin-top: 20px;">
+                <div class="fund-tabs">
+                    <button class="fund-tab active" onclick="updateFundChart('pe', this)">P/E Ratio Trend</button>
+                    <button class="fund-tab" onclick="updateFundChart('mc', this)">Market Cap Growth</button>
+                    <button class="fund-tab" onclick="updateFundChart('roe', this)">ROE Momentum</button>
+                </div>
+                <div style="position: relative; height: 350px; width: 100%;">
+                    <canvas id="fundamentalHistoryChart"></canvas>
+                </div>
+            </div>
+
+            <div class="fund-chart-container" id="income-stmt-section" style="margin-top: 20px;">
+                <div class="fundamentals-header">Quarterly Profit & Loss (Revenue vs Net Income)</div>
+                <div style="position: relative; height: 350px; width: 100%;">
+                    <canvas id="incomeStmtChart"></canvas>
+                </div>
+            </div>
+            
+            <div style="height:60px;"></div> 
+        </main>
+
+        <aside class="side-panel right"></aside>
+    </div>
+
+    <script>
+        const currentTicker = "<%= ticker %>";
+        let currentTimeframe = "1h"; // Synced default with the active button
+        let lastRenderedTimeframe = ""; 
+        let stockChart;
+        let candleChart;
+
+        function changeTimeframe(tf, btnElement) {
+            currentTimeframe = tf;
+            document.querySelectorAll('.tf-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            
+            const titles = {
+                '1h': '4-Hour Forecast', 
+                '90m': '6-Hour Forecast', 
+                '1d': '5-Day Forecast',
+                '1wk': '1-Month Forecast'
+            };
+            
+            document.getElementById('forecast-title').innerText = titles[tf];
+            document.getElementById('sync-status').innerText = "Recalculating AI Model...";
+            
+            if(stockChart) {
+                stockChart.data.labels = [];
+                stockChart.data.datasets.forEach(ds => ds.data = []);
+                stockChart.update('none');
+            }
+            refresh(); 
+        }
+
+        function initChart(data) {
+            const ctx = document.getElementById('liveChart').getContext('2d');
+            const allLabels = [...data.history_times, ...data.future_times];
+            
+            const actualLine = data.history_prices.concat(new Array(data.future_prices.length).fill(null));
+            const pastAiLine = data.history_ai_prices ? data.history_ai_prices.concat(new Array(data.future_prices.length).fill(null)) : [];
+            
+            const predictedLine = new Array(data.history_prices.length - 1).fill(null);
+            predictedLine.push(data.history_prices[data.history_prices.length - 1]);
+            const finalPrediction = predictedLine.concat(data.future_prices);
+
+            stockChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: allLabels,
+                    datasets: [
+                        { label: 'Actual Price', data: actualLine, borderColor: '#00E5FF', backgroundColor: 'rgba(0, 229, 255, 0.05)', borderWidth: 2, pointRadius: 0, tension: 0.1, fill: true },
+                        { label: 'Past AI Prediction', data: pastAiLine, borderColor: '#FF007F', borderWidth: 2, borderDash: [3, 3], pointRadius: 0, tension: 0.1, fill: false },
+                        { label: 'Future AI Forecast', data: finalPrediction, borderColor: '#00FF9D', borderWidth: 3, borderDash: [5, 5], pointRadius: 4, tension: 0.1, fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: 'white' } } },
+                    scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E9BAE' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E9BAE' } } }
+                }
+            });
+        }
+
+        function refresh() {
+            fetch(`/api/stats?ticker=${currentTicker}&timeframe=${currentTimeframe}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.waiting) { 
+                        document.getElementById('sync-status').innerText = `Training AI for ${currentTimeframe}...`; 
+                        return; 
+                    }
+
+                    const isIndian = currentTicker.includes('.NS') || currentTicker.includes('.BO') || currentTicker === 'INR=X';
+                    const isEuro = currentTicker.includes('EUR');
+                    const isPound = currentTicker.includes('GBP');
+                    const isYen = currentTicker.includes('JPY');
+                    
+                    let curSym = "$"; 
+                    if (isIndian) curSym = "₹";
+                    if (isEuro) curSym = "€";
+                    if (isPound) curSym = "£";
+                    if (isYen) curSym = "¥";
+                    if (currentTicker.includes('^')) curSym = ""; 
+                    
+                    document.getElementById('currency-symbol').innerText = curSym;
+                    document.getElementById('current-price-val').innerText = curSym + data.current.toFixed(2);
+                    document.getElementById('forecast-val').innerText = data.predicted.toFixed(2);
+                    document.getElementById('sync-status').innerText = "Live Update: " + (data.timestamp || new Date().toLocaleTimeString());
+
+                    // Update Smart Trade Panel
+                    if(data.trade_setup) {
+                        document.getElementById('setup-entry').innerText = curSym + data.trade_setup.entry.toFixed(2);
+                        document.getElementById('setup-sl').innerText = curSym + data.trade_setup.sl.toFixed(2);
+                        document.getElementById('setup-tp').innerText = curSym + data.trade_setup.tp.toFixed(2);
+                        
+                        const trendEl = document.getElementById('setup-trend');
+                        const panelEl = document.getElementById('smart-trade-panel');
+                        
+                        if(data.trade_setup.trend === "LONG") {
+                            trendEl.innerText = "LONG (BUY)";
+                            trendEl.style.color = "#00FF9D";
+                            trendEl.style.textShadow = "0 0 15px #00FF9D";
+                            document.getElementById('setup-sl').style.textShadow = "0 0 15px rgba(255,0,127,0.8)";
+                            document.getElementById('setup-tp').style.textShadow = "0 0 15px rgba(0,255,157,0.8)";
+                            panelEl.style.borderColor = "rgba(0, 255, 157, 0.4)";
+                            panelEl.style.boxShadow = "0 0 30px rgba(0, 255, 157, 0.15), inset 0 0 15px rgba(0, 255, 157, 0.05)";
+                        } else {
+                            trendEl.innerText = "SHORT (SELL)";
+                            trendEl.style.color = "#FF007F";
+                            trendEl.style.textShadow = "0 0 15px #FF007F";
+                            document.getElementById('setup-sl').style.textShadow = "0 0 15px rgba(255,0,127,0.8)";
+                            document.getElementById('setup-tp').style.textShadow = "0 0 15px rgba(0,255,157,0.8)";
+                            panelEl.style.borderColor = "rgba(255, 0, 127, 0.4)";
+                            panelEl.style.boxShadow = "0 0 30px rgba(255, 0, 127, 0.15), inset 0 0 15px rgba(255, 0, 127, 0.05)";
+                        }
+                    }
+
+                    // Update AI Sim
+                    if (data.simulation) {
+                        document.getElementById('sim-ai-roi').innerText = (data.simulation.ai_roi >= 0 ? "+" : "") + data.simulation.ai_roi.toFixed(2) + "%";
+                        document.getElementById('sim-market-roi').innerText = (data.simulation.market_roi >= 0 ? "+" : "") + data.simulation.market_roi.toFixed(2) + "%";
+                        const alphaEl = document.getElementById('sim-alpha');
+                        alphaEl.innerText = (data.simulation.beat_by >= 0 ? "+" : "") + data.simulation.beat_by.toFixed(2) + "%";
+                        alphaEl.style.color = data.simulation.beat_by >= 0 ? "#00FF9D" : "#FF007F";
+                        alphaEl.style.textShadow = data.simulation.beat_by >= 0 ? "0 0 10px #00FF9D" : "0 0 10px #FF007F";
+                    }
+
+                    if(data.accuracy) {
+                        document.getElementById('price-acc-val').innerText = data.accuracy.price + "%";
+                        const dirAcc = document.getElementById('dir-acc-val');
+                        dirAcc.innerText = data.accuracy.direction + "%";
+                        dirAcc.style.color = data.accuracy.direction > 50 ? "#00FF9D" : "#FF007F";
+                        dirAcc.style.textShadow = data.accuracy.direction > 50 ? "0 0 10px #00FF9D" : "0 0 10px #FF007F";
+                    }
+
+                    if(data.psychology) {
+                        const psyEl = document.getElementById('psy-val');
+                        psyEl.innerText = data.psychology.state;
+                        psyEl.style.color = data.psychology.color === 'up' ? '#00FF9D' : (data.psychology.color === 'down' ? '#FF007F' : '#00E5FF');
+                    }
+
+                    // Update Technical Analysis Visuals
+                    if(data.tech_analysis) {
+                        const terms = data.tech_analysis.terms;
+                        const degreeMap = { 'Very Bearish': -70, 'Bearish': -35, 'Neutral': 0, 'Bullish': 35, 'Very Bullish': 70 };
+                        
+                        ['short', 'medium', 'long'].forEach(term => {
+                            const state = terms[term];
+                            const textEl = document.getElementById(`text-${term}`);
+                            const needleEl = document.getElementById(`needle-${term}`);
+                            
+                            textEl.innerText = state;
+                            needleEl.style.transform = `rotate(${degreeMap[state] || 0}deg)`;
+                            
+                            if(state.includes('Bull')) textEl.style.color = '#00FF9D';
+                            else if(state.includes('Bear')) textEl.style.color = '#FF007F';
+                            else textEl.style.color = '#8E9BAE';
+                        });
+
+                        const mas = data.tech_analysis.moving_averages;
+                        const gridTarget = document.getElementById('ma-grid-target');
+                        
+                        let maHTML = '';
+                        ['SMA_5', 'SMA_10', 'SMA_20', 'SMA_50', 'SMA_100', 'SMA_200'].forEach(maKey => {
+                            const maData = mas[maKey];
+                            const isBull = maData.signal === 'Bullish';
+                            const color = isBull ? '#00FF9D' : '#FF007F';
+                            const icon = isBull ? '↑' : '↓';
+                            const label = maKey.replace('SMA_', '') + ' MA';
+
+                            maHTML += `
+                                <div class="ma-card" style="border-color: ${isBull ? 'rgba(0,255,157,0.2)' : 'rgba(255,0,127,0.2)'};">
+                                    <div class="ma-header">${label}</div>
+                                    <div class="ma-value">${curSym}${maData.value.toFixed(2)}</div>
+                                    <div class="ma-signal" style="color: ${color};">
+                                        <span>${icon}</span> ${maData.signal}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        gridTarget.innerHTML = maHTML;
+                    }
+
+                    const isBullish = data.predicted > data.current;
+                    const sentiment = document.getElementById('sentiment-val');
+                    const header = document.getElementById('forecast-header');
+                    sentiment.innerText = isBullish ? "BULLISH ↗" : "BEARISH ↘";
+                    sentiment.style.color = isBullish ? "#00FF9D" : "#FF007F";
+                    sentiment.style.textShadow = isBullish ? "0 0 10px #00FF9D" : "0 0 10px #FF007F";
+                    header.style.color = isBullish ? "#00FF9D" : "#FF007F";
+
+                    // Update Chart.js (Line Chart)
+                    if (!stockChart) { 
+                        initChart(data); 
+                    } else {
+                        stockChart.data.labels = [...data.history_times, ...data.future_times];
+                        stockChart.data.datasets[0].data = data.history_prices.concat(new Array(data.future_prices.length).fill(null));
+                        if(data.history_ai_prices) stockChart.data.datasets[1].data = data.history_ai_prices.concat(new Array(data.future_prices.length).fill(null));
+                        const predictedLine = new Array(data.history_prices.length - 1).fill(null);
+                        predictedLine.push(data.history_prices[data.history_prices.length - 1]);
+                        stockChart.data.datasets[2].data = predictedLine.concat(data.future_prices);
+                        stockChart.update('none');
+                    }
+
+                }).catch(err => console.log("Waiting for network..."));
+        }
+
+        setInterval(refresh, 5000); 
+        refresh(); 
+
+        // --- FUNDAMENTALS LOGIC ---
+        let fundHistoryData = null; 
+        let incomeStmtData = null;
+        let advancedFundChart = null; 
+        let incomeChart = null;
+        
+        function fmtN(num) { if (!num || isNaN(num)) return "N/A"; if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T'; if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B'; if (num >= 1e7) return (num / 1e7).toFixed(2) + 'Cr'; if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M'; return num.toLocaleString(); }
+        
+        async function fetchFundamentals(ticker) {
+            const target = document.getElementById('fundamentals-target');
+            const catTarget = document.getElementById('catalysts-target');
+            let curSy = "$"; if (ticker.includes('.NS') || ticker.includes('.BO') || ticker === 'INR=X') curSy = "₹"; if (ticker.includes('EUR')) curSy = "€"; if (ticker.includes('GBP')) curSy = "£"; if (ticker.includes('JPY')) curSy = "¥"; if (ticker.includes('^')) curSy = "";
+
+            try {
+                const response = await fetch(`/api/fundamentals?ticker=${ticker}`); 
+                const f = await response.json();
+                
+                if (f.error) { target.innerHTML = `<div style="color:#FF007F">Error fetching data</div>`; catTarget.innerHTML = `<div style="color:#FF007F">No events found</div>`; return; }
+                
+                if (f.asset_type === 'crypto') {
+                    document.querySelector('.fundamentals-header').innerText = "Network Tokenomics";
+                    target.innerHTML = `<div class="f-item"><span class="f-label">Network Cap</span><span class="f-value">${curSy}${fmtN(f.marketCap)}</span></div><div class="f-item"><span class="f-label">24H Volume</span><span class="f-value accent-text">${curSy}${fmtN(f.volume24Hr)}</span></div><div class="f-item"><span class="f-label">Circulating Supply</span><span class="f-value">${fmtN(f.circulatingSupply)}</span></div>`;
+                    document.getElementById('advanced-fund-section').style.display = 'none'; document.getElementById('income-stmt-section').style.display = 'none';
+                } else if (f.asset_type === 'forex' || f.asset_type === 'commodity' || f.asset_type === 'index') {
+                    document.querySelector('.fundamentals-header').innerText = "Market Overview";
+                    target.innerHTML = `<div class="f-item"><span class="f-label">Previous Close</span><span class="f-value">${curSy}${f.previousClose}</span></div><div class="f-item"><span class="f-label">Open Price</span><span class="f-value accent-text">${curSy}${f.open}</span></div><div class="f-item"><span class="f-label">Day Range</span><span class="f-value" style="font-size:0.9rem;">${curSy}${f.dayLow} - ${curSy}${f.dayHigh}</span></div><div class="f-item"><span class="f-label">Volume</span><span class="f-value">${fmtN(f.volume)}</span></div>`;
+                    document.getElementById('advanced-fund-section').style.display = 'none'; document.getElementById('income-stmt-section').style.display = 'none';
+                } else {
+                    document.querySelector('.fundamentals-header').innerText = "Fundamental Analysis";
+                    target.innerHTML = `<div class="f-item"><span class="f-label">Market Cap</span><span class="f-value">${curSy}${fmtN(f.marketCap)}</span></div><div class="f-item"><span class="f-label">P/E Ratio</span><span class="f-value accent-text">${f.pe_ratio ? f.pe_ratio.toFixed(2) : 'N/A'}</span></div><div class="f-item"><span class="f-label">EPS (TTM)</span><span class="f-value">${curSy}${f.eps ? f.eps.toFixed(2) : '0.00'}</span></div><div class="f-item"><span class="f-label">ROE</span><span class="f-value">${f.roe ? (f.roe * 100).toFixed(2) + '%' : 'N/A'}</span></div><div class="f-item"><span class="f-label">Book Value</span><span class="f-value">${curSy}${f.bookValue ? f.bookValue.toFixed(2) : 'N/A'}</span></div><div class="f-item"><span class="f-label">Price / Book</span><span class="f-value">${f.priceToBook ? f.priceToBook.toFixed(2) : 'N/A'}</span></div><div class="f-item"><span class="f-label">Div Yield</span><span class="f-value">${f.dividendYield ? (f.dividendYield * 100).toFixed(2) + '%' : '0.00%'}</span></div><div class="f-item"><span class="f-label">Debt / Equity</span><span class="f-value" style="color:${(f.debtToEquity > 100) ? '#FF007F' : '#f8fafc'}">${f.debtToEquity ? f.debtToEquity.toFixed(2) : 'N/A'}</span></div>`;
+                    if (f.historical && f.historical.years && f.historical.years.length > 0) { document.getElementById('advanced-fund-section').style.display = 'block'; fundHistoryData = f.historical; renderAdvancedFundChart('pe'); }
+                    if (f.income_stmt && f.income_stmt.years && f.income_stmt.years.length > 0) { document.getElementById('income-stmt-section').style.display = 'block'; incomeStmtData = f.income_stmt; renderIncomeChart(curSy); }
+                }
+
+                if (f.catalysts && f.catalysts.length > 0) {
+                    catTarget.innerHTML = f.catalysts.map(cat => {
+                        let icon = "📌"; if(cat.type === 'warning') icon = "⚠️"; if(cat.type === 'danger') icon = "🔥"; if(cat.type === 'neutral') icon = "⏳";
+                        return `<div class="catalyst-item cat-${cat.type}"><div style="display:flex; align-items:center; gap: 10px;"><span>${icon}</span><span style="font-weight: 600; font-size: 0.9rem; color: #f8fafc;">${cat.event}</span></div><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #8E9BAE;">${cat.date}</span></div>`;
+                    }).join('');
+                } else { catTarget.innerHTML = `<div style="color: #8E9BAE; font-size: 0.85rem;">No upcoming events scheduled.</div>`; }
+            } catch (err) {}
+        }
+
+        function updateFundChart(type, btnElement) { document.querySelectorAll('.fund-tab').forEach(el => el.classList.remove('active')); if(btnElement) btnElement.classList.add('active'); renderAdvancedFundChart(type); }
+        function renderAdvancedFundChart(type) {
+            if (!fundHistoryData) return; const ctx = document.getElementById('fundamentalHistoryChart').getContext('2d'); if (advancedFundChart) advancedFundChart.destroy(); 
+            let datasets = []; let yAxisConfig = { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E9BAE' } }; let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            if (type === 'pe') { const peData = fundHistoryData.pe; const avgPe = peData.reduce((a, b) => a + b, 0) / peData.length; const avgLine = Array(peData.length).fill(avgPe); gradient.addColorStop(0, 'rgba(0, 229, 255, 0.4)'); gradient.addColorStop(1, 'rgba(0, 229, 255, 0.0)'); datasets = [ { type: 'line', label: 'Monthly P/E', data: peData, borderColor: '#00E5FF', backgroundColor: gradient, borderWidth: 3, fill: true, tension: 0.4, pointRadius: 1 }, { type: 'line', label: `Average P/E (${avgPe.toFixed(1)})`, data: avgLine, borderColor: '#FF007F', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 } ]; }
+            else if (type === 'mc') { gradient.addColorStop(0, 'rgba(0, 255, 157, 0.4)'); gradient.addColorStop(1, 'rgba(0, 255, 157, 0.0)'); datasets = [ { type: 'line', label: 'Market Cap', data: fundHistoryData.market_cap, borderColor: '#00FF9D', backgroundColor: gradient, borderWidth: 3, fill: true, tension: 0.4, pointRadius: 1 } ]; yAxisConfig.ticks.callback = function(val) { let curSy = document.getElementById('currency-symbol').innerText; if (val >= 1e12) return curSy + (val / 1e12).toFixed(2) + 'T'; if (val >= 1e9) return curSy + (val / 1e9).toFixed(2) + 'B'; return curSy + val; }; }
+            else if (type === 'roe') { gradient.addColorStop(0, 'rgba(255, 0, 127, 0.4)'); gradient.addColorStop(1, 'rgba(255, 0, 127, 0.0)'); datasets = [ { type: 'line', label: 'ROE (%)', data: fundHistoryData.roe, borderColor: '#FF007F', backgroundColor: gradient, borderWidth: 3, fill: true, tension: 0.4, pointRadius: 1 } ]; yAxisConfig.ticks.callback = function(val) { return val + '%'; }; }
+            advancedFundChart = new Chart(ctx, { data: { labels: fundHistoryData.years, datasets: datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#ffffff', font: { weight: 'bold' } } } }, scales: { x: { grid: { display: false }, ticks: { color: '#8E9BAE', font: { weight: 'bold' }, autoSkip: true, maxTicksLimit: 12 } }, y: yAxisConfig } } });
+        }
+
+        function renderIncomeChart(curSy) {
+            if (!incomeStmtData || !incomeStmtData.years) return; 
+            const canvas = document.getElementById('incomeStmtChart');
+            if (!canvas) return; 
+            
+            const ctx = canvas.getContext('2d'); 
+            if (incomeChart) incomeChart.destroy(); 
+            
+            const revenueData = incomeStmtData.revenue || [];
+            const netIncomeData = incomeStmtData.net_income || [];
+            const netIncomeBgColors = netIncomeData.map(val => val >= 0 ? 'rgba(0, 255, 157, 0.7)' : 'rgba(255, 0, 127, 0.7)');
+            const netIncomeBorderColors = netIncomeData.map(val => val >= 0 ? '#00FF9D' : '#FF007F');
+
+            incomeChart = new Chart(ctx, { 
+                type: 'bar', 
+                data: { 
+                    labels: incomeStmtData.years, 
+                    datasets: [ 
+                        { label: 'Total Revenue', data: revenueData, backgroundColor: 'rgba(0, 229, 255, 0.5)', borderColor: '#00E5FF', borderWidth: 1, borderRadius: 4 }, 
+                        { label: 'Net Income', data: netIncomeData, backgroundColor: netIncomeBgColors, borderColor: netIncomeBorderColors, borderWidth: 1, borderRadius: 4 } 
+                    ] 
+                }, 
+                options: { 
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#ffffff', font: { weight: 'bold' } } } }, 
+                    scales: { 
+                        x: { grid: { display: false }, ticks: { color: '#8E9BAE', font: { weight: 'bold' } } }, 
+                        y: { 
+                            grid: { color: 'rgba(255,255,255,0.05)' }, 
+                            ticks: { 
+                                color: '#8E9BAE', 
+                                callback: function(val) { 
+                                    if (val >= 1e12 || val <= -1e12) return curSy + (val / 1e12).toFixed(1) + 'T'; 
+                                    if (val >= 1e9 || val <= -1e9) return curSy + (val / 1e9).toFixed(1) + 'B'; 
+                                    if (val >= 1e7 || val <= -1e7) return curSy + (val / 1e7).toFixed(1) + 'Cr'; 
+                                    if (val >= 1e6 || val <= -1e6) return curSy + (val / 1e6).toFixed(1) + 'M'; 
+                                    return curSy + val; 
+                                } 
+                            } 
+                        } 
+                    } 
+                } 
+            });
+        }
+        
+        fetchFundamentals(currentTicker); 
+
+        // --- SENTIMENT LOGIC ---
+        async function fetchSentiment(ticker) {
+            try {
+                const response = await fetch(`/api/sentiment?ticker=${ticker}`);
+                const data = await response.json();
+                if (data.error) { document.getElementById('news-target').innerHTML = `<div style="color:#ef4444">No recent news available.</div>`; return; }
+                document.getElementById('fg-state').innerText = `${data.state} (${data.score})`; document.getElementById('fg-state').style.color = data.color; document.getElementById('fg-state').style.textShadow = `0 0 10px ${data.color}`; document.getElementById('fg-bar').style.width = `${data.score}%`; document.getElementById('fg-bar').style.background = data.color; document.getElementById('fg-bar').style.boxShadow = `0 0 15px ${data.color}`;
+                document.getElementById('news-target').innerHTML = data.articles.map(article => { let badgeColor = article.tag === "Bullish" ? "rgba(0, 255, 157, 0.15)" : (article.tag === "Bearish" ? "rgba(255, 0, 127, 0.15)" : "rgba(142, 155, 174, 0.15)"); let textColor = article.tag === "Bullish" ? "#00FF9D" : (article.tag === "Bearish" ? "#FF007F" : "#8E9BAE"); return `<div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><a href="${article.link}" target="_blank" style="color: #f8fafc; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: block; margin-bottom: 5px;">${article.title}</a><div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;"><span style="color: #8E9BAE;">${article.publisher}</span><span style="background: ${badgeColor}; color: ${textColor}; padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid ${badgeColor};">${article.tag} [${article.sentiment}]</span></div></div>`; }).join('');
+            } catch (err) {}
+        }
+        fetchSentiment(currentTicker);
+    </script>
+
+    <script>
+        async function loadPeerComparison(ticker) {
+    const peerTarget = document.getElementById('peerGraph');
+    if (!peerTarget) return;
+
+    try {
+        const response = await fetch(`/api/peers?ticker=${ticker}`);
+        const data = await response.json();
+        
+        if (data.error) return;
+
+        const ctx = peerTarget.getContext('2d');
+        
+        // Data mapping for the Scatter Graph
+        const plotData = data.map(stock => ({
+            x: stock.pe,       // Valuation Axis
+            y: stock.roce,     // Profitability Axis
+            symbol: stock.symbol,
+            name: stock.name
+        }));
+
+        new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Sector Peers (P/E vs ROCE)',
+                    data: plotData,
+                    backgroundColor: '#00FF9D',
+                    borderColor: '#00FF9D',
+                    pointRadius: 6,
+                    pointHoverRadius: 10,
+                    showLine: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#fff' } },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const s = context.raw;
+                                return `${s.symbol}: P/E: ${s.x.toFixed(2)} | ROCE: ${s.y.toFixed(2)}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { 
+                        title: { display: true, text: 'P/E Ratio (Lower = Cheaper)', color: '#8E9BAE' },
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#8E9BAE' }
+                    },
+                    y: { 
+                        title: { display: true, text: 'ROCE % (Higher = More Efficient)', color: '#8E9BAE' },
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#8E9BAE' }
+                    }
+                }
+            }
+        });
+    } catch (err) {
+        console.error("Peer API Error:", err);
+    }
+}
+    </script>
+</body>
+</html>
