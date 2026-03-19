@@ -14,6 +14,18 @@ const MONGO_URI = 'mongodb://127.0.0.1:27017/stockpulse_db'; // Local MongoDB
 const SESSION_SECRET = 'supersecret_stockpulse_key'; // Change this in production
 const DATASET_PATH = path.join(__dirname, 'datasets'); // Specific folder for CSVs
 
+// --- DYNAMIC PYTHON PATH LOGIC ---
+// This automatically detects if it's running on your Hostinger server or local Windows PC
+let PYTHON_PATH = 'python'; // Default for Local Windows Environment
+const serverVenvPath = '/var/www/FinoraPulse/venv/bin/python';
+
+if (fs.existsSync(serverVenvPath)) {
+    PYTHON_PATH = serverVenvPath;
+    console.log(`🐍 Using Server Python Environment: ${PYTHON_PATH}`);
+} else {
+    console.log(`🐍 Using Local Python Environment: ${PYTHON_PATH}`);
+}
+
 // Ensure the dataset folder exists
 if (!fs.existsSync(DATASET_PATH)) {
     fs.mkdirSync(DATASET_PATH);
@@ -174,7 +186,7 @@ function startPythonWorker(ticker, timeframe = "1h") {
     console.log(`[Manager] Starting AI Engine for ${ticker} (${timeframe})...`);
     
     // Pass DATASET_PATH as the 3rd argument to predict.py
-    const pythonWorker = spawn('python', ['predict.py', ticker, timeframe, DATASET_PATH]);
+    const pythonWorker = spawn(PYTHON_PATH, ['predict.py', ticker, timeframe, DATASET_PATH]);
     pythonProcesses[cacheKey] = pythonWorker;
     statsCache[cacheKey] = { waiting: true };
 
@@ -217,7 +229,7 @@ const WATCHLIST = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'AAPL', 'T
 let marketCache = {};
 
 function startMarketWatcher() {
-    const worker = spawn('python', ['prices.py', WATCHLIST.join(',')]);
+    const worker = spawn(PYTHON_PATH, ['prices.py', WATCHLIST.join(',')]);
     worker.stdout.on('data', data => {
         try {
             const strData = data.toString().trim();
@@ -238,7 +250,7 @@ app.get('/api/fundamentals', (req, res) => {
     const ticker = req.query.ticker;
     if (!ticker) return res.status(400).json({ error: "Ticker required" });
 
-    const pythonProcess = spawn('python', ['fundamental.py', ticker]);
+    const pythonProcess = spawn(PYTHON_PATH, ['fundamental.py', ticker]);
     
     let dataString = '';
     pythonProcess.stdout.on('data', (data) => {
@@ -264,7 +276,7 @@ app.get('/macro', requireLogin, (req, res) => {
 
 app.get('/api/macro-explorer', (req, res) => {
     const country = req.query.country || 'IN';
-    const pythonProcess = spawn('python', ['macro_explorer.py', country]);
+    const pythonProcess = spawn(PYTHON_PATH, ['macro_explorer.py', country]);
     
     let dataString = '';
     pythonProcess.stdout.on('data', (data) => {
@@ -287,7 +299,7 @@ app.get('/heatmap', requireLogin, (req, res) => {
 });
 
 app.get('/api/heatmap-data', (req, res) => {
-    const pythonProcess = spawn('python', ['heatmap.py']);
+    const pythonProcess = spawn(PYTHON_PATH, ['heatmap.py']);
     
     let dataString = '';
     pythonProcess.stdout.on('data', (data) => {
@@ -309,7 +321,7 @@ app.get('/api/sentiment', (req, res) => {
     const ticker = req.query.ticker;
     if (!ticker) return res.status(400).json({ error: "Ticker required" });
 
-    const pythonProcess = spawn('python', ['sentiment.py', ticker]);
+    const pythonProcess = spawn(PYTHON_PATH, ['sentiment.py', ticker]);
     
     let dataString = '';
     pythonProcess.stdout.on('data', (data) => {
@@ -388,7 +400,7 @@ app.get('/api/peers', (req, res) => {
     if (!ticker) return res.status(400).json({ error: "Ticker required" });
 
     // Launch the new peers.py script
-    const pythonProcess = spawn('python', ['peers.py', ticker]);
+    const pythonProcess = spawn(PYTHON_PATH, ['peers.py', ticker]);
     
     let dataString = '';
     pythonProcess.stdout.on('data', (data) => {
