@@ -1,22 +1,21 @@
 const express = require('express');
 const { spawn } = require('child_process');
 const path = require('path');
-const fs = require('fs'); // Added for file system operations
+const fs = require('fs');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
-const User = require('./models/User'); // Import User Model
-const axios = require('axios'); // Install via: npm install axios
+const User = require('./models/User'); 
+const axios = require('axios'); 
 const app = express();
 
 // --- CONFIGURATION ---
-const MONGO_URI = 'mongodb://127.0.0.1:27017/stockpulse_db'; // Local MongoDB
-const SESSION_SECRET = 'supersecret_stockpulse_key'; // Change this in production
-const DATASET_PATH = path.join(__dirname, 'datasets'); // Specific folder for CSVs
+const MONGO_URI = 'mongodb://127.0.0.1:27017/stockpulse_db'; 
+const SESSION_SECRET = 'supersecret_stockpulse_key'; 
+const DATASET_PATH = path.join(__dirname, 'datasets'); 
 
 // --- DYNAMIC PYTHON PATH LOGIC ---
-// This automatically detects if it's running on your Hostinger server or local Windows PC
-let PYTHON_PATH = 'python'; // Default for Local Windows Environment
+let PYTHON_PATH = 'python'; 
 const serverVenvPath = '/var/www/FinoraPulse/venv/bin/python';
 
 if (fs.existsSync(serverVenvPath)) {
@@ -33,17 +32,17 @@ if (!fs.existsSync(DATASET_PATH)) {
 }
 
 // --- MIDDLEWARE ---
-app.use(express.urlencoded({ extended: true })); // Parse form data
+app.use(express.urlencoded({ extended: true })); 
 app.use(express.json());
 app.use(express.static('public'));
 
-// Session Setup (Handles Auto-Login)
+// Session Setup
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        maxAge: 1000 * 60 * 60 * 24 * 7 // 7 Days auto-login
+        maxAge: 1000 * 60 * 60 * 24 * 7 
     }
 }));
 
@@ -57,7 +56,6 @@ mongoose.connect(MONGO_URI)
     .catch(err => console.error("❌ MongoDB Error:", err));
 
 // --- AUTH MIDDLEWARE ---
-// Protects the predict page
 const requireLogin = (req, res, next) => {
     if (!req.session.userId) {
         return res.redirect('/auth');
@@ -65,7 +63,6 @@ const requireLogin = (req, res, next) => {
     next();
 };
 
-// Make 'user' available to all templates if logged in
 app.use(async (req, res, next) => {
     res.locals.user = null;
     if (req.session.userId) {
@@ -82,7 +79,7 @@ app.get('/', (req, res) => {
     res.render('home');
 });
 
-// 2. Auth Page (Login/Register)
+// 2. Auth Page
 app.get('/auth', (req, res) => {
     if (req.session.userId) return res.redirect('/');
     res.render('auth');
@@ -92,26 +89,20 @@ app.get('/auth', (req, res) => {
 app.post('/register', async (req, res) => {
     const { email, username, password, confirmPassword } = req.body;
 
-    // Basic Validation
     if (password !== confirmPassword) {
         return res.render('auth', { error: "Passwords do not match" });
     }
 
     try {
-        // Check if user exists
         const existingUser = await User.findOne({ $or: [{ email }, { username }] });
         if (existingUser) {
             return res.render('auth', { error: "User ID or Email already exists" });
         }
 
-        // Hash Password
         const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create User
         const newUser = new User({ email, username, password: hashedPassword });
         await newUser.save();
 
-        // Auto Login after Register
         req.session.userId = newUser._id;
         res.redirect('/');
         
@@ -122,10 +113,9 @@ app.post('/register', async (req, res) => {
 
 // 4. Login Logic
 app.post('/login', async (req, res) => {
-    const { loginInput, password } = req.body; // loginInput can be email OR username
+    const { loginInput, password } = req.body; 
 
     try {
-        // Find by Email OR Username
         const user = await User.findOne({ 
             $or: [{ email: loginInput }, { username: loginInput }] 
         });
@@ -134,13 +124,11 @@ app.post('/login', async (req, res) => {
             return res.render('auth', { error: "Invalid credentials" });
         }
 
-        // Check Password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.render('auth', { error: "Invalid credentials" });
         }
 
-        // Set Session (Login Success)
         req.session.userId = user._id;
         res.redirect('/');
 
@@ -157,10 +145,9 @@ app.get('/logout', (req, res) => {
 });
 
 // 6. Predict Page (PROTECTED)
-// Now uses requireLogin middleware
 app.get('/predict', requireLogin, (req, res) => {
     const ticker = (req.query.ticker || 'RELIANCE.NS').toUpperCase();
-    startPythonWorker(ticker, "1h"); // Start with 1h default
+    startPythonWorker(ticker, "1h"); 
     res.render('predict', { ticker: ticker }); 
 });
 
@@ -171,13 +158,13 @@ let pythonProcesses = {};
 function startPythonWorker(ticker, timeframe = "1h") {
     const cacheKey = `${ticker}_${timeframe}`;
     
-    // Kill existing processes for the SAME ticker but DIFFERENT timeframe to save CPU/RAM
+    // Kill existing processes to save RAM
     Object.keys(pythonProcesses).forEach(key => {
         if (key.startsWith(`${ticker}_`) && key !== cacheKey) {
             console.log(`[Manager] Stopping old timeframe worker for ${key}`);
             pythonProcesses[key].kill();
             delete pythonProcesses[key];
-            delete statsCache[key]; // Clear old cache data
+            delete statsCache[key]; 
         }
     });
 
@@ -185,23 +172,37 @@ function startPythonWorker(ticker, timeframe = "1h") {
     
     console.log(`[Manager] Starting AI Engine for ${ticker} (${timeframe})...`);
     
-    // Pass DATASET_PATH as the 3rd argument to predict.py
     const pythonWorker = spawn(PYTHON_PATH, ['predict.py', ticker, timeframe, DATASET_PATH]);
     pythonProcesses[cacheKey] = pythonWorker;
     statsCache[cacheKey] = { waiting: true };
 
+    // 🌟 DATA BUFFER FIX STARTS HERE 🌟
+    let dataBuffer = ''; 
+
     pythonWorker.stdout.on('data', (data) => {
-        try {
-            const strData = data.toString().trim();
-            const lines = strData.split('\n');
-            lines.forEach(line => {
-                if (line.startsWith('{')) {
+        dataBuffer += data.toString(); 
+        
+        let newlineIndex = dataBuffer.indexOf('\n');
+        while (newlineIndex > -1) {
+            const line = dataBuffer.substring(0, newlineIndex).trim();
+            dataBuffer = dataBuffer.substring(newlineIndex + 1); 
+            
+            if (line.startsWith('{')) {
+                try {
                     const parsed = JSON.parse(line);
                     if (parsed.current) statsCache[cacheKey] = parsed; 
+                } catch (e) {
+                    console.error(`[Manager] JSON Parse Error on ${cacheKey}:`, e.message);
                 }
-            });
-        } catch (e) {}
+            }
+            newlineIndex = dataBuffer.indexOf('\n');
+        }
     });
+
+    pythonWorker.stderr.on('data', (data) => {
+        console.error(`[Python Engine ${cacheKey} WARNING]:`, data.toString());
+    });
+    // 🌟 DATA BUFFER FIX ENDS HERE 🌟
 
     pythonWorker.on('close', (code) => {
         console.log(`[Manager] Engine for ${cacheKey} closed (Code: ${code})`);
@@ -212,7 +213,7 @@ function startPythonWorker(ticker, timeframe = "1h") {
 // 7. API Routes
 app.get('/api/stats', (req, res) => {
     const ticker = req.query.ticker;
-    const timeframe = req.query.timeframe || '1h'; // Defaulted to 1h
+    const timeframe = req.query.timeframe || '1h'; 
     if (!ticker) return res.status(400).json({error: "Ticker required"});
     
     const cacheKey = `${ticker}_${timeframe}`;
@@ -338,7 +339,7 @@ app.get('/api/sentiment', (req, res) => {
     });
 });
 
-// --- SEARCH SUGGESTIONS API (UPDATED FOR MULTI-ASSET & REGION) ---
+// --- SEARCH SUGGESTIONS API ---
 app.get('/api/search-suggest', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json([]);
@@ -347,7 +348,6 @@ app.get('/api/search-suggest', async (req, res) => {
         const response = await axios.get(`https://query1.finance.yahoo.com/v1/finance/search?q=${query}`);
         
         const suggestions = response.data.quotes.map(quote => {
-            // Determine region based on exchange or symbol suffix
             const isIndian = quote.exchange === 'NSI' || quote.exchange === 'BSE' || (quote.symbol && quote.symbol.endsWith('.NS')) || (quote.symbol && quote.symbol.endsWith('.BO'));
             const region = isIndian ? '🇮🇳 India' : '🇺🇸 Global/USA';
             
@@ -360,7 +360,6 @@ app.get('/api/search-suggest', async (req, res) => {
             };
         }).slice(0, 10);
 
-        // Inject spot gold manually if user searches "gold rate"
         if (query.toLowerCase().includes('gold rate')) {
             suggestions.unshift({
                 symbol: 'GC=F',
@@ -378,7 +377,6 @@ app.get('/api/search-suggest', async (req, res) => {
     }
 });
 
-// Helper to make asset types look clean
 function formatType(type) {
     const types = {
         'EQUITY': 'Stock',
@@ -392,14 +390,11 @@ function formatType(type) {
     return types[type] || type;
 }
 
-
-
 // --- PEER COMPARISON API ---
 app.get('/api/peers', (req, res) => {
     const ticker = req.query.ticker;
     if (!ticker) return res.status(400).json({ error: "Ticker required" });
 
-    // Launch the new peers.py script
     const pythonProcess = spawn(PYTHON_PATH, ['peers.py', ticker]);
     
     let dataString = '';
