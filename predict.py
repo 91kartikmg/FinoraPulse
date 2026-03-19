@@ -41,31 +41,40 @@ cached_velocities = []
 
 def get_market_data():
     stock = yf.Ticker(TICKER)
-    if not os.path.exists(CSV_FILE):
-        df = stock.history(period=PERIOD, interval=INTERVAL)
-    else:
-        new_df = stock.history(period="5d", interval=INTERVAL)
+    df = None
+    
+    # 1. Try to load and append to existing CSV
+    if os.path.exists(CSV_FILE):
         try:
             old_df = pd.read_csv(CSV_FILE, index_col=0)
             old_df.index = pd.to_datetime(old_df.index, utc=True)
+            
+            new_df = stock.history(period="5d", interval=INTERVAL)
             if not new_df.empty:
                 new_df.index = pd.to_datetime(new_df.index, utc=True)
                 combined_df = pd.concat([old_df, new_df])
-                combined_df = combined_df[~combined_df.index.duplicated(keep='last')]
-                df = combined_df
+                df = combined_df[~combined_df.index.duplicated(keep='last')]
             else:
                 df = old_df
-        except:
-            df = new_df 
+        except Exception as e:
+            # If CSV is corrupted or fails to load, force a fresh download
+            df = None 
+            
+    # 2. If CSV was missing, corrupted, or we have too little data, do a full download
+    if df is None or len(df) < 200:
+        df = stock.history(period=PERIOD, interval=INTERVAL)
+        if not df.empty:
+            df.index = pd.to_datetime(df.index, utc=True)
 
     if df is None or df.empty: 
         print(f"[DATASET ENGINE] ⚠️ Warning: yfinance returned empty data for {TICKER}", file=sys.stderr)
         return None
 
-    df.index = pd.to_datetime(df.index, utc=True)
+    # 3. Convert to Indian Standard Time (IST)
     ist = pytz.timezone('Asia/Kolkata')
     df.index = df.index.tz_convert(ist)
     
+    # 4. Save the updated data back to CSV
     try:
         df.to_csv(CSV_FILE)
     except Exception as e:
