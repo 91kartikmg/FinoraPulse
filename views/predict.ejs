@@ -44,6 +44,9 @@
         .apexcharts-tooltip-text { font-family: 'JetBrains Mono', monospace !important; color: #e2e8f0 !important; }
         .apexcharts-toolbar { z-index: 10 !important; }
         .apexcharts-menu { background: #0d1117 !important; border: 1px solid #1e293b !important; color: #fff !important;}
+        
+        .chart-card { min-height: 450px; }
+        #liveChart { display: block; width: 100% !important; height: 100% !important; }
     </style>
 </head> 
 <body>
@@ -246,23 +249,16 @@
 
     <script>
         const currentTicker = "<%= ticker %>";
-        let currentTimeframe = "1h"; // Synced default with the active button
+        let currentTimeframe = "1h"; 
         let lastRenderedTimeframe = ""; 
         let stockChart;
-        let candleChart;
 
         function changeTimeframe(tf, btnElement) {
             currentTimeframe = tf;
             document.querySelectorAll('.tf-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
             
-            const titles = {
-                '1h': '4-Hour Forecast', 
-                '90m': '6-Hour Forecast', 
-                '1d': '5-Day Forecast',
-                '1wk': '1-Month Forecast'
-            };
-            
+            const titles = { '1h': '4-Hour Forecast', '90m': '6-Hour Forecast', '1d': '5-Day Forecast', '1wk': '1-Month Forecast' };
             document.getElementById('forecast-title').innerText = titles[tf];
             document.getElementById('sync-status').innerText = "Recalculating AI Model...";
             
@@ -275,30 +271,49 @@
         }
 
         function initChart(data) {
-            const ctx = document.getElementById('liveChart').getContext('2d');
-            const allLabels = [...data.history_times, ...data.future_times];
-            
-            const actualLine = data.history_prices.concat(new Array(data.future_prices.length).fill(null));
-            const pastAiLine = data.history_ai_prices ? data.history_ai_prices.concat(new Array(data.future_prices.length).fill(null)) : [];
-            
-            const predictedLine = new Array(data.history_prices.length - 1).fill(null);
-            predictedLine.push(data.history_prices[data.history_prices.length - 1]);
-            const finalPrediction = predictedLine.concat(data.future_prices);
+            const ctx = document.getElementById('liveChart');
+            if (!ctx) return;
 
-            stockChart = new Chart(ctx, {
+            const historyPrices = data.history_prices || [];
+            const historyAIPrices = data.history_ai_prices || new Array(historyPrices.length).fill(null);
+            const futurePrices = data.future_prices || [];
+            const historyTimes = data.history_times || [];
+            const futureTimes = data.future_times || [];
+
+            const allLabels = [...historyTimes, ...futureTimes];
+            const actualLine = [...historyPrices, ...new Array(futurePrices.length).fill(null)];
+            
+            // Align AI past tracking correctly
+            const aiPastLine = [...historyAIPrices, ...new Array(futurePrices.length).fill(null)];
+
+            const predictedLine = new Array(historyPrices.length - 1).fill(null);
+            if (historyPrices.length > 0) {
+                predictedLine.push(historyPrices[historyPrices.length - 1]); 
+            }
+            const finalPrediction = [...predictedLine, ...futurePrices];
+
+            stockChart = new Chart(ctx.getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: allLabels,
                     datasets: [
-                        { label: 'Actual Price', data: actualLine, borderColor: '#00E5FF', backgroundColor: 'rgba(0, 229, 255, 0.05)', borderWidth: 2, pointRadius: 0, tension: 0.1, fill: true },
-                        { label: 'Past AI Prediction', data: pastAiLine, borderColor: '#FF007F', borderWidth: 2, borderDash: [3, 3], pointRadius: 0, tension: 0.1, fill: false },
-                        { label: 'Future AI Forecast', data: finalPrediction, borderColor: '#00FF9D', borderWidth: 3, borderDash: [5, 5], pointRadius: 4, tension: 0.1, fill: false }
+                        { label: 'Actual Price', data: actualLine, borderColor: '#00E5FF', backgroundColor: 'rgba(0, 229, 255, 0.05)', borderWidth: 2, pointRadius: 0, fill: true },
+                        { label: 'AI Past Tracking', data: aiPastLine, borderColor: 'rgba(168, 85, 247, 0.5)', borderWidth: 1, pointRadius: 0, fill: false },
+                        { label: 'Future AI Forecast', data: finalPrediction, borderColor: '#00FF9D', borderWidth: 3, borderDash: [5, 5], pointRadius: 4, pointBackgroundColor: '#00FF9D', fill: false }
                     ]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { labels: { color: 'white' } } },
-                    scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E9BAE' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E9BAE' } } }
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 }, 
+                    plugins: { 
+                        legend: { labels: { color: '#8E9BAE', font: { family: 'Inter' } } },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E9BAE', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E9BAE' } }
+                    }
                 }
             });
         }
@@ -307,6 +322,10 @@
             fetch(`/api/stats?ticker=${currentTicker}&timeframe=${currentTimeframe}`)
                 .then(res => res.json())
                 .then(data => {
+                    if (data.error) {
+                        document.getElementById('sync-status').innerText = data.error; 
+                        return;
+                    }
                     if (data.waiting) { 
                         document.getElementById('sync-status').innerText = `Training AI for ${currentTimeframe}...`; 
                         return; 
@@ -325,11 +344,10 @@
                     if (currentTicker.includes('^')) curSym = ""; 
                     
                     document.getElementById('currency-symbol').innerText = curSym;
-                    document.getElementById('current-price-val').innerText = curSym + data.current.toFixed(2);
-                    document.getElementById('forecast-val').innerText = data.predicted.toFixed(2);
+                    if(data.current) document.getElementById('current-price-val').innerText = curSym + data.current.toFixed(2);
+                    if(data.predicted) document.getElementById('forecast-val').innerText = data.predicted.toFixed(2);
                     document.getElementById('sync-status').innerText = "Live Update: " + (data.timestamp || new Date().toLocaleTimeString());
 
-                    // Update Smart Trade Panel
                     if(data.trade_setup) {
                         document.getElementById('setup-entry').innerText = curSym + data.trade_setup.entry.toFixed(2);
                         document.getElementById('setup-sl').innerText = curSym + data.trade_setup.sl.toFixed(2);
@@ -357,7 +375,6 @@
                         }
                     }
 
-                    // Update AI Sim
                     if (data.simulation) {
                         document.getElementById('sim-ai-roi').innerText = (data.simulation.ai_roi >= 0 ? "+" : "") + data.simulation.ai_roi.toFixed(2) + "%";
                         document.getElementById('sim-market-roi').innerText = (data.simulation.market_roi >= 0 ? "+" : "") + data.simulation.market_roi.toFixed(2) + "%";
@@ -381,7 +398,6 @@
                         psyEl.style.color = data.psychology.color === 'up' ? '#00FF9D' : (data.psychology.color === 'down' ? '#FF007F' : '#00E5FF');
                     }
 
-                    // Update Technical Analysis Visuals
                     if(data.tech_analysis) {
                         const terms = data.tech_analysis.terms;
                         const degreeMap = { 'Very Bearish': -70, 'Bearish': -35, 'Neutral': 0, 'Bullish': 35, 'Very Bullish': 70 };
@@ -431,26 +447,31 @@
                     sentiment.style.textShadow = isBullish ? "0 0 10px #00FF9D" : "0 0 10px #FF007F";
                     header.style.color = isBullish ? "#00FF9D" : "#FF007F";
 
-                    // Update Chart.js (Line Chart)
                     if (!stockChart) { 
                         initChart(data); 
                     } else {
                         stockChart.data.labels = [...data.history_times, ...data.future_times];
+                        
+                        // THIS WAS THE FIX: Make sure Actual, Tracking, and Future datasets match our array structure!
                         stockChart.data.datasets[0].data = data.history_prices.concat(new Array(data.future_prices.length).fill(null));
-                        if(data.history_ai_prices) stockChart.data.datasets[1].data = data.history_ai_prices.concat(new Array(data.future_prices.length).fill(null));
+                        
+                        if(data.history_ai_prices) {
+                            stockChart.data.datasets[1].data = data.history_ai_prices.concat(new Array(data.future_prices.length).fill(null));
+                        }
+                        
                         const predictedLine = new Array(data.history_prices.length - 1).fill(null);
                         predictedLine.push(data.history_prices[data.history_prices.length - 1]);
                         stockChart.data.datasets[2].data = predictedLine.concat(data.future_prices);
+                        
                         stockChart.update('none');
                     }
 
-                }).catch(err => console.log("Waiting for network..."));
+                }).catch(err => console.log("Waiting for network...", err));
         }
 
         setInterval(refresh, 5000); 
         refresh(); 
 
-        // --- FUNDAMENTALS LOGIC ---
         let fundHistoryData = null; 
         let incomeStmtData = null;
         let advancedFundChart = null; 
@@ -549,85 +570,84 @@
         
         fetchFundamentals(currentTicker); 
 
-        // --- SENTIMENT LOGIC ---
         async function fetchSentiment(ticker) {
             try {
                 const response = await fetch(`/api/sentiment?ticker=${ticker}`);
                 const data = await response.json();
-                if (data.error) { document.getElementById('news-target').innerHTML = `<div style="color:#ef4444">No recent news available.</div>`; return; }
+                if (data.error || !data.articles) { document.getElementById('news-target').innerHTML = `<div style="color:#ef4444">No recent news available.</div>`; return; }
                 document.getElementById('fg-state').innerText = `${data.state} (${data.score})`; document.getElementById('fg-state').style.color = data.color; document.getElementById('fg-state').style.textShadow = `0 0 10px ${data.color}`; document.getElementById('fg-bar').style.width = `${data.score}%`; document.getElementById('fg-bar').style.background = data.color; document.getElementById('fg-bar').style.boxShadow = `0 0 15px ${data.color}`;
                 document.getElementById('news-target').innerHTML = data.articles.map(article => { let badgeColor = article.tag === "Bullish" ? "rgba(0, 255, 157, 0.15)" : (article.tag === "Bearish" ? "rgba(255, 0, 127, 0.15)" : "rgba(142, 155, 174, 0.15)"); let textColor = article.tag === "Bullish" ? "#00FF9D" : (article.tag === "Bearish" ? "#FF007F" : "#8E9BAE"); return `<div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><a href="${article.link}" target="_blank" style="color: #f8fafc; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: block; margin-bottom: 5px;">${article.title}</a><div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;"><span style="color: #8E9BAE;">${article.publisher}</span><span style="background: ${badgeColor}; color: ${textColor}; padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid ${badgeColor};">${article.tag} [${article.sentiment}]</span></div></div>`; }).join('');
             } catch (err) {}
         }
         fetchSentiment(currentTicker);
-    </script>
 
-    <script>
         async function loadPeerComparison(ticker) {
-    const peerTarget = document.getElementById('peerGraph');
-    if (!peerTarget) return;
+            const peerTarget = document.getElementById('peerGraph');
+            if (!peerTarget) return;
 
-    try {
-        const response = await fetch(`/api/peers?ticker=${ticker}`);
-        const data = await response.json();
-        
-        if (data.error) return;
+            try {
+                const response = await fetch(`/api/peers?ticker=${ticker}`);
+                const data = await response.json();
+                
+                if (data.error) return;
 
-        const ctx = peerTarget.getContext('2d');
-        
-        // Data mapping for the Scatter Graph
-        const plotData = data.map(stock => ({
-            x: stock.pe,       // Valuation Axis
-            y: stock.roce,     // Profitability Axis
-            symbol: stock.symbol,
-            name: stock.name
-        }));
+                const ctx = peerTarget.getContext('2d');
+                
+                const plotData = data.map(stock => ({
+                    x: stock.pe,       
+                    y: stock.roce,     
+                    symbol: stock.symbol,
+                    name: stock.name
+                }));
 
-        new Chart(ctx, {
-            type: 'scatter',
-            data: {
-                datasets: [{
-                    label: 'Sector Peers (P/E vs ROCE)',
-                    data: plotData,
-                    backgroundColor: '#00FF9D',
-                    borderColor: '#00FF9D',
-                    pointRadius: 6,
-                    pointHoverRadius: 10,
-                    showLine: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { labels: { color: '#fff' } },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => {
-                                const s = context.raw;
-                                return `${s.symbol}: P/E: ${s.x.toFixed(2)} | ROCE: ${s.y.toFixed(2)}%`;
+                new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Sector Peers (P/E vs ROCE)',
+                            data: plotData,
+                            backgroundColor: '#00FF9D',
+                            borderColor: '#00FF9D',
+                            pointRadius: 6,
+                            pointHoverRadius: 10,
+                            showLine: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { color: '#fff' } },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        const s = context.raw;
+                                        return `${s.symbol}: P/E: ${s.x.toFixed(2)} | ROCE: ${s.y.toFixed(2)}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { 
+                                title: { display: true, text: 'P/E Ratio (Lower = Cheaper)', color: '#8E9BAE' },
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { color: '#8E9BAE' }
+                            },
+                            y: { 
+                                title: { display: true, text: 'ROCE % (Higher = More Efficient)', color: '#8E9BAE' },
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { color: '#8E9BAE' }
                             }
                         }
                     }
-                },
-                scales: {
-                    x: { 
-                        title: { display: true, text: 'P/E Ratio (Lower = Cheaper)', color: '#8E9BAE' },
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#8E9BAE' }
-                    },
-                    y: { 
-                        title: { display: true, text: 'ROCE % (Higher = More Efficient)', color: '#8E9BAE' },
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#8E9BAE' }
-                    }
-                }
+                });
+            } catch (err) {
+                console.error("Peer API Error:", err);
             }
-        });
-    } catch (err) {
-        console.error("Peer API Error:", err);
-    }
-}
+        }
+        
+        // This was missing from your script!
+        loadPeerComparison(currentTicker);
     </script>
 </body>
 </html>
