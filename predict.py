@@ -360,6 +360,7 @@ def run_prediction():
         "future_times": future_times
     }
 
+
 if __name__ == "__main__":
     while True:
         try:
