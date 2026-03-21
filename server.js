@@ -394,7 +394,8 @@ function formatType(type) {
 
 
 
-// --- PEER COMPARISON API ---
+
+// --- PEER COMPARISON API ---ss
 app.get('/api/peers', (req, res) => {
     const ticker = req.query.ticker;
     if (!ticker) return res.status(400).json({ error: "Ticker required" });
