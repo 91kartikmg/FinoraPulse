@@ -1,13 +1,24 @@
 <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
 
 <div class="price-ticker-wrapper">
-    <div class="ticker-move" id="header-ticker">
-        <div class="ticker-item" data-ticker="RELIANCE.NS" onclick="window.location.href='/predict?ticker=RELIANCE.NS'"><span>RELIANCE</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
-        <div class="ticker-item" data-ticker="TCS.NS" onclick="window.location.href='/predict?ticker=TCS.NS'"><span>TCS</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
-        <div class="ticker-item" data-ticker="BTC-USD" onclick="window.location.href='/predict?ticker=BTC-USD'"><span>BITCOIN</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
-        <div class="ticker-item" data-ticker="GC=F" onclick="window.location.href='/predict?ticker=GC=F'"><span>GOLD</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
-        <div class="ticker-item" data-ticker="^NSEI" onclick="window.location.href='/predict?ticker=^NSEI'"><span>NIFTY 50</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
-    </div>
+   <div class="ticker-move" id="header-ticker">
+    <div class="ticker-item" data-ticker="RELIANCE.NS" onclick="window.location.href='/predict?ticker=RELIANCE.NS'"><span>RELIANCE</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="TCS.NS" onclick="window.location.href='/predict?ticker=TCS.NS'"><span>TCS</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="BTC-USD" onclick="window.location.href='/predict?ticker=BTC-USD'"><span>BITCOIN</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="GC=F" onclick="window.location.href='/predict?ticker=GC=F'"><span>GOLD</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="^NSEI" onclick="window.location.href='/predict?ticker=^NSEI'"><span>NIFTY 50</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+
+    <div class="ticker-item" data-ticker="HDFCBANK.NS" onclick="window.location.href='/predict?ticker=HDFCBANK.NS'"><span>HDFC BANK</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="INFY.NS" onclick="window.location.href='/predict?ticker=INFY.NS'"><span>INFOSYS</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="AAPL" onclick="window.location.href='/predict?ticker=AAPL'"><span>APPLE</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="NVDA" onclick="window.location.href='/predict?ticker=NVDA'"><span>NVIDIA</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="TSLA" onclick="window.location.href='/predict?ticker=TSLA'"><span>TESLA</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="ETH-USD" onclick="window.location.href='/predict?ticker=ETH-USD'"><span>ETHEREUM</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="SOL-USD" onclick="window.location.href='/predict?ticker=SOL-USD'"><span>SOLANA</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="SI=F" onclick="window.location.href='/predict?ticker=SI=F'"><span>SILVER</span> <span class="price-val">$--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="EURUSD=X" onclick="window.location.href='/predict?ticker=EURUSD=X'"><span>EUR/USD</span> <span class="price-val">€--</span> <small class="change-val">--</small></div>
+    <div class="ticker-item" data-ticker="^BSESN" onclick="window.location.href='/predict?ticker=^BSESN'"><span>SENSEX</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
+</div>
 </div>
 
 <nav class="navbar">
@@ -44,6 +55,8 @@
 
 <script>
     // 1. Synchronize Top Ticker
+  
+    // 1. Synchronize Top Ticker
     function updateHeaderMarketWatch() {
         fetch('/api/market').then(res => res.json()).then(data => {
             document.querySelectorAll('#header-ticker [data-ticker]').forEach(el => {
@@ -67,23 +80,27 @@
                     const change = data[ticker].change; 
                     const isUp = change >= 0; 
                     
+                    // FORCE COLORS VIA JAVASCRIPT
+                    const textColor = isUp ? '#00FF41' : '#ff4d4d'; 
+
                     if (priceEl) { 
                         priceEl.innerText = sym + data[ticker].price.toFixed(2); 
-                        priceEl.classList.remove('up', 'down'); 
-                        priceEl.classList.add(isUp ? 'up' : 'down'); 
+                        priceEl.style.color = textColor; // Apply color to price
                     }
                     if (changeEl) { 
                         changeEl.innerText = (isUp ? '▲ ' : '▼ ') + Math.abs(change).toFixed(2) + '%'; 
-                        changeEl.classList.remove('up', 'down'); 
-                        changeEl.classList.add(isUp ? 'up' : 'down'); 
+                        changeEl.style.color = textColor; // Apply color to change %
                     }
                 }
             });
         }).catch(err => console.log("Market sync paused..."));
     }
+    
     updateHeaderMarketWatch(); 
-    setInterval(updateHeaderMarketWatch, 5000);
+    // Set to 15 minutes (900,000 milliseconds)
+    setInterval(updateHeaderMarketWatch, 900000);
 
+    // ... (Keep your Search Bar Auto-Suggest code the same below this) ...
     // 2. Search Bar Auto-Suggest
     const searchInput = document.getElementById('stockSearch');
     const suggestionsBox = document.getElementById('searchSuggestions');

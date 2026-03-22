@@ -256,10 +256,21 @@ app.get('/api/stats', (req, res) => {
 });
 
 // --- MARKET WATCHER LOGIC ---
-const WATCHLIST = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'AAPL', 'TSLA', 'NVDA', 'SBIN.NS'];
+// ==========================================
+// 1. MARKET WATCHER LOGIC (FOR TOP HEADER)
+// ==========================================
+// ==========================================
+// 1. MARKET WATCHER LOGIC (FOR TOP HEADER)
+// ==========================================
+const WATCHLIST = [
+    'RELIANCE.NS', 'TCS.NS', 'BTC-USD', 'GC=F', '^NSEI', 
+    'HDFCBANK.NS', 'INFY.NS', 'AAPL', 'NVDA', 'TSLA', 
+    'ETH-USD', 'SOL-USD', 'SI=F', 'EURUSD=X', '^BSESN'
+];
 let marketCache = {};
 
 function startMarketWatcher() {
+    // Passes the tickers to prices.py
     const worker = spawn(PYTHON_PATH, ['prices.py', WATCHLIST.join(',')]);
     worker.stdout.on('data', data => {
         try {
@@ -270,11 +281,38 @@ function startMarketWatcher() {
             });
         } catch (e) {}
     });
-    worker.on('close', () => setTimeout(startMarketWatcher, 5000));
+    // Update every 1 hour
+    // Update every 15 minutes
+    worker.on('close', () => setTimeout(startMarketWatcher, 900000));
 }
 startMarketWatcher();
 
 app.get('/api/market', (req, res) => res.json(marketCache));
+
+
+// ==========================================
+// 2. TOP MOVERS LOGIC (FOR HOME PAGE CARDS)
+// ==========================================
+let topMoversCache = {};
+
+function startTopMoversWatcher() {
+    // Passes the command "TOP_MOVERS" to the exact same prices.py file
+    const worker = spawn(PYTHON_PATH, ['prices.py', 'TOP_MOVERS']);
+    worker.stdout.on('data', data => {
+        try {
+            const strData = data.toString().trim();
+            const lines = strData.split('\n');
+            lines.forEach(line => {
+                if (line.startsWith('{')) topMoversCache = JSON.parse(line);
+            });
+        } catch (e) {}
+    });
+    // Update every 5 minutes
+    worker.on('close', () => setTimeout(startTopMoversWatcher, 300000));
+}
+startTopMoversWatcher();
+
+app.get('/api/top-movers', (req, res) => res.json(topMoversCache));
 
 // --- FUNDAMENTALS API ---
 app.get('/api/fundamentals', (req, res) => {

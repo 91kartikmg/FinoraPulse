@@ -16,7 +16,7 @@
 
 .ticker-move { 
     display: inline-block; 
-    animation: marquee 30s linear infinite; 
+    animation: marquee 70s linear infinite; 
     padding-left: 100%; 
     white-space: nowrap;
 }
