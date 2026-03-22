@@ -141,6 +141,7 @@ def run_prediction():
     )
     final_model.fit(X, y)
 
+
     # --- 4. BACKTESTING ---
     train_df['Pred_Vel'] = final_model.predict(X)
     train_df['Past_AI_Price'] = train_df['Close'].shift(1) + train_df['Pred_Vel'].shift(1)
