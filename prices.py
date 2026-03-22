@@ -1,57 +1,93 @@
-import yfinance as yf
-import json
 import sys
-import time
+import json
+import yfinance as yf
+import warnings
+from concurrent.futures import ThreadPoolExecutor
 
-# Assets to monitor
+warnings.filterwarnings('ignore')
+
+# --- HOMEPAGE ASSETS ---
 ASSETS = {
     "STOCKS": ["NVDA", "AAPL", "TSLA", "MSFT", "GOOGL", "AMZN", "META", "AMD"],
     "CRYPTO": ["BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "DOGE-USD", "ADA-USD"],
     "FOREX": ["EURUSD=X", "GBPUSD=X", "JPY=X", "AUDUSD=X"],
-    "METALS": ["GC=F", "SI=F"] # Gold and Silver
+    "METALS": ["GC=F", "SI=F"]
 }
 
-def get_performance(ticker_list):
-    data = []
-    for ticker in ticker_list:
-        try:
-            t = yf.Ticker(ticker)
-            # Fetching 2 days of data to calculate percentage change
-            hist = t.history(period="2d")
-            if len(hist) >= 2:
-                prev_close = hist['Close'].iloc[-2]
-                curr_price = hist['Close'].iloc[-1]
-                change = ((curr_price - prev_close) / prev_close) * 100
-                
-                # Clean up display name
-                display_name = ticker.replace("-USD", "").replace("=X", "").replace("=F", " (Gold/Silver)")
-                if ticker == "GC=F": display_name = "GOLD"
-                if ticker == "SI=F": display_name = "SILVER"
+# --- FETCH SINGLE TICKER (Used by both) ---
+def fetch_data(ticker, is_homepage=False):
+    try:
+        t = yf.Ticker(ticker)
+        hist = t.history(period="2d")
+        
+        if len(hist) >= 2:
+            prev_close = hist['Close'].iloc[-2]
+            curr_price = hist['Close'].iloc[-1]
+            change = ((curr_price - prev_close) / prev_close) * 100
+        elif len(hist) == 1:
+            curr_price = hist['Close'].iloc[-1]
+            change = 0.0
+        else:
+            return ticker, None
 
-                data.append({
-                    "symbol": display_name,
-                    "original_ticker": ticker, # Keep this for the URL link
-                    "price": round(curr_price, 2),
-                    "change": round(change, 2)
-                })
-        except Exception as e:
-            continue
-    
-    # Sort by highest performance
+        if is_homepage:
+            display_name = ticker.replace("-USD", "").replace("=X", "")
+            if ticker == "GC=F": display_name = "GOLD"
+            elif ticker == "SI=F": display_name = "SILVER"
+            return ticker, {"symbol": display_name, "original_ticker": ticker, "price": float(curr_price), "change": round(float(change), 2)}
+        else:
+            return ticker, {"price": float(curr_price), "change": float(change)}
+            
+    except Exception:
+        return ticker, None
+
+# --- HEADER LOGIC ---
+def get_header_data(tickers_string):
+    tickers = tickers_string.split(',')
+    result = {}
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(fetch_data, t, False) for t in tickers]
+        for future in futures:
+            ticker, data = future.result()
+            if data:
+                result[ticker] = data
+    return result
+
+# --- HOMEPAGE LOGIC ---
+def get_category_performance(ticker_list):
+    data = []
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(fetch_data, t, True) for t in ticker_list]
+        for future in futures:
+            ticker, res = future.result()
+            if res:
+                data.append(res)
     return sorted(data, key=lambda x: x['change'], reverse=True)
 
+def get_homepage_data():
+    return {
+        "stocks": get_category_performance(ASSETS["STOCKS"])[:3],
+        "crypto": get_category_performance(ASSETS["CRYPTO"])[:3],
+        "forex": get_category_performance(ASSETS["FOREX"])[:2],
+        "metals": get_category_performance(ASSETS["METALS"])
+    }
+
+# --- MAIN CONTROLLER ---
 def main():
-    while True:
-        results = {
-            "stocks": get_performance(ASSETS["STOCKS"])[:3], # Top 3
-            "crypto": get_performance(ASSETS["CRYPTO"])[:3], # Top 3
-            "forex": get_performance(ASSETS["FOREX"])[:2],
-            "metals": get_performance(ASSETS["METALS"])
-        }
-        # Print as single JSON line for Node.js to read
-        print(json.dumps(results))
-        sys.stdout.flush()
-        time.sleep(30) # Update every 30 seconds
+    if len(sys.argv) < 2:
+        print(json.dumps({}))
+        return
+
+    command = sys.argv[1]
+
+    if command == "TOP_MOVERS":
+        # Node asked for homepage cards
+        print(json.dumps(get_homepage_data()))
+    else:
+        # Node asked for header tickers
+        print(json.dumps(get_header_data(command)))
+
+    sys.stdout.flush()
 
 if __name__ == "__main__":
     main()
