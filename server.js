@@ -184,41 +184,59 @@ function startPythonWorker(ticker, timeframe = "1h") {
     if (pythonProcesses[cacheKey]) return;
     
     console.log(`[Manager] Starting AI Engine for ${ticker} (${timeframe})...`);
-    
-    // ADD THIS: Log which Python path is being used
     console.log(`[Manager] Using Python: ${PYTHON_PATH}`);
+    console.log(`[Manager] Dataset path: ${DATASET_PATH}`);
     
     const pythonWorker = spawn(PYTHON_PATH, ['predict.py', ticker, timeframe, DATASET_PATH]);
     pythonProcesses[cacheKey] = pythonWorker;
     statsCache[cacheKey] = { waiting: true };
 
+    // Buffer for stdout
+    let stdoutBuffer = '';
+    
     pythonWorker.stdout.on('data', (data) => {
-        try {
-            const strData = data.toString().trim();
-            const lines = strData.split('\n');
-            lines.forEach(line => {
-                if (line.startsWith('{')) {
+        stdoutBuffer += data.toString();
+        const lines = stdoutBuffer.split('\n');
+        
+        // Keep the last incomplete line in buffer
+        stdoutBuffer = lines.pop() || '';
+        
+        lines.forEach(line => {
+            if (line.trim()) {
+                try {
                     const parsed = JSON.parse(line);
-                    if (parsed.current) statsCache[cacheKey] = parsed;
-                    console.log(`[Manager] Received data for ${cacheKey}`);
+                    if (parsed.current) {
+                        statsCache[cacheKey] = parsed;
+                        console.log(`[Manager] Received data for ${cacheKey}`);
+                    }
+                } catch (e) {
+                    console.error(`[Manager] Parse error for ${cacheKey}:`, e.message);
+                    console.error(`[Manager] Raw data:`, line.substring(0, 200));
                 }
-            });
-        } catch (e) {
-            console.error(`[Manager] Parse error:`, e);
-        }
+            }
+        });
     });
 
-    // ADD THIS: Log stderr to see errors
+    // CRITICAL: Log stderr to see Python errors
     pythonWorker.stderr.on('data', (data) => {
-        console.error(`[Python Error for ${cacheKey}]:`, data.toString());
+        const errorMsg = data.toString();
+        console.error(`[Python Error for ${cacheKey}]:`, errorMsg);
     });
 
     pythonWorker.on('close', (code) => {
         console.log(`[Manager] Engine for ${cacheKey} closed (Code: ${code})`);
         if (code !== 0) {
             console.error(`[Manager] Python process exited with error code ${code}`);
+            // Check if there's any remaining output in buffer
+            if (stdoutBuffer.trim()) {
+                console.error(`[Manager] Unprocessed stdout:`, stdoutBuffer);
+            }
         }
         delete pythonProcesses[cacheKey];
+    });
+    
+    pythonWorker.on('error', (err) => {
+        console.error(`[Manager] Failed to start Python process:`, err);
     });
 }
 
