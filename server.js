@@ -172,21 +172,22 @@ let pythonProcesses = {};
 function startPythonWorker(ticker, timeframe = "1h") {
     const cacheKey = `${ticker}_${timeframe}`;
     
-    // Kill existing processes for the SAME ticker but DIFFERENT timeframe to save CPU/RAM
     Object.keys(pythonProcesses).forEach(key => {
         if (key.startsWith(`${ticker}_`) && key !== cacheKey) {
             console.log(`[Manager] Stopping old timeframe worker for ${key}`);
             pythonProcesses[key].kill();
             delete pythonProcesses[key];
-            delete statsCache[key]; // Clear old cache data
+            delete statsCache[key];
         }
     });
 
-    if (pythonProcesses[cacheKey]) return; 
+    if (pythonProcesses[cacheKey]) return;
     
     console.log(`[Manager] Starting AI Engine for ${ticker} (${timeframe})...`);
     
-    // Pass DATASET_PATH as the 3rd argument to predict.py
+    // ADD THIS: Log which Python path is being used
+    console.log(`[Manager] Using Python: ${PYTHON_PATH}`);
+    
     const pythonWorker = spawn(PYTHON_PATH, ['predict.py', ticker, timeframe, DATASET_PATH]);
     pythonProcesses[cacheKey] = pythonWorker;
     statsCache[cacheKey] = { waiting: true };
@@ -198,14 +199,25 @@ function startPythonWorker(ticker, timeframe = "1h") {
             lines.forEach(line => {
                 if (line.startsWith('{')) {
                     const parsed = JSON.parse(line);
-                    if (parsed.current) statsCache[cacheKey] = parsed; 
+                    if (parsed.current) statsCache[cacheKey] = parsed;
+                    console.log(`[Manager] Received data for ${cacheKey}`);
                 }
             });
-        } catch (e) {}
+        } catch (e) {
+            console.error(`[Manager] Parse error:`, e);
+        }
+    });
+
+    // ADD THIS: Log stderr to see errors
+    pythonWorker.stderr.on('data', (data) => {
+        console.error(`[Python Error for ${cacheKey}]:`, data.toString());
     });
 
     pythonWorker.on('close', (code) => {
         console.log(`[Manager] Engine for ${cacheKey} closed (Code: ${code})`);
+        if (code !== 0) {
+            console.error(`[Manager] Python process exited with error code ${code}`);
+        }
         delete pythonProcesses[cacheKey];
     });
 }
