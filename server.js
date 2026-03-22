@@ -17,7 +17,7 @@ const DATASET_PATH = path.join(__dirname, 'datasets'); // Specific folder for CS
 // --- DYNAMIC PYTHON PATH LOGIC ---
 // This automatically detects if it's running on your Hostinger server or local Windows PC
 let PYTHON_PATH = 'python'; // Default for Local Windows Environment
-const serverVenvPath = '/var/www/FinoraPulse/venv/bin/python3';
+const serverVenvPath = '/var/www/FinoraPulse/venv/bin/python3'
 
 if (fs.existsSync(serverVenvPath)) {
     PYTHON_PATH = serverVenvPath;
