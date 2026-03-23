@@ -77,6 +77,7 @@ def get_correlation():
             series.append({"name": row_asset, "data": row_data})
             
         return {"series": series}
+    
 
 if __name__ == "__main__":
     print(json.dumps(get_correlation()))
