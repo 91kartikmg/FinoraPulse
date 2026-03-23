@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
         .macro-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
@@ -34,6 +35,30 @@
         .screener-company { font-size: 1rem; font-weight: 700; color: #f8fafc; margin-bottom: 10px; }
         .screener-data { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
     </style>
+
+    <style>
+        /* AI Health Score Styles */
+        /* AI Health Score Styles */
+        .health-panel { background: #0d1117; border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; display: flex; align-items: center; gap: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border-left: 4px solid #00FF9D; }
+        
+        /* Increased width from 120px to 180px and added flex-shrink */
+        .health-gauge { width: 180px; position: relative; text-align: center; flex-shrink: 0; } 
+        
+        /* Changed border-radius to 200px so it scales perfectly */
+        .gauge-bg { width: 100%; padding-top: 50%; background: conic-gradient(from 270deg at 50% 100%, #ff4d4d 0deg, #f59e0b 90deg, #00FF9D 180deg, transparent 180deg); border-radius: 200px 200px 0 0; position: relative; }
+        
+        /* Increased the top/left/right spacing slightly to match the larger scale */
+        .gauge-inner { position: absolute; top: 14px; left: 14px; right: 14px; bottom: 0; background: #0d1117; border-radius: 200px 200px 0 0; }
+        
+        .gauge-needle { position: absolute; bottom: 0; left: calc(50% - 2px); width: 4px; height: 90%; background: #fff; border-radius: 4px; transform-origin: bottom center; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        
+        /* NEW: A dedicated class for the big score number */
+        .health-score-value { margin-top: 15px; font-family: 'JetBrains Mono', monospace; font-size: 2.2rem; font-weight: 900; color: #fff; letter-spacing: -2px; }
+        
+        .health-text { flex-grow: 1; }
+        .health-title { font-size: 0.8rem; color: #a855f7; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
+        .health-summary { font-size: 1.15rem; color: #f8fafc; line-height: 1.6; }
+    </style>
 </head>
 <body>
 
@@ -55,7 +80,21 @@
                     <button type="submit" class="btn">Search</button>
                 </form>
             </div>
-
+            <div class="health-panel" id="macro-health-panel" style="display: none;">
+                <div class="health-gauge">
+                    <div class="gauge-bg">
+                        <div class="gauge-inner"></div>
+                        <div id="health-needle" class="gauge-needle" style="transform: rotate(0deg);"></div>
+                    </div>
+                    <div class="health-score-value" id="health-score-text">0/100</div>
+                </div>
+                <div class="health-text">
+                    <div class="health-title">✨ AI Macro Evaluation</div>
+                    <div class="health-summary" id="health-summary-text">
+                        Analyzing economic indicators...
+                    </div>
+                </div>
+            </div>
             <div class="charts-grid">
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">Total GDP (USD)</h3>
@@ -88,6 +127,28 @@
                     <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="advancedExportChart"></canvas></div>
                 </div>
             </div>
+             <div class="charts-grid">
+                <div class="chart-box">
+                    <h3 style="margin-top:0; color:var(--text-muted);">Central Bank Interest Rate (%)</h3>
+                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="interestRateChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <h3 style="margin-top:0; color:var(--text-muted);">Govt Debt to GDP (%)</h3>
+                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="debtChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="stat-card" style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+                    <div>
+                        <h3 style="margin:0; color:var(--text-main);">Cross-Asset Correlation Matrix</h3>
+                        <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">Measures how global assets move together. <strong style="color:#00FF9D">+1.0</strong> means they move perfectly together. <strong style="color:#FF007F">-1.0</strong> means they move in opposite directions.</p>
+                    </div>
+                </div>
+                
+                <div id="correlation-loader" style="color:var(--text-muted); font-style: italic; padding: 20px 0;">Crunching 1-Year Historical Data...</div>
+                <div id="correlation-chart" style="min-height: 350px;"></div>
+            </div>
 
             <div class="stat-card" style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border);">
                 <h3 style="margin:0; color:var(--text-main);">Export Leaders (Live Screener)</h3>
@@ -97,6 +158,7 @@
                     <div style="color:var(--text-muted); font-style: italic;">Scanning market for leading stocks...</div>
                 </div>
             </div>
+           
             
             <div style="height: 40px;"></div>
         </main>
@@ -118,81 +180,112 @@
 
                 if (data.error) { alert("Error loading data. Check country code."); return; }
 
-                // 1. Total GDP
-                const ctxGdpTotal = document.getElementById('gdpTotalChart').getContext('2d');
-                new Chart(ctxGdpTotal, {
-                    type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Total GDP (USD)', data: data.gdp_total_trend, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { let value = context.parsed.y; if (value >= 1e12) return 'Total GDP: $' + (value / 1e12).toFixed(2) + 'T'; if (value >= 1e9) return 'Total GDP: $' + (value / 1e9).toFixed(2) + 'B'; return 'Total GDP: $' + value; }}}}, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: function(value) { if (value >= 1e12) return '$' + (value / 1e12).toFixed(1) + 'T'; if (value >= 1e9) return '$' + (value / 1e9).toFixed(1) + 'B'; return '$' + value; }}}} }
-                });
+                // --- 1. AI MACRO HEALTH ENGINE ---
+                if (data.gdp_trend && data.inflation_trend && data.unemployment_trend && data.gdp_trend.length > 0) {
+                    const getLatestValid = (arr) => {
+                        for (let i = arr.length - 1; i >= 0; i--) {
+                            if (arr[i] !== 0 && arr[i] !== null) return arr[i];
+                        }
+                        return 0; 
+                    };
 
-                // 2. Growth vs Inflation
-                const ctxHistory = document.getElementById('historyChart').getContext('2d');
-                new Chart(ctxHistory, {
-                    type: 'line', data: { labels: data.history_years, datasets: [ { label: 'GDP Growth (%)', data: data.gdp_trend, borderColor: '#22c55e', borderWidth: 3, tension: 0.3, fill: false, pointRadius: 4 }, { label: 'Inflation (%)', data: data.inflation_trend, borderColor: '#ef4444', borderWidth: 3, borderDash: [5, 5], tension: 0.3, fill: false, pointRadius: 4 } ]},
-                    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
-                });
+                    const latestGDP = getLatestValid(data.gdp_trend);
+                    const latestInf = getLatestValid(data.inflation_trend);
+                    const latestUnemp = getLatestValid(data.unemployment_trend);
+                    
+                    let score = 50; 
+                    score += (latestGDP * 5); 
+                    score -= (Math.abs(latestInf - 2) * 3); 
+                    score -= (latestUnemp * 2); 
+                    score = Math.max(0, Math.min(100, Math.round(score)));
 
-                // 3. Unemployment
+                    // Subtract 90 degrees so it maps correctly from Left (-90) to Right (+90)
+                    const degrees = ((score / 100) * 180) - 90;
+                    document.getElementById('health-needle').style.transform = `rotate(${degrees}deg)`;
+                    document.getElementById('health-score-text').innerText = `${score}/100`;
+
+                    const gdpClass = latestGDP > 2.5 ? 'highlight-good' : (latestGDP < 0 ? 'highlight-bad' : 'highlight-neutral');
+                    const infClass = (latestInf > 1 && latestInf < 3.5) ? 'highlight-good' : (latestInf > 6 ? 'highlight-bad' : 'highlight-neutral');
+                    const unempClass = latestUnemp < 5 ? 'highlight-good' : (latestUnemp > 7 ? 'highlight-bad' : 'highlight-neutral');
+                    const statusWord = score > 70 ? "robust" : (score > 40 ? "stabilizing" : "struggling");
+
+                    document.getElementById('health-summary-text').innerHTML = `
+                        The AI evaluates this economy as <strong>${statusWord}</strong>. 
+                        Economic growth is currently <span class="${gdpClass}">${latestGDP}%</span>, 
+                        while inflation is measuring at <span class="${infClass}">${latestInf}%</span>. 
+                        The labor market shows an unemployment rate of <span class="${unempClass}">${latestUnemp}%</span>.
+                    `;
+
+                    document.getElementById('macro-health-panel').style.display = 'flex';
+                }
+
+                // --- 2. CORE CHARTS ---
+                if(data.gdp_total_trend && data.gdp_total_trend.length > 0) {
+                    new Chart(document.getElementById('gdpTotalChart').getContext('2d'), {
+                        type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Total GDP (USD)', data: data.gdp_total_trend, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { let value = context.parsed.y; if (value >= 1e12) return 'Total GDP: $' + (value / 1e12).toFixed(2) + 'T'; if (value >= 1e9) return 'Total GDP: $' + (value / 1e9).toFixed(2) + 'B'; return 'Total GDP: $' + value; }}}}, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: function(value) { if (value >= 1e12) return '$' + (value / 1e12).toFixed(1) + 'T'; if (value >= 1e9) return '$' + (value / 1e9).toFixed(1) + 'B'; return '$' + value; }}}} }
+                    });
+                }
+
+                if(data.gdp_trend && data.inflation_trend) {
+                    new Chart(document.getElementById('historyChart').getContext('2d'), {
+                        type: 'line', data: { labels: data.history_years, datasets: [ { label: 'GDP Growth (%)', data: data.gdp_trend, borderColor: '#22c55e', borderWidth: 3, tension: 0.3, fill: false, pointRadius: 4 }, { label: 'Inflation (%)', data: data.inflation_trend, borderColor: '#ef4444', borderWidth: 3, borderDash: [5, 5], tension: 0.3, fill: false, pointRadius: 4 } ]},
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                    });
+                }
+
                 if(data.unemployment_trend && data.unemployment_trend.length > 0) {
-                    const ctxUnemp = document.getElementById('unemploymentChart').getContext('2d');
-                    new Chart(ctxUnemp, {
+                    new Chart(document.getElementById('unemploymentChart').getContext('2d'), {
                         type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Unemployment Rate (%)', data: data.unemployment_trend, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
                         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
                     });
                 }
 
-                // 4. Bond Yield
                 if(data.bond_trend && data.bond_trend.length > 0 && data.bond_trend.some(val => val !== null)) {
-                    const ctxBond = document.getElementById('bondChart').getContext('2d');
-                    new Chart(ctxBond, {
+                    new Chart(document.getElementById('bondChart').getContext('2d'), {
                         type: 'line', data: { labels: data.history_years, datasets: [{ label: '10-Year Bond Yield (%)', data: data.bond_trend, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
                         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
                     });
                 }
 
-                // 5. Currency Chart
+                // --- 3. NEW MACRO CHARTS ---
+                if(data.interest_rate_trend && data.interest_rate_trend.length > 0) {
+                    new Chart(document.getElementById('interestRateChart').getContext('2d'), {
+                        type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Interest Rate (%)', data: data.interest_rate_trend, borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                    });
+                }
+
+                if(data.debt_trend && data.debt_trend.length > 0) {
+                    new Chart(document.getElementById('debtChart').getContext('2d'), {
+                        type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Debt to GDP (%)', data: data.debt_trend, borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                    });
+                }
+
+                // --- 4. FOREX & EXPORTS ---
                 if(data.currency_trend && data.currency_trend.length > 0) {
                     document.getElementById('currency-pair-label').innerText = "(" + data.currency_pair + ")";
-                    const ctxCurr = document.getElementById('currencyChart').getContext('2d');
-                    new Chart(ctxCurr, {
+                    new Chart(document.getElementById('currencyChart').getContext('2d'), {
                         type: 'line', data: { labels: data.history_years, datasets: [{ label: data.currency_pair, data: data.currency_trend, borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
                         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
                     });
                 }
 
-                // 6. NEW: ADVANCED HORIZONTAL BAR CHART
                 if(data.advanced_exports && data.advanced_exports.length > 0) {
                     const expLabels = data.advanced_exports.map(e => e.sector);
                     const expValues = data.advanced_exports.map(e => e.pct);
                     
-                    const ctxAdvExp = document.getElementById('advancedExportChart').getContext('2d');
-                    new Chart(ctxAdvExp, {
-                        type: 'bar', // Horizontal bar is better for reading long sector names
-                        data: { 
-                            labels: expLabels, 
-                            datasets: [{ 
-                                label: '% of Total Exports', 
-                                data: expValues, 
-                                backgroundColor: '#38bdf8',
-                                borderRadius: 4
-                            }] 
-                        },
-                        options: { 
-                            indexAxis: 'y', // Makes it horizontal
-                            responsive: true, maintainAspectRatio: false, 
-                            plugins: { legend: { display: false } },
-                            scales: { 
-                                x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, 
-                                y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { weight: 'bold' } } } 
-                            }
-                        }
+                    new Chart(document.getElementById('advancedExportChart').getContext('2d'), {
+                        type: 'bar', data: { labels: expLabels, datasets: [{ label: '% of Total Exports', data: expValues, backgroundColor: '#38bdf8', borderRadius: 4 }] },
+                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { weight: 'bold' } } } } }
                     });
                 }
 
-                // 7. NEW: RENDER AI SCREENER CARDS
+                // --- 5. AI SCREENER CARDS ---
                 const screenerTarget = document.getElementById('screener-target');
                 if(data.screener && data.screener.length > 0) {
-                    screenerTarget.innerHTML = ''; // Clear loading text
+                    screenerTarget.innerHTML = ''; 
                     const sym = (targetCountry === 'IN') ? '₹' : (targetCountry === 'JP' ? '¥' : '$');
                     
                     data.screener.forEach(stock => {
@@ -200,7 +293,6 @@
                         const colorClass = isUp ? 'up' : 'down';
                         const sign = isUp ? '+' : '';
                         
-                        // We wrap the card in an anchor tag so clicking it takes them straight to the prediction page!
                         screenerTarget.innerHTML += `
                             <div class="screener-card" onclick="window.location.href='/predict?ticker=${stock.ticker}'">
                                 <div class="screener-sector">${stock.sector}</div>
@@ -221,46 +313,136 @@
 
             } catch (err) { console.error(err); }
         }
+        
+        // Initialize Macro Dashboard
         loadMacro();
-    </script>
 
-    <script>
-        function updateMarketWatch() {
+        // --- GLOBAL HEADER TICKER SYNC ---
+        function updateHeaderMarketWatch() {
             fetch('/api/market').then(res => res.json()).then(data => {
-                document.querySelectorAll('.ticker-item').forEach(el => {
+                document.querySelectorAll('#header-ticker [data-ticker]').forEach(el => {
                     const ticker = el.getAttribute('data-ticker');
                     if (data[ticker]) {
-                        const priceEl = el.querySelector('.price-val'); const changeEl = el.querySelector('.change-val');
-                        const sym = (ticker.includes('.NS') || ticker.includes('.BO')) ? '₹' : '$';
-                        const change = data[ticker].change; const isUp = change >= 0; 
-                        if (priceEl) { priceEl.innerText = sym + data[ticker].price.toFixed(2); priceEl.className = 'price-val ' + (isUp ? 'up' : 'down'); }
-                        if (changeEl) { changeEl.innerText = (isUp ? '▲ ' : '▼ ') + Math.abs(change).toFixed(2) + '%'; changeEl.className = 'change-val ' + (isUp ? 'up' : 'down'); }
+                        const priceEl = el.querySelector('.price-val'); 
+                        const changeEl = el.querySelector('.change-val');
+                        
+                        const isIndian = ticker.includes('.NS') || ticker.includes('.BO') || ticker === 'INR=X' || ticker === '^NSEI';
+                        const isEuro = ticker.includes('EUR');
+                        const isPound = ticker.includes('GBP');
+                        const isYen = ticker.includes('JPY');
+                        
+                        let sym = "$"; 
+                        if (isIndian) sym = "₹";
+                        if (isEuro) sym = "€";
+                        if (isPound) sym = "£";
+                        if (isYen) sym = "¥";
+                        if (ticker.includes('^')) sym = "";
+                        
+                        const change = data[ticker].change; 
+                        const isUp = change >= 0; 
+                        
+                        // Force colors based on market movement
+                        const textColor = isUp ? '#00FF41' : '#ff4d4d'; 
+
+                        if (priceEl) { 
+                            priceEl.innerText = sym + data[ticker].price.toFixed(2); 
+                            priceEl.style.color = textColor; 
+                        }
+                        if (changeEl) { 
+                            changeEl.innerText = (isUp ? '▲ ' : '▼ ') + Math.abs(change).toFixed(2) + '%'; 
+                            changeEl.style.color = textColor; 
+                        }
                     }
                 });
             }).catch(err => console.log("Market sync paused..."));
         }
-        updateMarketWatch(); setInterval(updateMarketWatch, 1000);
-    </script>
-    <script>
-    // Hamburger Menu Toggle Logic
-    document.addEventListener('DOMContentLoaded', () => {
-        const menuBtn = document.getElementById('mobile-menu-btn');
-        const sidebar = document.querySelector('.ticker-sidebar');
         
-        if(menuBtn && sidebar) {
-            menuBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent click from triggering the logo link
-                sidebar.classList.toggle('open');
-            });
+        updateHeaderMarketWatch(); 
+        setInterval(updateHeaderMarketWatch, 900000); // 15 mins
 
-            // Optional: Close the sidebar if the user clicks anywhere else on the screen
-            document.addEventListener('click', (e) => {
-                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuBtn) {
-                    sidebar.classList.remove('open');
+        // --- HAMBURGER MENU LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.querySelector('.ticker-sidebar');
+            
+            if(menuBtn && sidebar) {
+                menuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    sidebar.classList.toggle('open');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuBtn) {
+                        sidebar.classList.remove('open');
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script>
+        // --- 6. CROSS-ASSET CORRELATION MATRIX ---
+        async function loadCorrelationMatrix() {
+            try {
+                const response = await fetch('/api/correlation');
+                const data = await response.json();
+                
+                document.getElementById('correlation-loader').style.display = 'none';
+                
+                if (data.error) {
+                    document.getElementById('correlation-chart').innerHTML = `<div style="color:#ff4d4d;">Data unavailable.</div>`;
+                    return;
                 }
-            });
+
+                const options = {
+                    series: data.series,
+                    chart: {
+                        height: 380,
+                        type: 'heatmap',
+                        background: 'transparent',
+                        toolbar: { show: false }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        style: { colors: ['#fff'], fontSize: '12px', fontFamily: 'JetBrains Mono' }
+                    },
+                    colors: ['#008FFB'],
+                    plotOptions: {
+                        heatmap: {
+                            shadeIntensity: 0.5,
+                            radius: 4,
+                            useFillColorAsStroke: false,
+                            colorScale: {
+                                ranges: [
+                                    { from: -1.0, to: -0.3, color: '#FF007F', name: 'Inverse (Hedge)' },
+                                    { from: -0.29, to: 0.29, color: '#1e293b', name: 'Uncorrelated' },
+                                    { from: 0.3, to: 1.0, color: '#00FF9D', name: 'Correlated (Risk)' }
+                                ]
+                            }
+                        }
+                    },
+                    stroke: { width: 1, colors: ['#0d1117'] },
+                    xaxis: {
+                        labels: { style: { colors: '#8E9BAE', fontSize: '11px', fontWeight: 600 } },
+                        axisBorder: { show: false },
+                        axisTicks: { show: false }
+                    },
+                    yaxis: {
+                        labels: { style: { colors: '#8E9BAE', fontSize: '11px', fontWeight: 600 } }
+                    },
+                    theme: { mode: 'dark' }
+                };
+
+                const chart = new ApexCharts(document.querySelector("#correlation-chart"), options);
+                chart.render();
+
+            } catch (err) {
+                console.error("Correlation Error:", err);
+            }
         }
-    });
-</script>
+        
+        // Make sure to execute it alongside loadMacro!
+        loadCorrelationMatrix();
+    </script>
 </body>
 </html>

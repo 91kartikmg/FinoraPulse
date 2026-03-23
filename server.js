@@ -487,5 +487,44 @@ app.get('/api/peers', (req, res) => {
     });
 });
 
+// --- SMART MONEY API ---
+app.get('/api/smart-money', (req, res) => {
+    const ticker = req.query.ticker;
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+
+    const pythonProcess = spawn(PYTHON_PATH, ['smart_money.py', ticker]);
+    
+    let dataString = '';
+    pythonProcess.stdout.on('data', (data) => {
+        dataString += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+        try {
+            res.json(JSON.parse(dataString));
+        } catch (e) {
+            res.status(500).json({ error: "Failed to fetch Smart Money data" });
+        }
+    });
+});
+
+// --- CROSS-ASSET CORRELATION API ---
+app.get('/api/correlation', (req, res) => {
+    const pythonProcess = spawn(PYTHON_PATH, ['correlation.py']);
+    
+    let dataString = '';
+    pythonProcess.stdout.on('data', (data) => {
+        dataString += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+        try {
+            res.json(JSON.parse(dataString));
+        } catch (e) {
+            res.status(500).json({ error: "Failed to load correlation data" });
+        }
+    });
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`StockPulse Live at: http://localhost:${PORT}`));
