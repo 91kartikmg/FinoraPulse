@@ -71,15 +71,78 @@
 
         <main class="content-panel">
             <div class="macro-header">
+                <% 
+                    let inputCountry = country.toUpperCase().trim();
+                    
+                    // 1. Secretly translate full names back to ISO codes for the API
+                    const nameToCode = {
+                        "INDIA": "IN", "UNITED STATES": "US", "USA": "US", "AMERICA": "US",
+                        "CHINA": "CN", "JAPAN": "JP", "SOUTH KOREA": "KR", "KOREA": "KR",
+                        "AUSTRALIA": "AU", "SINGAPORE": "SG", "INDONESIA": "ID", "CANADA": "CA",
+                        "BRAZIL": "BR", "MEXICO": "MX", "GERMANY": "DE", "UNITED KINGDOM": "GB",
+                        "UK": "GB", "FRANCE": "FR", "ITALY": "IT"
+                    };
+                    
+                    let validCode = nameToCode[inputCountry] || inputCountry;
+
+                    // 2. Translate codes into Full Names for the UI Display
+                    const codeToName = {
+                        "IN": "India", "US": "United States", "CN": "China", "JP": "Japan", 
+                        "KR": "South Korea", "AU": "Australia", "SG": "Singapore", "ID": "Indonesia", 
+                        "CA": "Canada", "BR": "Brazil", "MX": "Mexico", "DE": "Germany", 
+                        "GB": "United Kingdom", "FR": "France", "IT": "Italy"
+                    };
+                    
+                    const fullName = codeToName[validCode] || validCode;
+                %>
                 <div>
-                    <h1 style="margin:0; font-size: 2.2rem;">Macro Explorer: <span class="accent"><%= country %></span></h1>
+                    <h1 style="margin:0; font-size: 2.2rem;">Macro Explorer: <span class="accent"><%= fullName %></span></h1>
                     <p style="color:var(--text-muted); margin-top:5px;">Economic Health & Sector Screener</p>
                 </div>
                 <form action="/macro" method="GET" class="search-bar" style="display: flex; gap: 10px;">
-                    <input type="text" name="country" placeholder="ISO Code (e.g. IN, JP)..." value="<%= country %>" style="width: 180px;">
+                    <input type="text" name="country" placeholder="Country Name or Code..." value="<%= country %>" style="width: 180px;">
                     <button type="submit" class="btn">Search</button>
                 </form>
             </div>
+
+            <div class="stat-card" style="background: var(--card-bg); padding:25px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                    <div>
+                        <h3 style="margin:0; color:var(--text-main); font-size: 1.4rem;">Institutional Liquidity Matrix</h3>
+                        <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">Live estimated capital flow for the <strong class="accent"><%= fullName %></strong> benchmark equity market.</p>
+                    </div>
+                    <div id="liquidity-status" style="padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; background: rgba(30, 41, 59, 0.5); color: #8E9BAE; border: 1px solid #334155;">
+                        Calculating...
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div id="label-foreign" style="width: 140px; font-weight: bold; color: #f8fafc; font-size: 0.85rem;">Foreign Flow</div>
+                        <div style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
+                            <div id="bar-foreign" style="height: 100%; width: 0%; transition: all 1s ease-out;"></div>
+                        </div>
+                        <div id="val-foreign" style="width: 130px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">--</div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div id="label-domestic" style="width: 140px; font-weight: bold; color: #f8fafc; font-size: 0.85rem;">Local Flow</div>
+                        <div style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
+                            <div id="bar-domestic" style="height: 100%; width: 0%; transition: all 1s ease-out;"></div>
+                        </div>
+                        <div id="val-domestic" style="width: 130px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">--</div>
+                    </div>
+
+                    <div style="border-top: 1px dashed #334155; margin: 10px 0;"></div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #8E9BAE; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Net Market Flow</span>
+                        <span id="val-net" style="font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 900; color: #fff;">--</span>
+                    </div>
+                </div>
+            </div>
+
+
             <div class="health-panel" id="macro-health-panel" style="display: none;">
                 <div class="health-gauge">
                     <div class="gauge-bg">
@@ -171,7 +234,7 @@
     </div>
 
     <script>
-        const targetCountry = "<%= country %>";
+        const targetCountry = "<%= validCode %>";
 
         async function loadMacro() {
             try {
@@ -443,6 +506,72 @@
         
         // Make sure to execute it alongside loadMacro!
         loadCorrelationMatrix();
+    </script>
+    <script>
+        // --- 7. GLOBAL LIQUIDITY MATRIX ---
+        async function loadGlobalLiquidity() {
+            try {
+                // targetCountry is already defined at the top of macro.ejs!
+                const response = await fetch(`/api/global-liquidity?country=${targetCountry}`);
+                const data = await response.json();
+
+                if(data.error) return;
+
+                const fmt = (num) => new Intl.NumberFormat('en-US').format(Math.abs(num));
+                
+                document.getElementById('label-foreign').innerText = data.foreign_label;
+                document.getElementById('label-domestic').innerText = data.domestic_label;
+
+                const fVal = document.getElementById('val-foreign');
+                const dVal = document.getElementById('val-domestic');
+                const nVal = document.getElementById('val-net');
+                const fBar = document.getElementById('bar-foreign');
+                const dBar = document.getElementById('bar-domestic');
+                const statusBox = document.getElementById('liquidity-status');
+
+                const cur = data.currency;
+
+                fVal.innerText = (data.foreign_val >= 0 ? "+" : "-") + fmt(data.foreign_val) + " " + cur;
+                fVal.style.color = data.foreign_val >= 0 ? "#00FF9D" : "#FF007F";
+                
+                dVal.innerText = (data.domestic_val >= 0 ? "+" : "-") + fmt(data.domestic_val) + " " + cur;
+                dVal.style.color = data.domestic_val >= 0 ? "#00FF9D" : "#FF007F";
+
+                nVal.innerText = (data.net >= 0 ? "+" : "-") + fmt(data.net) + " " + cur;
+                nVal.style.color = data.net >= 0 ? "#00FF9D" : "#FF007F";
+
+                statusBox.innerText = data.status;
+                if(data.status.includes("Bullish")) {
+                    statusBox.style.color = "#00FF9D";
+                    statusBox.style.borderColor = "rgba(0, 255, 157, 0.4)";
+                    statusBox.style.backgroundColor = "rgba(0, 255, 157, 0.1)";
+                } else if(data.status.includes("Bearish")) {
+                    statusBox.style.color = "#FF007F";
+                    statusBox.style.borderColor = "rgba(255, 0, 127, 0.4)";
+                    statusBox.style.backgroundColor = "rgba(255, 0, 127, 0.1)";
+                } else {
+                    statusBox.style.color = "#8E9BAE";
+                    statusBox.style.borderColor = "#334155";
+                    statusBox.style.backgroundColor = "rgba(30, 41, 59, 0.5)";
+                }
+
+                const maxVal = Math.max(Math.abs(data.foreign_val), Math.abs(data.domestic_val), 100); 
+                
+                fBar.style.width = `${(Math.abs(data.foreign_val) / maxVal) * 100}%`;
+                fBar.style.backgroundColor = data.foreign_val >= 0 ? "#00FF9D" : "#FF007F";
+                fBar.style.boxShadow = data.foreign_val >= 0 ? "0 0 10px rgba(0, 255, 157, 0.5)" : "0 0 10px rgba(255, 0, 127, 0.5)";
+
+                dBar.style.width = `${(Math.abs(data.domestic_val) / maxVal) * 100}%`;
+                dBar.style.backgroundColor = data.domestic_val >= 0 ? "#00FF9D" : "#FF007F";
+                dBar.style.boxShadow = data.domestic_val >= 0 ? "0 0 10px rgba(0, 255, 157, 0.5)" : "0 0 10px rgba(255, 0, 127, 0.5)";
+
+            } catch (err) {
+                console.error("Liquidity Error:", err);
+            }
+        }
+
+        // Call it!
+        loadGlobalLiquidity();
     </script>
 </body>
 </html>

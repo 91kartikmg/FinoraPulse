@@ -189,6 +189,34 @@
                     <canvas id="peerGraph"></canvas>
                 </div>
             </div>
+            <div style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid rgba(168, 85, 247, 0.4); margin-bottom: 20px; box-shadow: 0 0 20px rgba(168, 85, 247, 0.1), inset 0 0 10px rgba(168, 85, 247, 0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; margin-bottom: 15px;">
+                    <div>
+                        <h3 style="margin: 0; color: #fff; font-size: 1.3rem;">🎙️ NLP Earnings "Truth Extractor"</h3>
+                        <p style="margin: 5px 0 0 0; color: #8E9BAE; font-size: 0.85rem;">AI linguistic analysis of the most recent quarterly earnings call transcript.</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.7rem; color: #8E9BAE; letter-spacing: 1px; text-transform: uppercase;">Executive Tone</div>
+                        <div id="nlp-tone" style="font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: bold; color: #a855f7;">Scanning...</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <div style="font-size: 0.8rem; color: #8E9BAE; text-transform: uppercase; margin-bottom: 10px; font-weight: bold;">Keyword Frequency Heatmap</div>
+                        <div id="nlp-keywords" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <div class="loading-pulse">Processing linguistics...</div>
+                        </div>
+                    </div>
+
+                    <div style="flex: 2; min-width: 300px; background: #080a0c; padding: 15px; border-radius: 12px; border: 1px solid #1e293b;">
+                        <div style="font-size: 0.8rem; color: #8E9BAE; text-transform: uppercase; margin-bottom: 10px; font-weight: bold;">The Hidden Truth</div>
+                        <ul id="nlp-bullets" style="margin: 0; padding-left: 20px; color: #e2e8f0; font-size: 0.95rem; line-height: 1.6;">
+                            <li>Extracting subtext...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                 <div class="fundamentals-container" style="margin-top: 0;">
@@ -747,6 +775,56 @@
         // Make sure to call it!
         fetchSmartMoney(currentTicker);
 
+    </script>
+
+    <script>
+        // --- EARNINGS NLP FETCH LOGIC ---
+        async function fetchEarningsNLP(ticker) {
+            try {
+                const response = await fetch(`/api/earnings-nlp?ticker=${ticker}`);
+                const data = await response.json();
+                
+                const toneEl = document.getElementById('nlp-tone');
+                const keywordsEl = document.getElementById('nlp-keywords');
+                const bulletsEl = document.getElementById('nlp-bullets');
+
+                if (data.error || !data.keywords) {
+                    toneEl.innerText = "N/A";
+                    toneEl.style.color = "#8E9BAE";
+                    keywordsEl.innerHTML = `<span style="color:#64748b; font-size: 0.85rem;">Transcript data unavailable.</span>`;
+                    bulletsEl.innerHTML = `<li style="color:#64748b;">Not applicable for this asset.</li>`;
+                    return;
+                }
+
+                // Set Tone
+                toneEl.innerText = data.tone;
+                toneEl.style.color = data.color;
+                toneEl.style.textShadow = `0 0 10px ${data.color}`;
+
+                // Render Keyword Pills
+                keywordsEl.innerHTML = data.keywords.map(kw => {
+                    let bg = kw.sentiment === 'bull' ? 'rgba(0, 255, 157, 0.1)' : (kw.sentiment === 'bear' ? 'rgba(255, 0, 127, 0.1)' : 'rgba(142, 155, 174, 0.1)');
+                    let border = kw.sentiment === 'bull' ? 'rgba(0, 255, 157, 0.3)' : (kw.sentiment === 'bear' ? 'rgba(255, 0, 127, 0.3)' : 'rgba(142, 155, 174, 0.3)');
+                    let text = kw.sentiment === 'bull' ? '#00FF9D' : (kw.sentiment === 'bear' ? '#FF007F' : '#8E9BAE');
+                    
+                    return `
+                        <div style="background: ${bg}; border: 1px solid ${border}; color: #f8fafc; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; display: flex; align-items: center; gap: 8px;">
+                            <span>${kw.word}</span>
+                            <span style="background: ${text}; color: #000; padding: 2px 6px; border-radius: 10px; font-weight: bold; font-size: 0.7rem;">${kw.count}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                // Render Truth Bullets
+                bulletsEl.innerHTML = data.bullets.map(b => `<li style="margin-bottom: 8px;">${b}</li>`).join('');
+
+            } catch (err) {
+                console.error("NLP Error:", err);
+            }
+        }
+        
+        // Execute it!
+        fetchEarningsNLP(currentTicker);
     </script>
 </body>
 

@@ -526,5 +526,64 @@ app.get('/api/correlation', (req, res) => {
     });
 });
 
+
+// --- FII & DII LIQUIDITY API ---
+app.get('/api/fii-dii', (req, res) => {
+    const pythonProcess = spawn(PYTHON_PATH, ['fii_dii.py']);
+    
+    let dataString = '';
+    pythonProcess.stdout.on('data', (data) => {
+        dataString += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+        try {
+            res.json(JSON.parse(dataString));
+        } catch (e) {
+            res.status(500).json({ error: "Failed to load liquidity data" });
+        }
+    });
+});
+
+// --- GLOBAL LIQUIDITY API ---
+app.get('/api/global-liquidity', (req, res) => {
+    const country = req.query.country || 'US';
+    const pythonProcess = spawn(PYTHON_PATH, ['global_liquidity.py', country]);
+    
+    let dataString = '';
+    pythonProcess.stdout.on('data', (data) => {
+        dataString += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+        try {
+            res.json(JSON.parse(dataString));
+        } catch (e) {
+            res.status(500).json({ error: "Failed to load global liquidity data" });
+        }
+    });
+});
+
+
+// --- EARNINGS CALL NLP API ---
+app.get('/api/earnings-nlp', (req, res) => {
+    const ticker = req.query.ticker;
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+
+    const pythonProcess = spawn(PYTHON_PATH, ['earnings_nlp.py', ticker]);
+    
+    let dataString = '';
+    pythonProcess.stdout.on('data', (data) => {
+        dataString += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+        try {
+            res.json(JSON.parse(dataString));
+        } catch (e) {
+            res.status(500).json({ error: "Failed to parse NLP data" });
+        }
+    });
+});
 const PORT = 3000;
 app.listen(PORT, () => console.log(`StockPulse Live at: http://localhost:${PORT}`));

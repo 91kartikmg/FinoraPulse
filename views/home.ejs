@@ -110,7 +110,44 @@
 
     <div id="dynamic-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px;">
         </div>
+        <div class="stat-card" style="background: var(--card-bg); padding:25px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                    <div>
+                        <h3 style="margin:0; color:var(--text-main); font-size: 1.4rem;">FII & DII Liquidity Matrix</h3>
+                        <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">Live institutional cash flow in the Indian Equity Market (₹ Crores).</p>
+                    </div>
+                    <div id="liquidity-status" style="padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; background: rgba(30, 41, 59, 0.5); color: #8E9BAE; border: 1px solid #334155;">
+                        Calculating...
+                    </div>
+                </div>
 
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
+                    
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 50px; font-weight: bold; color: #f8fafc;">FII</div>
+                        <div style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
+                            <div id="fii-bar" style="height: 100%; width: 0%; transition: all 1s ease-out;"></div>
+                        </div>
+                        <div id="fii-val" style="width: 100px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">--</div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 50px; font-weight: bold; color: #f8fafc;">DII</div>
+                        <div style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
+                            <div id="dii-bar" style="height: 100%; width: 0%; transition: all 1s ease-out;"></div>
+                        </div>
+                        <div id="dii-val" style="width: 100px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">--</div>
+                    </div>
+
+                    <div style="border-top: 1px dashed #334155; margin: 10px 0;"></div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #8E9BAE; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Net Institutional Flow</span>
+                        <span id="net-val" style="font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 900; color: #fff;">--</span>
+                    </div>
+
+                </div>
+            </div>
 </main>
 
 
@@ -359,5 +396,70 @@
     }, 1500);
 
 </script>
+
+<script>
+        async function loadLiquidityMatrix() {
+            try {
+                const response = await fetch('/api/fii-dii');
+                const data = await response.json();
+
+                if(data.error) return;
+
+                const fii = data.fii;
+                const dii = data.dii;
+                const net = data.net;
+
+                // Format numbers with commas
+                const fmt = (num) => new Intl.NumberFormat('en-IN').format(Math.abs(num));
+                
+                // Get elements
+                const fiiVal = document.getElementById('fii-val');
+                const diiVal = document.getElementById('dii-val');
+                const netVal = document.getElementById('net-val');
+                const fiiBar = document.getElementById('fii-bar');
+                const diiBar = document.getElementById('dii-bar');
+                const statusBox = document.getElementById('liquidity-status');
+
+                // Update Text
+                fiiVal.innerText = (fii >= 0 ? "+" : "-") + fmt(fii) + " Cr";
+                fiiVal.style.color = fii >= 0 ? "#00FF9D" : "#FF007F";
+                
+                diiVal.innerText = (dii >= 0 ? "+" : "-") + fmt(dii) + " Cr";
+                diiVal.style.color = dii >= 0 ? "#00FF9D" : "#FF007F";
+
+                netVal.innerText = (net >= 0 ? "+" : "-") + fmt(net) + " Cr";
+                netVal.style.color = net >= 0 ? "#00FF9D" : "#FF007F";
+
+                // Update Status Box
+                statusBox.innerText = data.status;
+                if(data.status.includes("Bullish")) {
+                    statusBox.style.color = "#00FF9D";
+                    statusBox.style.borderColor = "rgba(0, 255, 157, 0.4)";
+                    statusBox.style.backgroundColor = "rgba(0, 255, 157, 0.1)";
+                } else if(data.status.includes("Bearish")) {
+                    statusBox.style.color = "#FF007F";
+                    statusBox.style.borderColor = "rgba(255, 0, 127, 0.4)";
+                    statusBox.style.backgroundColor = "rgba(255, 0, 127, 0.1)";
+                }
+
+                // Animate Bars (Calculate percentage out of the maximum possible width)
+                const maxVal = Math.max(Math.abs(fii), Math.abs(dii), 100); // Floor of 100 to prevent divide by zero
+                
+                fiiBar.style.width = `${(Math.abs(fii) / maxVal) * 100}%`;
+                fiiBar.style.backgroundColor = fii >= 0 ? "#00FF9D" : "#FF007F";
+                fiiBar.style.boxShadow = fii >= 0 ? "0 0 10px rgba(0, 255, 157, 0.5)" : "0 0 10px rgba(255, 0, 127, 0.5)";
+
+                diiBar.style.width = `${(Math.abs(dii) / maxVal) * 100}%`;
+                diiBar.style.backgroundColor = dii >= 0 ? "#00FF9D" : "#FF007F";
+                diiBar.style.boxShadow = dii >= 0 ? "0 0 10px rgba(0, 255, 157, 0.5)" : "0 0 10px rgba(255, 0, 127, 0.5)";
+
+            } catch (err) {
+                console.error("FII/DII Error:", err);
+            }
+        }
+
+        // Load on start
+        loadLiquidityMatrix();
+    </script>
 </body>
 </html>
