@@ -158,7 +158,6 @@ app.get('/logout', (req, res) => {
 });
 
 // 6. Predict Page (PROTECTED)
-// Now uses requireLogin middleware
 app.get('/predict', requireLogin, (req, res) => {
     const ticker = (req.query.ticker || 'RELIANCE.NS').toUpperCase();
     startPythonWorker(ticker, "1h"); // Start with 1h default
@@ -227,7 +226,6 @@ function startPythonWorker(ticker, timeframe = "1h") {
         console.log(`[Manager] Engine for ${cacheKey} closed (Code: ${code})`);
         if (code !== 0) {
             console.error(`[Manager] Python process exited with error code ${code}`);
-            // Check if there's any remaining output in buffer
             if (stdoutBuffer.trim()) {
                 console.error(`[Manager] Unprocessed stdout:`, stdoutBuffer);
             }
@@ -243,7 +241,7 @@ function startPythonWorker(ticker, timeframe = "1h") {
 // 7. API Routes
 app.get('/api/stats', (req, res) => {
     const ticker = req.query.ticker;
-    const timeframe = req.query.timeframe || '1h'; // Defaulted to 1h
+    const timeframe = req.query.timeframe || '1h'; 
     if (!ticker) return res.status(400).json({error: "Ticker required"});
     
     const cacheKey = `${ticker}_${timeframe}`;
@@ -255,10 +253,6 @@ app.get('/api/stats', (req, res) => {
     res.json(statsCache[cacheKey] || { waiting: true });
 });
 
-// --- MARKET WATCHER LOGIC ---
-// ==========================================
-// 1. MARKET WATCHER LOGIC (FOR TOP HEADER)
-// ==========================================
 // ==========================================
 // 1. MARKET WATCHER LOGIC (FOR TOP HEADER)
 // ==========================================
@@ -270,7 +264,6 @@ const WATCHLIST = [
 let marketCache = {};
 
 function startMarketWatcher() {
-    // Passes the tickers to prices.py
     const worker = spawn(PYTHON_PATH, ['prices.py', WATCHLIST.join(',')]);
     worker.stdout.on('data', data => {
         try {
@@ -281,7 +274,6 @@ function startMarketWatcher() {
             });
         } catch (e) {}
     });
-    // Update every 1 hour
     // Update every 15 minutes
     worker.on('close', () => setTimeout(startMarketWatcher, 900000));
 }
@@ -289,14 +281,12 @@ startMarketWatcher();
 
 app.get('/api/market', (req, res) => res.json(marketCache));
 
-
 // ==========================================
 // 2. TOP MOVERS LOGIC (FOR HOME PAGE CARDS)
 // ==========================================
 let topMoversCache = {};
 
 function startTopMoversWatcher() {
-    // Passes the command "TOP_MOVERS" to the exact same prices.py file
     const worker = spawn(PYTHON_PATH, ['prices.py', 'TOP_MOVERS']);
     worker.stdout.on('data', data => {
         try {
@@ -333,31 +323,6 @@ app.get('/api/fundamentals', (req, res) => {
         } catch (e) {
             console.error("Fundamentals Error:", e);
             res.status(500).json({ error: "Failed to parse Python data" });
-        }
-    });
-});
-
-// --- MACRO EXPLORER ROUTES ---
-app.get('/macro', requireLogin, (req, res) => {
-    const country = req.query.country || 'IN';
-    res.render('macro', { country: country });
-});
-
-app.get('/api/macro-explorer', (req, res) => {
-    const country = req.query.country || 'IN';
-    const pythonProcess = spawn(PYTHON_PATH, ['macro_explorer.py', country]);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            const json = JSON.parse(dataString);
-            res.json(json);
-        } catch (e) {
-            res.status(500).json({ error: "Failed to load macro data" });
         }
     });
 });
@@ -407,7 +372,7 @@ app.get('/api/sentiment', (req, res) => {
     });
 });
 
-// --- SEARCH SUGGESTIONS API (UPDATED FOR MULTI-ASSET & REGION) ---
+// --- SEARCH SUGGESTIONS API ---
 app.get('/api/search-suggest', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json([]);
@@ -416,7 +381,6 @@ app.get('/api/search-suggest', async (req, res) => {
         const response = await axios.get(`https://query1.finance.yahoo.com/v1/finance/search?q=${query}`);
         
         const suggestions = response.data.quotes.map(quote => {
-            // Determine region based on exchange or symbol suffix
             const isIndian = quote.exchange === 'NSI' || quote.exchange === 'BSE' || (quote.symbol && quote.symbol.endsWith('.NS')) || (quote.symbol && quote.symbol.endsWith('.BO'));
             const region = isIndian ? '🇮🇳 India' : '🇺🇸 Global/USA';
             
@@ -429,7 +393,6 @@ app.get('/api/search-suggest', async (req, res) => {
             };
         }).slice(0, 10);
 
-        // Inject spot gold manually if user searches "gold rate"
         if (query.toLowerCase().includes('gold rate')) {
             suggestions.unshift({
                 symbol: 'GC=F',
@@ -447,29 +410,19 @@ app.get('/api/search-suggest', async (req, res) => {
     }
 });
 
-// Helper to make asset types look clean
 function formatType(type) {
     const types = {
-        'EQUITY': 'Stock',
-        'CRYPTO': 'Crypto',
-        'ETF': 'ETF',
-        'INDEX': 'Index',
-        'CURRENCY': 'Forex',
-        'MUTUALFUND': 'Fund',
-        'FUTURE': 'Commodity'
+        'EQUITY': 'Stock', 'CRYPTO': 'Crypto', 'ETF': 'ETF',
+        'INDEX': 'Index', 'CURRENCY': 'Forex', 'MUTUALFUND': 'Fund', 'FUTURE': 'Commodity'
     };
     return types[type] || type;
 }
 
-
-
-
-// --- PEER COMPARISON API ---ss
+// --- PEER COMPARISON API ---
 app.get('/api/peers', (req, res) => {
     const ticker = req.query.ticker;
     if (!ticker) return res.status(400).json({ error: "Ticker required" });
 
-    // Launch the new peers.py script
     const pythonProcess = spawn(PYTHON_PATH, ['peers.py', ticker]);
     
     let dataString = '';
@@ -508,63 +461,6 @@ app.get('/api/smart-money', (req, res) => {
     });
 });
 
-// --- CROSS-ASSET CORRELATION API ---
-app.get('/api/correlation', (req, res) => {
-    const pythonProcess = spawn(PYTHON_PATH, ['correlation.py']);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            res.json(JSON.parse(dataString));
-        } catch (e) {
-            res.status(500).json({ error: "Failed to load correlation data" });
-        }
-    });
-});
-
-
-// --- FII & DII LIQUIDITY API ---
-app.get('/api/fii-dii', (req, res) => {
-    const pythonProcess = spawn(PYTHON_PATH, ['fii_dii.py']);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            res.json(JSON.parse(dataString));
-        } catch (e) {
-            res.status(500).json({ error: "Failed to load liquidity data" });
-        }
-    });
-});
-
-// --- GLOBAL LIQUIDITY API ---
-app.get('/api/global-liquidity', (req, res) => {
-    const country = req.query.country || 'US';
-    const pythonProcess = spawn(PYTHON_PATH, ['global_liquidity.py', country]);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            res.json(JSON.parse(dataString));
-        } catch (e) {
-            res.status(500).json({ error: "Failed to load global liquidity data" });
-        }
-    });
-});
-
-
 // --- EARNINGS CALL NLP API ---
 app.get('/api/earnings-nlp', (req, res) => {
     const ticker = req.query.ticker;
@@ -585,5 +481,124 @@ app.get('/api/earnings-nlp', (req, res) => {
         }
     });
 });
+
+// --- FII & DII LIQUIDITY API ---
+app.get('/api/fii-dii', (req, res) => {
+    const pythonProcess = spawn(PYTHON_PATH, ['fii_dii.py']);
+    
+    let dataString = '';
+    pythonProcess.stdout.on('data', (data) => {
+        dataString += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+        try {
+            res.json(JSON.parse(dataString));
+        } catch (e) {
+            res.status(500).json({ error: "Failed to load liquidity data" });
+        }
+    });
+});
+
+
+// ==========================================
+// 📈 SERVER-SIDE CACHE SYSTEM
+// Prevents server crashes by saving heavy Python calculations in RAM
+// ==========================================
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // Cache expires every 12 hours
+const apiCache = {
+    macro: {},
+    liquidity: {},
+    correlation: null
+};
+
+// --- MACRO EXPLORER ROUTES ---
+app.get('/macro', requireLogin, (req, res) => {
+    const country = req.query.country || 'IN';
+    res.render('macro', { country: country });
+});
+
+// --- MACRO EXPLORER API (CACHED) ---
+app.get('/api/macro-explorer', (req, res) => {
+    const country = (req.query.country || 'IN').toUpperCase();
+    
+    // 1. Check if we have fresh data saved in RAM
+    if (apiCache.macro[country] && (Date.now() - apiCache.macro[country].timestamp < CACHE_TTL_MS)) {
+        console.log(`⚡ [CACHE HIT] Serving Macro Data for ${country}`);
+        return res.json(apiCache.macro[country].data);
+    }
+
+    // 2. If no cache, run Python
+    console.log(`🐢 [CACHE MISS] Running Python Macro Engine for ${country}...`);
+    const pythonProcess = spawn(PYTHON_PATH, ['macro_explorer.py', country]);
+    
+    let dataString = '';
+    pythonProcess.stdout.on('data', (data) => { dataString += data.toString(); });
+
+    pythonProcess.on('close', (code) => {
+        try {
+            const json = JSON.parse(dataString);
+            
+            // 3. Save the result to the RAM Cache before sending to user
+            if (!json.error) {
+                apiCache.macro[country] = { data: json, timestamp: Date.now() };
+            }
+            res.json(json);
+        } catch (e) {
+            res.status(500).json({ error: "Failed to load macro data" });
+        }
+    });
+});
+
+// --- GLOBAL LIQUIDITY API (CACHED) ---
+app.get('/api/global-liquidity', (req, res) => {
+    const country = (req.query.country || 'US').toUpperCase();
+    
+    if (apiCache.liquidity[country] && (Date.now() - apiCache.liquidity[country].timestamp < CACHE_TTL_MS)) {
+        return res.json(apiCache.liquidity[country].data);
+    }
+
+    const pythonProcess = spawn(PYTHON_PATH, ['global_liquidity.py', country]);
+    
+    let dataString = '';
+    pythonProcess.stdout.on('data', (data) => { dataString += data.toString(); });
+
+    pythonProcess.on('close', (code) => {
+        try {
+            const json = JSON.parse(dataString);
+            if (!json.error) {
+                apiCache.liquidity[country] = { data: json, timestamp: Date.now() };
+            }
+            res.json(json);
+        } catch (e) {
+            res.status(500).json({ error: "Failed to load global liquidity data" });
+        }
+    });
+});
+
+// --- CROSS-ASSET CORRELATION API (CACHED) ---
+app.get('/api/correlation', (req, res) => {
+    if (apiCache.correlation && (Date.now() - apiCache.correlation.timestamp < CACHE_TTL_MS)) {
+        return res.json(apiCache.correlation.data);
+    }
+
+    const pythonProcess = spawn(PYTHON_PATH, ['correlation.py']);
+    
+    let dataString = '';
+    pythonProcess.stdout.on('data', (data) => { dataString += data.toString(); });
+
+    pythonProcess.on('close', (code) => {
+        try {
+            const json = JSON.parse(dataString);
+            if (!json.error) {
+                apiCache.correlation = { data: json, timestamp: Date.now() };
+            }
+            res.json(json);
+        } catch (e) {
+            res.status(500).json({ error: "Failed to load correlation data" });
+        }
+    });
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`StockPulse Live at: http://localhost:${PORT}`));
