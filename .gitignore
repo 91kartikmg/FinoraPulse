@@ -3,4 +3,6 @@ venv/
 __pycache__/
 datasets/*.csv
 .env
-node_modules/
+node_modules/data_*.csv
+*.csv
+cookies.txt
