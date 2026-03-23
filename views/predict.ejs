@@ -224,6 +224,27 @@
                     </div>
                 </div>
             </div>
+            <br>
+            <div class="sentiment-container" style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: 100%;">
+                    <div class="fundamentals-header" style="display: flex; justify-content: space-between;">
+                        <span>Smart Money Flow</span>
+                        <span id="sm-status" style="font-weight: bold; font-size: 0.85rem; color: #8E9BAE;">Scanning...</span>
+                    </div>
+                    
+                    <div id="sm-insider-box" style="background: rgba(30, 41, 59, 0.5); border-left: 3px solid #334155; padding: 12px; border-radius: 6px; margin-bottom: 20px; transition: all 0.3s ease;">
+                        <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; margin-bottom: 4px; font-weight: bold;">Insider Activity</div>
+                        <div id="sm-insider-text" style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #f8fafc; line-height: 1.4;">Extracting SEC Filings...</div>
+                    </div>
+
+                    <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; font-weight: bold;">
+                        <span>Top Institutional Holders</span>
+                        <span id="sm-inst-pct" style="color: #00E5FF;">--% Held</span>
+                    </div>
+                    
+                    <div id="sm-institutions-target" style="height: 120px; overflow-y: auto; padding-right: 5px;">
+                        <div class="loading-pulse">Retrieving Institutional Data...</div>
+                    </div>
+                </div>
 
             <div class="fund-chart-container" id="advanced-fund-section" style="margin-top: 20px;">
                 <div class="fund-tabs">
@@ -591,7 +612,17 @@
                 const response = await fetch(`/api/peers?ticker=${ticker}`);
                 const data = await response.json();
                 
-                if (data.error) return;
+                // NEW: Draw an elegant error message instead of leaving it blank
+                if (data.error) {
+                    const ctx = peerTarget.getContext('2d');
+                    ctx.fillStyle = '#8E9BAE';
+                    ctx.font = '14px JetBrains Mono';
+                    ctx.textAlign = 'center';
+                    ctx.fillText("Valuation Metrics Not Applicable / Unavailable", peerTarget.width / 2, peerTarget.height / 2);
+                    return;
+                }
+
+                // ... keep the rest of your Chart.js drawing code exactly the same ...
 
                 const ctx = peerTarget.getContext('2d');
                 
@@ -651,6 +682,70 @@
 
         // This was missing from your script!
         loadPeerComparison(currentTicker);
+
+
+
+
+
+        // --- SMART MONEY FETCH LOGIC ---
+        async function fetchSmartMoney(ticker) {
+            try {
+                const response = await fetch(`/api/smart-money?ticker=${ticker}`);
+                const data = await response.json();
+                
+                const statusEl = document.getElementById('sm-status');
+                const insiderBox = document.getElementById('sm-insider-box');
+                const insiderText = document.getElementById('sm-insider-text');
+                const instPct = document.getElementById('sm-inst-pct');
+                const instTarget = document.getElementById('sm-institutions-target');
+
+                if (data.error) {
+                    statusEl.innerText = "N/A";
+                    insiderText.innerText = data.error;
+                    instTarget.innerHTML = `<div style="color:#64748b; font-size: 0.85rem; margin-top: 10px;">Not applicable for this asset.</div>`;
+                    return;
+                }
+
+                // 1. Color Code Insider Status
+                statusEl.innerText = data.insider_status;
+                if(data.insider_status === "Bullish") {
+                    statusEl.style.color = "#00FF9D";
+                    statusEl.style.textShadow = "0 0 10px #00FF9D";
+                    insiderBox.style.borderLeftColor = "#00FF9D";
+                    insiderBox.style.backgroundColor = "rgba(0, 255, 157, 0.05)";
+                } else if (data.insider_status === "Bearish") {
+                    statusEl.style.color = "#FF007F";
+                    statusEl.style.textShadow = "0 0 10px #FF007F";
+                    insiderBox.style.borderLeftColor = "#FF007F";
+                    insiderBox.style.backgroundColor = "rgba(255, 0, 127, 0.05)";
+                } else {
+                    statusEl.style.color = "#8E9BAE";
+                }
+                insiderText.innerText = data.insider_text;
+
+                // 2. Set Institutional Holding %
+                instPct.innerText = `${data.inst_percent || '--'} Held`;
+
+                // 3. List Top Institutions
+                // 3. List Top Institutions
+                if(data.institutions && data.institutions.length > 0) {
+                    instTarget.innerHTML = data.institutions.map(inst => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 15px;">
+                            <span style="font-weight: 600; font-size: 0.85rem; color: #e2e8f0; line-height: 1.4;">${inst.name}</span>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #00E5FF; font-weight: bold; flex-shrink: 0;">${fmtN(inst.shares)} shrs</span>
+                        </div>
+                    `).join('');
+                } else {
+                    instTarget.innerHTML = `<div style="color:#64748b; font-size: 0.85rem; margin-top: 10px;">No major institutional data found.</div>`;
+                }
+
+            } catch (err) {
+                console.error("Smart Money Error:", err);
+            }
+        }
+        
+        // Make sure to call it!
+        fetchSmartMoney(currentTicker);
 
     </script>
 </body>

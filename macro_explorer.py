@@ -9,7 +9,9 @@ INDICATORS = {
     "gdp_total": "NY.GDP.MKTP.CD",       
     "gdp_growth": "NY.GDP.MKTP.KD.ZG",   
     "inflation": "FP.CPI.TOTL.ZG",       
-    "unemployment": "SL.UEM.TOTL.ZS"
+    "unemployment": "SL.UEM.TOTL.ZS",
+    "interest_rate": "FR.INR.LEND",      # NEW: Interest Rate
+    "debt_to_gdp": "GC.DOD.TOTL.GD.ZS"   # NEW: Debt to GDP
 }
 
 CURRENCY_MAP = {
@@ -22,7 +24,7 @@ BOND_MAP = {
     "JP": "^JN10YT=RR", "DE": "^DE10YT=RR", "GB": "^UK10YT=RR"
 }
 
-# --- NEW: ADVANCED DETAILED EXPORTS & STOCK SCREENER DATA ---
+# --- ADVANCED DETAILED EXPORTS & STOCK SCREENER DATA ---
 ADVANCED_EXPORTS = {
     "IN": [
         {"sector": "Engineering & Machinery", "pct": 27.3, "stocks": ["L&T (LT.NS)", "BHEL (BHEL.NS)"]},
@@ -62,13 +64,15 @@ def get_country_macro(country_code):
         "currency_trend": [],
         "currency_pair": "",
         "bond_trend": [],
-        "advanced_exports": [], # NEW
-        "screener": []          # NEW
+        "advanced_exports": [], 
+        "screener": [],
+        "interest_rate_trend": [], # NEW
+        "debt_trend": []           # NEW
     }
 
     try:
-        # 1. Fetch Core Macro (GDP, Inflation, Unemployment)
-        for key in ["gdp_total", "gdp_growth", "inflation", "unemployment"]:
+        # 1. Fetch Core Macro (Now loops through ALL keys in INDICATORS dynamically)
+        for key in INDICATORS.keys():
             url = f"{base_url}/{country_code}/indicator/{INDICATORS[key]}?format=json&date={date_range}"
             resp = requests.get(url).json()
             
@@ -78,6 +82,7 @@ def get_country_macro(country_code):
                 years = []
                 for entry in reversed(data_list):
                     val = entry['value']
+                    # World Bank data can sometimes be missing for a specific year, fallback to 0 or previous
                     values.append(round(val, 2) if val is not None else 0)
                     years.append(entry['date'])
                 
@@ -88,8 +93,12 @@ def get_country_macro(country_code):
                     output["gdp_trend"] = values
                 elif key == "inflation":
                     output["inflation_trend"] = values
-                else:
+                elif key == "unemployment":
                     output["unemployment_trend"] = values
+                elif key == "interest_rate":       # NEW
+                    output["interest_rate_trend"] = values
+                elif key == "debt_to_gdp":         # NEW
+                    output["debt_trend"] = values
 
         # 2. Currency & Bonds
         if len(output["history_years"]) > 0:
@@ -111,21 +120,18 @@ def get_country_macro(country_code):
                     yearly_closes = bond_data.groupby('Year')['Close'].last().to_dict()
                     output["bond_trend"] = [round(yearly_closes.get(int(y), 0), 2) for y in output["history_years"]]
 
-        # --- 3. THE NEW ADVANCED SECTOR & SCREENER LOGIC ---
-        # Default to US layout if country not in our advanced dictionary
+        # --- 3. ADVANCED SECTOR & SCREENER LOGIC ---
         advanced_data = ADVANCED_EXPORTS.get(country_code, ADVANCED_EXPORTS["US"])
         output["advanced_exports"] = advanced_data
 
         screener_results = []
         
-        # Loop through only the top 2 sectors to keep the API fast
         for sector_info in advanced_data[:2]:
             for stock_str in sector_info["stocks"]:
                 name = stock_str.split("(")[0].strip()
                 ticker = stock_str.split("(")[1].replace(")", "")
                 
                 try:
-                    # Fetch live market data for the companies driving the GDP
                     tkr = yf.Ticker(ticker)
                     hist = tkr.history(period="2d")
                     if len(hist) >= 2:
