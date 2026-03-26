@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
         .macro-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; transition: opacity 0.3s; }
         .chart-box {
             background: var(--card-bg, #1e293b); padding: 20px; border-radius: 16px;
             border: 1px solid var(--border, #334155); height: 350px; display: flex; flex-direction: column;
@@ -38,21 +38,12 @@
 
     <style>
         /* AI Health Score Styles */
-        /* AI Health Score Styles */
-        .health-panel { background: #0d1117; border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; display: flex; align-items: center; gap: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border-left: 4px solid #00FF9D; }
+        .health-panel { background: #0d1117; border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; display: flex; align-items: center; gap: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border-left: 4px solid #00FF9D; transition: opacity 0.3s; }
         
-        /* Increased width from 120px to 180px and added flex-shrink */
         .health-gauge { width: 180px; position: relative; text-align: center; flex-shrink: 0; } 
-        
-        /* Changed border-radius to 200px so it scales perfectly */
         .gauge-bg { width: 100%; padding-top: 50%; background: conic-gradient(from 270deg at 50% 100%, #ff4d4d 0deg, #f59e0b 90deg, #00FF9D 180deg, transparent 180deg); border-radius: 200px 200px 0 0; position: relative; }
-        
-        /* Increased the top/left/right spacing slightly to match the larger scale */
         .gauge-inner { position: absolute; top: 14px; left: 14px; right: 14px; bottom: 0; background: #0d1117; border-radius: 200px 200px 0 0; }
-        
         .gauge-needle { position: absolute; bottom: 0; left: calc(50% - 2px); width: 4px; height: 90%; background: #fff; border-radius: 4px; transform-origin: bottom center; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
-        
-        /* NEW: A dedicated class for the big score number */
         .health-score-value { margin-top: 15px; font-family: 'JetBrains Mono', monospace; font-size: 2.2rem; font-weight: 900; color: #fff; letter-spacing: -2px; }
         
         .health-text { flex-grow: 1; }
@@ -73,8 +64,6 @@
             <div class="macro-header">
                 <% 
                     let inputCountry = country.toUpperCase().trim();
-                    
-                    // 1. Secretly translate full names back to ISO codes for the API
                     const nameToCode = {
                         "INDIA": "IN", "UNITED STATES": "US", "USA": "US", "AMERICA": "US",
                         "CHINA": "CN", "JAPAN": "JP", "SOUTH KOREA": "KR", "KOREA": "KR",
@@ -82,17 +71,14 @@
                         "BRAZIL": "BR", "MEXICO": "MX", "GERMANY": "DE", "UNITED KINGDOM": "GB",
                         "UK": "GB", "FRANCE": "FR", "ITALY": "IT"
                     };
-                    
                     let validCode = nameToCode[inputCountry] || inputCountry;
 
-                    // 2. Translate codes into Full Names for the UI Display
                     const codeToName = {
                         "IN": "India", "US": "United States", "CN": "China", "JP": "Japan", 
                         "KR": "South Korea", "AU": "Australia", "SG": "Singapore", "ID": "Indonesia", 
                         "CA": "Canada", "BR": "Brazil", "MX": "Mexico", "DE": "Germany", 
                         "GB": "United Kingdom", "FR": "France", "IT": "Italy"
                     };
-                    
                     const fullName = codeToName[validCode] || validCode;
                 %>
                 <div>
@@ -105,7 +91,7 @@
                 </form>
             </div>
 
-            <div class="stat-card" style="background: var(--card-bg); padding:25px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <div class="stat-card" style="background: var(--card-bg); padding:25px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: opacity 0.3s;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                     <div>
                         <h3 style="margin:0; color:var(--text-main); font-size: 1.4rem;">Institutional Liquidity Matrix</h3>
@@ -142,7 +128,6 @@
                 </div>
             </div>
 
-
             <div class="health-panel" id="macro-health-panel" style="display: none;">
                 <div class="health-gauge">
                     <div class="gauge-bg">
@@ -158,6 +143,7 @@
                     </div>
                 </div>
             </div>
+            
             <div class="charts-grid">
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">Total GDP (USD)</h3>
@@ -190,6 +176,7 @@
                     <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="advancedExportChart"></canvas></div>
                 </div>
             </div>
+            
              <div class="charts-grid">
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">Central Bank Interest Rate (%)</h3>
@@ -201,28 +188,25 @@
                 </div>
             </div>
 
-            <div class="stat-card" style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <div class="stat-card" style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: opacity 0.3s;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
                     <div>
                         <h3 style="margin:0; color:var(--text-main);">Cross-Asset Correlation Matrix</h3>
-                        <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">Measures how global assets move together. <strong style="color:#00FF9D">+1.0</strong> means they move perfectly together. <strong style="color:#FF007F">-1.0</strong> means they move in opposite directions.</p>
+                        <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">Measures how global assets move together. <strong style="color:#00FF9D">+1.0</strong> means they move perfectly together.</p>
                     </div>
                 </div>
-                
                 <div id="correlation-loader" style="color:var(--text-muted); font-style: italic; padding: 20px 0;">Crunching 1-Year Historical Data...</div>
                 <div id="correlation-chart" style="min-height: 350px;"></div>
             </div>
 
-            <div class="stat-card" style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border);">
+            <div class="stat-card" style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border); transition: opacity 0.3s;">
                 <h3 style="margin:0; color:var(--text-main);">Export Leaders (Live Screener)</h3>
                 <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">These publicly traded companies dominate the top export sectors driving this country's GDP.</p>
-                
                 <div class="screener-grid" id="screener-target">
                     <div style="color:var(--text-muted); font-style: italic;">Scanning market for leading stocks...</div>
                 </div>
             </div>
            
-            
             <div style="height: 40px;"></div>
         </main>
 
@@ -230,7 +214,6 @@
             <div class="sidebar-header" style="padding: 0 0 15px 0; border-bottom: none;">Sponsors</div>
             <div class="ad-placeholder" style="background: rgba(0,0,0,0.2);"><span>Ad Slot</span><span style="font-size: 0.65rem; margin-top: 5px;">300 x 250</span></div>
         </aside>
-
     </div>
 
     <script>
@@ -240,6 +223,39 @@
             try {
                 const response = await fetch(`/api/macro-explorer?country=${targetCountry}`);
                 const data = await response.json();
+
+                // ==========================================
+                // THE COLD START PROTECTOR (POLLING LOGIC)
+                // ==========================================
+                if (response.status === 202 || data.status === "building") {
+                    let loader = document.getElementById('macro-cold-start-loader');
+                    
+                    if (!loader) {
+                        loader = document.createElement('div');
+                        loader.id = 'macro-cold-start-loader';
+                        loader.innerHTML = `
+                            <div style="text-align: center; padding: 40px; background: var(--card-bg, #1e293b); border: 1px solid var(--accent, #38bdf8); border-radius: 16px; margin-bottom: 25px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);">
+                                <h2 style="color: var(--accent); margin: 0 0 10px 0;">⏳ ${data.message || 'Building Macro Dashboard...'}</h2>
+                                <p style="color: var(--text-muted); margin: 0;">Establishing connection to the World Bank. This takes about 5-8 seconds on the first run...</p>
+                            </div>
+                        `;
+                        document.querySelector('.macro-header').insertAdjacentElement('afterend', loader);
+                        
+                        // Dim the rest of the dashboard
+                        document.querySelectorAll('.charts-grid, .health-panel, .stat-card').forEach(el => el.style.opacity = '0.1');
+                    } else {
+                        loader.querySelector('h2').innerText = `⏳ ${data.message || 'Building Macro Dashboard...'}`;
+                    }
+                    
+                    // Poll again in 3 seconds
+                    setTimeout(loadMacro, 3000);
+                    return; 
+                }
+
+                // Remove loader and restore opacity when data is ready
+                const loader = document.getElementById('macro-cold-start-loader');
+                if (loader) loader.remove();
+                document.querySelectorAll('.charts-grid, .health-panel, .stat-card').forEach(el => el.style.opacity = '1');
 
                 if (data.error) { alert("Error loading data. Check country code."); return; }
 
@@ -262,7 +278,6 @@
                     score -= (latestUnemp * 2); 
                     score = Math.max(0, Math.min(100, Math.round(score)));
 
-                    // Subtract 90 degrees so it maps correctly from Left (-90) to Right (+90)
                     const degrees = ((score / 100) * 180) - 90;
                     document.getElementById('health-needle').style.transform = `rotate(${degrees}deg)`;
                     document.getElementById('health-score-text').innerText = `${score}/100`;
@@ -311,7 +326,6 @@
                     });
                 }
 
-                // --- 3. NEW MACRO CHARTS ---
                 if(data.interest_rate_trend && data.interest_rate_trend.length > 0) {
                     new Chart(document.getElementById('interestRateChart').getContext('2d'), {
                         type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Interest Rate (%)', data: data.interest_rate_trend, borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
@@ -326,7 +340,6 @@
                     });
                 }
 
-                // --- 4. FOREX & EXPORTS ---
                 if(data.currency_trend && data.currency_trend.length > 0) {
                     document.getElementById('currency-pair-label').innerText = "(" + data.currency_pair + ")";
                     new Chart(document.getElementById('currencyChart').getContext('2d'), {
@@ -345,7 +358,6 @@
                     });
                 }
 
-                // --- 5. AI SCREENER CARDS ---
                 const screenerTarget = document.getElementById('screener-target');
                 if(data.screener && data.screener.length > 0) {
                     screenerTarget.innerHTML = ''; 
@@ -377,52 +389,18 @@
             } catch (err) { console.error(err); }
         }
         
-        // Initialize Macro Dashboard
         loadMacro();
 
-        // --- GLOBAL HEADER TICKER SYNC ---
+        // Safe Fallback for header top-bar (since we removed the heavy background loop)
         function updateHeaderMarketWatch() {
-            fetch('/api/market').then(res => res.json()).then(data => {
-                document.querySelectorAll('#header-ticker [data-ticker]').forEach(el => {
-                    const ticker = el.getAttribute('data-ticker');
-                    if (data[ticker]) {
-                        const priceEl = el.querySelector('.price-val'); 
-                        const changeEl = el.querySelector('.change-val');
-                        
-                        const isIndian = ticker.includes('.NS') || ticker.includes('.BO') || ticker === 'INR=X' || ticker === '^NSEI';
-                        const isEuro = ticker.includes('EUR');
-                        const isPound = ticker.includes('GBP');
-                        const isYen = ticker.includes('JPY');
-                        
-                        let sym = "$"; 
-                        if (isIndian) sym = "₹";
-                        if (isEuro) sym = "€";
-                        if (isPound) sym = "£";
-                        if (isYen) sym = "¥";
-                        if (ticker.includes('^')) sym = "";
-                        
-                        const change = data[ticker].change; 
-                        const isUp = change >= 0; 
-                        
-                        // Force colors based on market movement
-                        const textColor = isUp ? '#00FF41' : '#ff4d4d'; 
-
-                        if (priceEl) { 
-                            priceEl.innerText = sym + data[ticker].price.toFixed(2); 
-                            priceEl.style.color = textColor; 
-                        }
-                        if (changeEl) { 
-                            changeEl.innerText = (isUp ? '▲ ' : '▼ ') + Math.abs(change).toFixed(2) + '%'; 
-                            changeEl.style.color = textColor; 
-                        }
-                    }
-                });
-            }).catch(err => console.log("Market sync paused..."));
+            fetch('/api/market').then(res => {
+                if(!res.ok) throw new Error("Skipped");
+                return res.json();
+            }).then(data => {
+                // Feature currently disabled to save RAM, so this will quietly bypass
+            }).catch(err => { /* Quiet failure to keep console clean */ });
         }
         
-        updateHeaderMarketWatch(); 
-        setInterval(updateHeaderMarketWatch, 900000); // 15 mins
-
         // --- HAMBURGER MENU LOGIC ---
         document.addEventListener('DOMContentLoaded', () => {
             const menuBtn = document.getElementById('mobile-menu-btn');
@@ -459,22 +437,12 @@
 
                 const options = {
                     series: data.series,
-                    chart: {
-                        height: 380,
-                        type: 'heatmap',
-                        background: 'transparent',
-                        toolbar: { show: false }
-                    },
-                    dataLabels: {
-                        enabled: true,
-                        style: { colors: ['#fff'], fontSize: '12px', fontFamily: 'JetBrains Mono' }
-                    },
+                    chart: { height: 380, type: 'heatmap', background: 'transparent', toolbar: { show: false } },
+                    dataLabels: { enabled: true, style: { colors: ['#fff'], fontSize: '12px', fontFamily: 'JetBrains Mono' } },
                     colors: ['#008FFB'],
                     plotOptions: {
                         heatmap: {
-                            shadeIntensity: 0.5,
-                            radius: 4,
-                            useFillColorAsStroke: false,
+                            shadeIntensity: 0.5, radius: 4, useFillColorAsStroke: false,
                             colorScale: {
                                 ranges: [
                                     { from: -1.0, to: -0.3, color: '#FF007F', name: 'Inverse (Hedge)' },
@@ -485,14 +453,8 @@
                         }
                     },
                     stroke: { width: 1, colors: ['#0d1117'] },
-                    xaxis: {
-                        labels: { style: { colors: '#8E9BAE', fontSize: '11px', fontWeight: 600 } },
-                        axisBorder: { show: false },
-                        axisTicks: { show: false }
-                    },
-                    yaxis: {
-                        labels: { style: { colors: '#8E9BAE', fontSize: '11px', fontWeight: 600 } }
-                    },
+                    xaxis: { labels: { style: { colors: '#8E9BAE', fontSize: '11px', fontWeight: 600 } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                    yaxis: { labels: { style: { colors: '#8E9BAE', fontSize: '11px', fontWeight: 600 } } },
                     theme: { mode: 'dark' }
                 };
 
@@ -504,14 +466,12 @@
             }
         }
         
-        // Make sure to execute it alongside loadMacro!
         loadCorrelationMatrix();
     </script>
     <script>
         // --- 7. GLOBAL LIQUIDITY MATRIX ---
         async function loadGlobalLiquidity() {
             try {
-                // targetCountry is already defined at the top of macro.ejs!
                 const response = await fetch(`/api/global-liquidity?country=${targetCountry}`);
                 const data = await response.json();
 
@@ -570,7 +530,6 @@
             }
         }
 
-        // Call it!
         loadGlobalLiquidity();
     </script>
 </body>

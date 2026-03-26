@@ -362,14 +362,14 @@ def run_prediction():
     }
 
 
-
 if __name__ == "__main__":
-    while True:
-        try:
-            stats = run_prediction()
+    try:
+        # Run exactly ONCE and exit. Node.js will handle the caching!
+        stats = run_prediction()
+        if stats:
             print(json.dumps(stats))
-            sys.stdout.flush() 
-            time.sleep(LOG_FREQ_SECONDS)
-        except Exception as e:
-            sys.stderr.write(f"Error: {e}\n")
-            time.sleep(10)
+        else:
+            print(json.dumps({"error": "Failed to generate prediction. Not enough data."}))
+        sys.stdout.flush() 
+    except Exception as e:
+        sys.stderr.write(f"Error: {e}\n")

@@ -183,12 +183,23 @@
                 </div>
             </div>
 
-            <div class="ta-section">
-                <div class="fundamentals-header" style="text-align: center; border: none;">Peer Valuation Graph (P/E vs ROCE)</div>
+            <div class="ta-section" style="margin-top: 20px;">
+                <div class="fundamentals-header" style="text-align: center; border: none; margin-bottom: 15px;">5-Year Peer Trajectory</div>
+                
+                <div class="fund-tabs" style="justify-content: center; margin-bottom: 20px;">
+                    <button class="fund-tab active" onclick="updatePeerHistory('Market Cap (B)', this)">Market Cap</button>
+                    <button class="fund-tab" onclick="updatePeerHistory('P/E Ratio', this)">P/E Ratio</button>
+                    <button class="fund-tab" onclick="updatePeerHistory('ROE (%)', this)">ROE</button>
+                    <button class="fund-tab" onclick="updatePeerHistory('EPS', this)">EPS</button>
+                </div>
+                
                 <div style="position: relative; height: 400px; width: 100%;">
-                    <canvas id="peerGraph"></canvas>
+                    <div id="peer-history-loader" class="loading-pulse" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);">Syncing 5-Year Data...</div>
+                    <canvas id="peerHistoryChart"></canvas>
                 </div>
             </div>
+
+
             <div style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid rgba(168, 85, 247, 0.4); margin-bottom: 20px; box-shadow: 0 0 20px rgba(168, 85, 247, 0.1), inset 0 0 10px rgba(168, 85, 247, 0.05);">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; margin-bottom: 15px;">
                     <div>
@@ -640,8 +651,8 @@
                 const response = await fetch(`/api/peers?ticker=${ticker}`);
                 const data = await response.json();
                 
-                // NEW: Draw an elegant error message instead of leaving it blank
-                if (data.error) {
+                // Elegant Error Message
+                if (data.error || !data.target) {
                     const ctx = peerTarget.getContext('2d');
                     ctx.fillStyle = '#8E9BAE';
                     ctx.font = '14px JetBrains Mono';
@@ -650,52 +661,68 @@
                     return;
                 }
 
-                // ... keep the rest of your Chart.js drawing code exactly the same ...
+                // Format data for the two distinct colors
+                const targetPoint = { x: data.target.pe, y: data.target.roce, name: data.target.name, ticker: data.target.ticker };
+                const peerPoints = data.peers.map(p => ({ x: p.pe, y: p.roce, name: p.name, ticker: p.ticker }));
 
                 const ctx = peerTarget.getContext('2d');
                 
-                const plotData = data.map(stock => ({
-                    x: stock.pe,       
-                    y: stock.roce,     
-                    symbol: stock.symbol,
-                    name: stock.name
-                }));
-
                 new Chart(ctx, {
                     type: 'scatter',
                     data: {
-                        datasets: [{
-                            label: 'Sector Peers (P/E vs ROCE)',
-                            data: plotData,
-                            backgroundColor: '#00FF9D',
-                            borderColor: '#00FF9D',
-                            pointRadius: 6,
-                            pointHoverRadius: 10,
-                            showLine: false
-                        }]
+                        datasets: [
+                            {
+                                label: 'Target Asset',
+                                data: [targetPoint],
+                                backgroundColor: '#a855f7', // Glowing Purple
+                                borderColor: '#fff',
+                                borderWidth: 2,
+                                pointRadius: 8,
+                                pointHoverRadius: 10
+                            },
+                            {
+                                label: 'Industry Competitors',
+                                data: peerPoints,
+                                backgroundColor: 'rgba(56, 189, 248, 0.6)', // Light Blue
+                                borderColor: '#38bdf8',
+                                borderWidth: 1,
+                                pointRadius: 6,
+                                pointHoverRadius: 8
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { labels: { color: '#fff' } },
+                            legend: { labels: { color: '#8E9BAE' } },
                             tooltip: {
+                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                titleColor: '#fff',
+                                bodyColor: '#00FF9D',
+                                borderColor: '#334155',
+                                borderWidth: 1,
+                                padding: 12,
                                 callbacks: {
-                                    label: (context) => {
-                                        const s = context.raw;
-                                        return `${s.symbol}: P/E: ${s.x.toFixed(2)} | ROCE: ${s.y.toFixed(2)}%`;
+                                    label: function(context) {
+                                        const point = context.raw;
+                                        return [
+                                            `${point.name} (${point.ticker})`,
+                                            `P/E Ratio: ${point.x}`,
+                                            `ROCE: ${point.y}%`
+                                        ];
                                     }
                                 }
                             }
                         },
                         scales: {
                             x: { 
-                                title: { display: true, text: 'P/E Ratio (Lower = Cheaper)', color: '#8E9BAE' },
+                                title: { display: true, text: 'Valuation (P/E Ratio)', color: '#8E9BAE' },
                                 grid: { color: 'rgba(255,255,255,0.05)' },
                                 ticks: { color: '#8E9BAE' }
                             },
                             y: { 
-                                title: { display: true, text: 'ROCE % (Higher = More Efficient)', color: '#8E9BAE' },
+                                title: { display: true, text: 'Profitability (ROCE %)', color: '#8E9BAE' },
                                 grid: { color: 'rgba(255,255,255,0.05)' },
                                 ticks: { color: '#8E9BAE' }
                             }
@@ -825,6 +852,75 @@
         
         // Execute it!
         fetchEarningsNLP(currentTicker);
+    </script>
+    <script>
+        // --- HISTORICAL PEER TRENDS LOGIC ---
+        let peerHistoryData = null;
+        let peerHistoryChartObj = null;
+
+        async function loadPeerHistory(ticker) {
+            try {
+                const response = await fetch(`/api/peer-history?ticker=${ticker}`);
+                const data = await response.json();
+                
+                document.getElementById('peer-history-loader').style.display = 'none';
+
+                if (data.error || !data.metrics) {
+                    console.error("Peer History Error");
+                    return;
+                }
+
+                peerHistoryData = data;
+                // Render Default View (Market Cap)
+                updatePeerHistory('Market Cap (B)', document.querySelector('.fund-tabs button.active'));
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        window.updatePeerHistory = function(metricName, btnElement) {
+            if (!peerHistoryData) return;
+
+            // Update active button styling
+            const tabs = btnElement.parentElement.querySelectorAll('.fund-tab');
+            tabs.forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            const ctx = document.getElementById('peerHistoryChart').getContext('2d');
+            const datasets = peerHistoryData.metrics[metricName];
+
+            if (peerHistoryChartObj) {
+                peerHistoryChartObj.destroy();
+            }
+
+            peerHistoryChartObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: peerHistoryData.years,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0', font: { family: 'Inter', weight: 'bold' } } },
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleColor: '#fff', bodyColor: '#fff', borderColor: '#334155', borderWidth: 1 }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E9BAE', font: { weight: 'bold' } } },
+                        y: { 
+                            grid: { color: 'rgba(255,255,255,0.05)' }, 
+                            ticks: { color: '#8E9BAE' },
+                            title: { display: true, text: metricName, color: '#8E9BAE' }
+                        }
+                    }
+                }
+            });
+        };
+
+        // Trigger the fetch when the page loads
+        loadPeerHistory(currentTicker);
     </script>
 </body>
 

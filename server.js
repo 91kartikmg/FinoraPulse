@@ -1,23 +1,24 @@
 const express = require('express');
 const { spawn } = require('child_process');
 const path = require('path');
-const fs = require('fs'); // Added for file system operations
+const fs = require('fs'); 
 const mongoose = require('mongoose');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
-const User = require('./models/User'); // Import User Model
-const axios = require('axios'); // Install via: npm install axios
+const User = require('./models/User'); 
+const axios = require('axios'); 
+const cron = require('node-cron'); // <-- Added for Batch Scheduling
 const app = express();
 
-// --- CONFIGURATION ---
-const MONGO_URI = 'mongodb://127.0.0.1:27017/stockpulse_db'; // Local MongoDB
-const SESSION_SECRET = 'supersecret_stockpulse_key'; // Change this in production
-const DATASET_PATH = path.join(__dirname, 'datasets'); // Specific folder for CSVs
+// ==========================================
+// 1. CONFIGURATION & ENVIRONMENT
+// ==========================================
+const MONGO_URI = 'mongodb://127.0.0.1:27017/stockpulse_db'; 
+const SESSION_SECRET = 'supersecret_stockpulse_key'; 
+const DATASET_PATH = path.join(__dirname, 'datasets'); 
 
-// --- DYNAMIC PYTHON PATH LOGIC ---
-// This automatically detects if it's running on your Hostinger server or local Windows PC
-let PYTHON_PATH = 'python'; // Default for Local Windows Environment
-const serverVenvPath = '/var/www/FinoraPulse/venv/bin/python3'
+let PYTHON_PATH = 'python'; 
+const serverVenvPath = '/var/www/FinoraPulse/venv/bin/python3';
 
 if (fs.existsSync(serverVenvPath)) {
     PYTHON_PATH = serverVenvPath;
@@ -26,47 +27,37 @@ if (fs.existsSync(serverVenvPath)) {
     console.log(`🐍 Using Local Python Environment: ${PYTHON_PATH}`);
 }
 
-// Ensure the dataset folder exists
 if (!fs.existsSync(DATASET_PATH)) {
     fs.mkdirSync(DATASET_PATH);
     console.log("📁 Created datasets folder");
 }
 
-
-// --- MIDDLEWARE ---
-app.use(express.urlencoded({ extended: true })); // Parse form data
+// ==========================================
+// 2. MIDDLEWARE & AUTHENTICATION
+// ==========================================
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static('public'));
 
-// Session Setup (Handles Auto-Login)
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { 
-        maxAge: 1000 * 60 * 60 * 24 * 7 // 7 Days auto-login
-    }
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 } 
 }));
 
-// View Engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// --- DATABASE CONNECTION ---
 mongoose.connect(MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected"))
     .catch(err => console.error("❌ MongoDB Error:", err));
 
-// --- AUTH MIDDLEWARE ---
-// Protects the predict page
 const requireLogin = (req, res, next) => {
-    if (!req.session.userId) {
-        return res.redirect('/auth');
-    }
+    if (!req.session.userId) return res.redirect('/auth');
     next();
 };
 
-// Make 'user' available to all templates if logged in
 app.use(async (req, res, next) => {
     res.locals.user = null;
     if (req.session.userId) {
@@ -76,529 +67,324 @@ app.use(async (req, res, next) => {
     next();
 });
 
-// --- ROUTES ---
-
-// 1. Home Page
-app.get('/', (req, res) => {
-    res.render('home');
-});
-
-// 2. Auth Page (Login/Register)
+// --- AUTH ROUTES ---
 app.get('/auth', (req, res) => {
     if (req.session.userId) return res.redirect('/');
     res.render('auth');
 });
 
-// 3. Register Logic
 app.post('/register', async (req, res) => {
     const { email, username, password, confirmPassword } = req.body;
-
-    // Basic Validation
-    if (password !== confirmPassword) {
-        return res.render('auth', { error: "Passwords do not match" });
-    }
+    if (password !== confirmPassword) return res.render('auth', { error: "Passwords do not match" });
 
     try {
-        // Check if user exists
         const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-        if (existingUser) {
-            return res.render('auth', { error: "User ID or Email already exists" });
-        }
+        if (existingUser) return res.render('auth', { error: "User ID or Email already exists" });
 
-        // Hash Password
         const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create User
         const newUser = new User({ email, username, password: hashedPassword });
         await newUser.save();
 
-        // Auto Login after Register
         req.session.userId = newUser._id;
         res.redirect('/');
-        
     } catch (err) {
         res.render('auth', { error: "Error creating account. Try again." });
     }
 });
 
-// 4. Login Logic
 app.post('/login', async (req, res) => {
-    const { loginInput, password } = req.body; // loginInput can be email OR username
-
+    const { loginInput, password } = req.body;
     try {
-        // Find by Email OR Username
-        const user = await User.findOne({ 
-            $or: [{ email: loginInput }, { username: loginInput }] 
-        });
+        const user = await User.findOne({ $or: [{ email: loginInput }, { username: loginInput }] });
+        if (!user) return res.render('auth', { error: "Invalid credentials" });
 
-        if (!user) {
-            return res.render('auth', { error: "Invalid credentials" });
-        }
-
-        // Check Password
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.render('auth', { error: "Invalid credentials" });
-        }
+        if (!isMatch) return res.render('auth', { error: "Invalid credentials" });
 
-        // Set Session (Login Success)
         req.session.userId = user._id;
         res.redirect('/');
-
     } catch (err) {
         res.render('auth', { error: "Login failed. Please try again." });
     }
 });
 
-// 5. Logout
 app.get('/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/');
-    });
+    req.session.destroy(() => res.redirect('/'));
 });
 
-// 6. Predict Page (PROTECTED)
-app.get('/predict', requireLogin, (req, res) => {
-    const ticker = (req.query.ticker || 'RELIANCE.NS').toUpperCase();
-    startPythonWorker(ticker, "1h"); // Start with 1h default
-    res.render('predict', { ticker: ticker }); 
-});
+// ==========================================
+// 3. FRONTEND PAGE ROUTES
+// ==========================================
+app.get('/', (req, res) => res.render('home'));
+app.get('/predict', requireLogin, (req, res) => res.render('predict', { ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase() }));
+app.get('/macro', requireLogin, (req, res) => res.render('macro', { country: req.query.country || 'IN' }));
+app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap'));
 
-// --- PYTHON ENGINE LOGIC ---
-let statsCache = {}; 
-let pythonProcesses = {};
 
-function startPythonWorker(ticker, timeframe = "1h") {
-    const cacheKey = `${ticker}_${timeframe}`;
-    
-    Object.keys(pythonProcesses).forEach(key => {
-        if (key.startsWith(`${ticker}_`) && key !== cacheKey) {
-            console.log(`[Manager] Stopping old timeframe worker for ${key}`);
-            pythonProcesses[key].kill();
-            delete pythonProcesses[key];
-            delete statsCache[key];
-        }
-    });
-
-    if (pythonProcesses[cacheKey]) return;
-    
-    console.log(`[Manager] Starting AI Engine for ${ticker} (${timeframe})...`);
-    console.log(`[Manager] Using Python: ${PYTHON_PATH}`);
-    console.log(`[Manager] Dataset path: ${DATASET_PATH}`);
-    
-    const pythonWorker = spawn(PYTHON_PATH, ['predict.py', ticker, timeframe, DATASET_PATH]);
-    pythonProcesses[cacheKey] = pythonWorker;
-    statsCache[cacheKey] = { waiting: true };
-
-    // Buffer for stdout
-    let stdoutBuffer = '';
-    
-    pythonWorker.stdout.on('data', (data) => {
-        stdoutBuffer += data.toString();
-        const lines = stdoutBuffer.split('\n');
+// ==========================================
+// 4. PYTHON EXECUTION HELPER (Updated for Arrays)
+// ==========================================
+function fetchPythonData(folder, scriptName, argsArray = []) {
+    return new Promise((resolve) => {
+        const scriptPath = path.join(__dirname, 'python_engine', folder, scriptName);
+        const args = [scriptPath, ...argsArray]; 
         
-        // Keep the last incomplete line in buffer
-        stdoutBuffer = lines.pop() || '';
+        const pythonProcess = spawn(PYTHON_PATH, args);
+        let dataString = '';
         
-        lines.forEach(line => {
-            if (line.trim()) {
-                try {
-                    const parsed = JSON.parse(line);
-                    if (parsed.current) {
-                        statsCache[cacheKey] = parsed;
-                        console.log(`[Manager] Received data for ${cacheKey}`);
-                    }
-                } catch (e) {
-                    console.error(`[Manager] Parse error for ${cacheKey}:`, e.message);
-                    console.error(`[Manager] Raw data:`, line.substring(0, 200));
-                }
-            }
+        pythonProcess.stdout.on('data', (data) => { dataString += data.toString(); });
+        pythonProcess.on('close', () => {
+            try { resolve(JSON.parse(dataString)); } 
+            catch (e) { resolve({ error: "Parse failed" }); }
         });
     });
-
-    // CRITICAL: Log stderr to see Python errors
-    pythonWorker.stderr.on('data', (data) => {
-        const errorMsg = data.toString();
-        console.error(`[Python Error for ${cacheKey}]:`, errorMsg);
-    });
-
-    pythonWorker.on('close', (code) => {
-        console.log(`[Manager] Engine for ${cacheKey} closed (Code: ${code})`);
-        if (code !== 0) {
-            console.error(`[Manager] Python process exited with error code ${code}`);
-            if (stdoutBuffer.trim()) {
-                console.error(`[Manager] Unprocessed stdout:`, stdoutBuffer);
-            }
-        }
-        delete pythonProcesses[cacheKey];
-    });
-    
-    pythonWorker.on('error', (err) => {
-        console.error(`[Manager] Failed to start Python process:`, err);
-    });
 }
 
-// 7. API Routes
-app.get('/api/stats', (req, res) => {
-    const ticker = req.query.ticker;
-    const timeframe = req.query.timeframe || '1h'; 
-    if (!ticker) return res.status(400).json({error: "Ticker required"});
+// ==========================================
+// 5. PREDICT PAGE CHART CACHE (3-Minute TTL)
+// ==========================================
+const predictCache = {}; 
+const PREDICT_CACHE_TTL = 3 * 60 * 1000; 
+
+app.get('/api/stats', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    const timeframe = req.query.timeframe || '1h';
     
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
     const cacheKey = `${ticker}_${timeframe}`;
-    
-    if (!pythonProcesses[cacheKey]) {
-        startPythonWorker(ticker, timeframe);
+
+    if (predictCache[cacheKey] && (Date.now() - predictCache[cacheKey].timestamp < PREDICT_CACHE_TTL)) {
+        return res.json(predictCache[cacheKey].data);
     }
+
+    const result = await fetchPythonData('ml_models', 'ml_engine.py', ['predict', ticker, timeframe, DATASET_PATH]);
     
-    res.json(statsCache[cacheKey] || { waiting: true });
+    if (!result.error) predictCache[cacheKey] = { data: result, timestamp: Date.now() };
+    res.json(result);
 });
 
-// ==========================================
-// 1. MARKET WATCHER LOGIC (FOR TOP HEADER)
-// ==========================================
-const WATCHLIST = [
-    'RELIANCE.NS', 'TCS.NS', 'BTC-USD', 'GC=F', '^NSEI', 
-    'HDFCBANK.NS', 'INFY.NS', 'AAPL', 'NVDA', 'TSLA', 
-    'ETH-USD', 'SOL-USD', 'SI=F', 'EURUSD=X', '^BSESN'
-];
-let marketCache = {};
 
-function startMarketWatcher() {
-    const worker = spawn(PYTHON_PATH, ['prices.py', WATCHLIST.join(',')]);
-    worker.stdout.on('data', data => {
+// ==========================================
+// 6. MACRO BATCH DOWNLOADER & CACHE WARMER
+// ==========================================
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000; 
+const apiCache = { macro: {}, liquidity: {}, correlation: null };
+// The Top 25 Global Economies (ISO Alpha-2 Codes)
+const SUPPORTED_COUNTRIES = [
+    "US", "CN", "DE", "JP", "IN", "GB", "FR", "IT", "BR", "CA", 
+    "KR", "AU", "MX", "ES", "ID", "NL", "SA", "CH", "TW", "PL", 
+    "SE", "BE", "SG", "HK", "ZA"
+]; // Expanded list
+
+async function runMacroBatchUpdate() {
+    console.log("🌎 [MACRO BATCH] Starting Global Economic Sync...");
+    
+    // 1. Sync Global Correlation
+    const corrData = await fetchPythonData('macro_quant', 'macro_engine.py', ['correlation']);
+    if (!corrData.error) apiCache.correlation = { data: corrData, timestamp: Date.now() };
+
+    // 2. Sync Macro & Liquidity per country
+    for (const country of SUPPORTED_COUNTRIES) {
         try {
-            const strData = data.toString().trim();
-            const lines = strData.split('\n');
-            lines.forEach(line => {
-                if (line.startsWith('{')) marketCache = JSON.parse(line);
-            });
-        } catch (e) {}
-    });
-    // Update every 15 minutes
-    worker.on('close', () => setTimeout(startMarketWatcher, 900000));
+            // Fetch Macro Explorer Data
+            const macroData = await fetchPythonData('macro_quant', 'macro_engine.py', ['macro', country]);
+            if (!macroData.error) {
+                // Save to Disk for persistence
+                const filePath = path.join(DATASET_PATH, `${country}_macro.json`);
+                fs.writeFileSync(filePath, JSON.stringify(macroData));
+                // Save to RAM for instant access
+                apiCache.macro[country] = { data: macroData, timestamp: Date.now() };
+                console.log(`✅ Cached Macro: ${country}`);
+            }
+
+            // Fetch Liquidity Data
+            const liquidityData = await fetchPythonData('macro_quant', 'macro_engine.py', ['liquidity', country]);
+            if (!liquidityData.error) apiCache.liquidity[country] = { data: liquidityData, timestamp: Date.now() };
+
+            // Wait 5 seconds between countries to respect API limits
+            await new Promise(resolve => setTimeout(resolve, 5000)); 
+        } catch (err) {
+            console.error(`❌ Batch failed for ${country}:`, err.message);
+        }
+    }
+    console.log("🏁 [MACRO BATCH] Sync Complete!");
 }
-startMarketWatcher();
 
-app.get('/api/market', (req, res) => res.json(marketCache));
+// Run the heavy Macro batch every Sunday at 3:00 AM
+cron.schedule('0 3 * * 0', runMacroBatchUpdate);
 
+// Also run once on server start
+runMacroBatchUpdate();
+
+// --- MACRO API ROUTES ---
 // ==========================================
-// 2. TOP MOVERS LOGIC (FOR HOME PAGE CARDS)
+// MACRO EXPLORER (Non-Blocking Cold Start)
 // ==========================================
-let topMoversCache = {};
+app.get('/api/macro-explorer', async (req, res) => {
+    const country = (req.query.country || 'IN').toUpperCase();
+    const diskPath = path.join(DATASET_PATH, `${country}_macro.json`);
 
-function startTopMoversWatcher() {
-    const worker = spawn(PYTHON_PATH, ['prices.py', 'TOP_MOVERS']);
-    worker.stdout.on('data', data => {
+    // LAYER 1: Fast RAM Cache
+    if (apiCache.macro[country]) {
+        return res.json(apiCache.macro[country].data);
+    }
+
+    // LAYER 2: Fast Disk Cache
+    if (fs.existsSync(diskPath)) {
         try {
-            const strData = data.toString().trim();
-            const lines = strData.split('\n');
-            lines.forEach(line => {
-                if (line.startsWith('{')) topMoversCache = JSON.parse(line);
-            });
-        } catch (e) {}
+            const data = JSON.parse(fs.readFileSync(diskPath));
+            apiCache.macro[country] = { data, timestamp: Date.now() }; // Backfill RAM
+            return res.json(data);
+        } catch (e) { console.error("Disk read error", e); }
+    }
+
+    // LAYER 3: The Cold Start Protector
+    // If a build is not already in progress, start one in the background
+    if (!apiCache.macro[`building_${country}`]) {
+        apiCache.macro[`building_${country}`] = true;
+        console.log(`☁️ Cache Miss: Building Macro Data for ${country} in background...`);
+
+        // Notice we DO NOT use 'await' here. We let it run in the background.
+        fetchPythonData('macro_quant', 'macro_engine.py', ['macro', country]).then(liveData => {
+            if (!liveData.error) {
+                fs.writeFileSync(diskPath, JSON.stringify(liveData));
+                apiCache.macro[country] = { data: liveData, timestamp: Date.now() };
+                console.log(`✅ Background Build Complete for ${country}.`);
+            }
+            // Clear the building lock
+            delete apiCache.macro[`building_${country}`];
+        });
+    }
+
+    // Instantly return a 202 Accepted status so the browser doesn't freeze
+    return res.status(202).json({ 
+        status: "building", 
+        message: "Compiling global economic data. Please wait a few seconds..." 
     });
-    // Update every 5 minutes
-    worker.on('close', () => setTimeout(startTopMoversWatcher, 300000));
+});
+app.get('/api/global-liquidity', (req, res) => {
+    const country = (req.query.country || 'US').toUpperCase();
+    if (apiCache.liquidity[country] && (Date.now() - apiCache.liquidity[country].timestamp < CACHE_TTL_MS)) return res.json(apiCache.liquidity[country].data);
+    fetchPythonData('macro_quant', 'macro_engine.py', ['liquidity', country]).then(data => res.json(data));
+});
+
+app.get('/api/correlation', (req, res) => {
+    if (apiCache.correlation && (Date.now() - apiCache.correlation.timestamp < CACHE_TTL_MS)) return res.json(apiCache.correlation.data);
+    fetchPythonData('macro_quant', 'macro_engine.py', ['correlation']).then(data => res.json(data));
+});
+
+
+// ==========================================
+// 7. SMART FEATURE CACHE (NLP, Fundamentals, Peers)
+// ==========================================
+const featureCache = {};
+const TTL_MAP = {
+    'fundamentals': 24 * 60 * 60 * 1000, 
+    'peers':        24 * 60 * 60 * 1000, 
+    'smart_money':  24 * 60 * 60 * 1000, 
+    'sentiment':     4 * 60 * 60 * 1000, 
+    'earnings_nlp':  4 * 60 * 60 * 1000, 
+    'peer_history': 12 * 60 * 60 * 1000,
+    'heatmap':       1 * 60 * 60 * 1000  
+};
+
+async function getCachedFeature(featureType, folder, scriptName, argsArray) {
+    const cacheKey = `${featureType}_${argsArray.join('_')}`;
+    const ttl = TTL_MAP[featureType] || (4 * 60 * 60 * 1000); 
+
+    if (featureCache[cacheKey] && (Date.now() - featureCache[cacheKey].timestamp < ttl)) {
+        return featureCache[cacheKey].data;
+    }
+
+    const data = await fetchPythonData(folder, scriptName, argsArray);
+
+    if (!data.error) {
+        featureCache[cacheKey] = { data: data, timestamp: Date.now() };
+    }
+    return data;
 }
-startTopMoversWatcher();
 
-app.get('/api/top-movers', (req, res) => res.json(topMoversCache));
-
-// --- FUNDAMENTALS API ---
-app.get('/api/fundamentals', (req, res) => {
-    const ticker = req.query.ticker;
-    if (!ticker) return res.status(400).json({ error: "Ticker required" });
-
-    const pythonProcess = spawn(PYTHON_PATH, ['fundamental.py', ticker]);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            const json = JSON.parse(dataString);
-            res.json(json);
-        } catch (e) {
-            console.error("Fundamentals Error:", e);
-            res.status(500).json({ error: "Failed to parse Python data" });
-        }
-    });
+// Routed API Endpoints
+app.get('/api/fundamentals', async (req, res) => {
+    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
+    res.json(await getCachedFeature('fundamentals', 'fundamentals', 'fundamentals_engine.py', ['fundamentals', req.query.ticker]));
 });
 
-// --- HEATMAP ROUTES ---
-app.get('/heatmap', requireLogin, (req, res) => {
-    res.render('heatmap');
+app.get('/api/peers', async (req, res) => {
+    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
+    res.json(await getCachedFeature('peers', 'fundamentals', 'fundamentals_engine.py', ['peers', req.query.ticker]));
 });
 
-app.get('/api/heatmap-data', (req, res) => {
-    const pythonProcess = spawn(PYTHON_PATH, ['heatmap.py']);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            const json = JSON.parse(dataString);
-            res.json(json);
-        } catch (e) {
-            res.status(500).json({ error: "Failed to load heatmap data" });
-        }
-    });
+app.get('/api/smart-money', async (req, res) => {
+    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
+    res.json(await getCachedFeature('smart_money', 'fundamentals', 'fundamentals_engine.py', ['smart_money', req.query.ticker]));
 });
 
-// --- NLP SENTIMENT API ---
-app.get('/api/sentiment', (req, res) => {
-    const ticker = req.query.ticker;
-    if (!ticker) return res.status(400).json({ error: "Ticker required" });
-
-    const pythonProcess = spawn(PYTHON_PATH, ['sentiment.py', ticker]);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            const json = JSON.parse(dataString);
-            res.json(json);
-        } catch (e) {
-            res.status(500).json({ error: "Failed to parse sentiment data" });
-        }
-    });
+app.get('/api/sentiment', async (req, res) => {
+    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
+    res.json(await getCachedFeature('sentiment', 'ml_models', 'ml_engine.py', ['sentiment', req.query.ticker]));
 });
 
-// --- SEARCH SUGGESTIONS API ---
+app.get('/api/earnings-nlp', async (req, res) => {
+    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
+    res.json(await getCachedFeature('earnings_nlp', 'ml_models', 'ml_engine.py', ['earnings', req.query.ticker]));
+});
+
+app.get('/api/peer-history', async (req, res) => {
+    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
+    res.json(await getCachedFeature('peer_history', 'ml_models', 'ml_engine.py', ['peers', req.query.ticker]));
+});
+
+app.get('/api/heatmap-data', async (req, res) => {
+    res.json(await getCachedFeature('heatmap', 'macro_quant', 'macro_engine.py', ['heatmap']));
+});
+
+
+// ==========================================
+// 8. YAHOO FINANCE SEARCH PROXY (Cached)
+// ==========================================
+const searchCache = {}; 
+const SEARCH_CACHE_TTL = 60 * 60 * 1000; 
+
 app.get('/api/search-suggest', async (req, res) => {
-    const query = req.query.q;
+    const query = req.query.q?.toLowerCase();
     if (!query) return res.json([]);
+
+    if (searchCache[query] && (Date.now() - searchCache[query].timestamp < SEARCH_CACHE_TTL)) {
+        return res.json(searchCache[query].data);
+    }
 
     try {
         const response = await axios.get(`https://query1.finance.yahoo.com/v1/finance/search?q=${query}`);
-        
         const suggestions = response.data.quotes.map(quote => {
             const isIndian = quote.exchange === 'NSI' || quote.exchange === 'BSE' || (quote.symbol && quote.symbol.endsWith('.NS')) || (quote.symbol && quote.symbol.endsWith('.BO'));
-            const region = isIndian ? '🇮🇳 India' : '🇺🇸 Global/USA';
-            
             return {
                 symbol: quote.symbol,
                 name: quote.shortname || quote.longname || quote.symbol,
-                region: region,
+                region: isIndian ? '🇮🇳 India' : '🇺🇸 Global/USA',
                 type: formatType(quote.quoteType),
                 exchange: quote.exchDisp
             };
         }).slice(0, 10);
 
-        if (query.toLowerCase().includes('gold rate')) {
-            suggestions.unshift({
-                symbol: 'GC=F',
-                name: 'Spot Gold Rate',
-                region: '🇺🇸 Global/USA',
-                type: 'Rate',
-                exchange: 'COMEX'
-            });
+        if (query.includes('gold rate')) {
+            suggestions.unshift({ symbol: 'GC=F', name: 'Spot Gold Rate', region: '🇺🇸 Global/USA', type: 'Rate', exchange: 'COMEX' });
         }
-
+        
+        searchCache[query] = { data: suggestions, timestamp: Date.now() };
         res.json(suggestions);
     } catch (err) {
-        console.error("Suggestion Error:", err.message);
         res.json([]);
     }
 });
 
 function formatType(type) {
-    const types = {
-        'EQUITY': 'Stock', 'CRYPTO': 'Crypto', 'ETF': 'ETF',
-        'INDEX': 'Index', 'CURRENCY': 'Forex', 'MUTUALFUND': 'Fund', 'FUTURE': 'Commodity'
-    };
+    const types = { 'EQUITY': 'Stock', 'CRYPTO': 'Crypto', 'ETF': 'ETF', 'INDEX': 'Index', 'CURRENCY': 'Forex', 'MUTUALFUND': 'Fund', 'FUTURE': 'Commodity' };
     return types[type] || type;
 }
 
-// --- PEER COMPARISON API ---
-app.get('/api/peers', (req, res) => {
-    const ticker = req.query.ticker;
-    if (!ticker) return res.status(400).json({ error: "Ticker required" });
-
-    const pythonProcess = spawn(PYTHON_PATH, ['peers.py', ticker]);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            const json = JSON.parse(dataString);
-            res.json(json);
-        } catch (e) {
-            res.status(500).json({ error: "Failed to fetch peer data" });
-        }
-    });
-});
-
-// --- SMART MONEY API ---
-app.get('/api/smart-money', (req, res) => {
-    const ticker = req.query.ticker;
-    if (!ticker) return res.status(400).json({ error: "Ticker required" });
-
-    const pythonProcess = spawn(PYTHON_PATH, ['smart_money.py', ticker]);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            res.json(JSON.parse(dataString));
-        } catch (e) {
-            res.status(500).json({ error: "Failed to fetch Smart Money data" });
-        }
-    });
-});
-
-// --- EARNINGS CALL NLP API ---
-app.get('/api/earnings-nlp', (req, res) => {
-    const ticker = req.query.ticker;
-    if (!ticker) return res.status(400).json({ error: "Ticker required" });
-
-    const pythonProcess = spawn(PYTHON_PATH, ['earnings_nlp.py', ticker]);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            res.json(JSON.parse(dataString));
-        } catch (e) {
-            res.status(500).json({ error: "Failed to parse NLP data" });
-        }
-    });
-});
-
-// --- FII & DII LIQUIDITY API ---
-app.get('/api/fii-dii', (req, res) => {
-    const pythonProcess = spawn(PYTHON_PATH, ['fii_dii.py']);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => {
-        dataString += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            res.json(JSON.parse(dataString));
-        } catch (e) {
-            res.status(500).json({ error: "Failed to load liquidity data" });
-        }
-    });
-});
-
-
 // ==========================================
-// 📈 SERVER-SIDE CACHE SYSTEM
-// Prevents server crashes by saving heavy Python calculations in RAM
+// 9. START SERVER
 // ==========================================
-const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // Cache expires every 12 hours
-const apiCache = {
-    macro: {},
-    liquidity: {},
-    correlation: null
-};
-
-// --- MACRO EXPLORER ROUTES ---
-app.get('/macro', requireLogin, (req, res) => {
-    const country = req.query.country || 'IN';
-    res.render('macro', { country: country });
-});
-
-// --- MACRO EXPLORER API (CACHED) ---
-app.get('/api/macro-explorer', (req, res) => {
-    const country = (req.query.country || 'IN').toUpperCase();
-    
-    // 1. Check if we have fresh data saved in RAM
-    if (apiCache.macro[country] && (Date.now() - apiCache.macro[country].timestamp < CACHE_TTL_MS)) {
-        console.log(`⚡ [CACHE HIT] Serving Macro Data for ${country}`);
-        return res.json(apiCache.macro[country].data);
-    }
-
-    // 2. If no cache, run Python
-    console.log(`🐢 [CACHE MISS] Running Python Macro Engine for ${country}...`);
-    const pythonProcess = spawn(PYTHON_PATH, ['macro_explorer.py', country]);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => { dataString += data.toString(); });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            const json = JSON.parse(dataString);
-            
-            // 3. Save the result to the RAM Cache before sending to user
-            if (!json.error) {
-                apiCache.macro[country] = { data: json, timestamp: Date.now() };
-            }
-            res.json(json);
-        } catch (e) {
-            res.status(500).json({ error: "Failed to load macro data" });
-        }
-    });
-});
-
-// --- GLOBAL LIQUIDITY API (CACHED) ---
-app.get('/api/global-liquidity', (req, res) => {
-    const country = (req.query.country || 'US').toUpperCase();
-    
-    if (apiCache.liquidity[country] && (Date.now() - apiCache.liquidity[country].timestamp < CACHE_TTL_MS)) {
-        return res.json(apiCache.liquidity[country].data);
-    }
-
-    const pythonProcess = spawn(PYTHON_PATH, ['global_liquidity.py', country]);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => { dataString += data.toString(); });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            const json = JSON.parse(dataString);
-            if (!json.error) {
-                apiCache.liquidity[country] = { data: json, timestamp: Date.now() };
-            }
-            res.json(json);
-        } catch (e) {
-            res.status(500).json({ error: "Failed to load global liquidity data" });
-        }
-    });
-});
-
-// --- CROSS-ASSET CORRELATION API (CACHED) ---
-app.get('/api/correlation', (req, res) => {
-    if (apiCache.correlation && (Date.now() - apiCache.correlation.timestamp < CACHE_TTL_MS)) {
-        return res.json(apiCache.correlation.data);
-    }
-
-    const pythonProcess = spawn(PYTHON_PATH, ['correlation.py']);
-    
-    let dataString = '';
-    pythonProcess.stdout.on('data', (data) => { dataString += data.toString(); });
-
-    pythonProcess.on('close', (code) => {
-        try {
-            const json = JSON.parse(dataString);
-            if (!json.error) {
-                apiCache.correlation = { data: json, timestamp: Date.now() };
-            }
-            res.json(json);
-        } catch (e) {
-            res.status(500).json({ error: "Failed to load correlation data" });
-        }
-    });
-});
-
 const PORT = 3000;
-app.listen(PORT, () => console.log(`StockPulse Live at: http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`🚀 FinoraPulse Live at: http://localhost:${PORT}`));
