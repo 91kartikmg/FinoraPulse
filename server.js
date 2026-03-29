@@ -7,7 +7,7 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User'); 
 const axios = require('axios'); 
-const cron = require('node-cron'); // <-- Added for Batch Scheduling
+const cron = require('node-cron'); 
 const app = express();
 
 // ==========================================
@@ -15,7 +15,7 @@ const app = express();
 // ==========================================
 const MONGO_URI = 'mongodb://127.0.0.1:27017/stockpulse_db'; 
 const SESSION_SECRET = 'supersecret_stockpulse_key'; 
-const DATASET_PATH = path.join(__dirname, 'datasets'); 
+const DATASET_PATH = path.resolve(__dirname, 'datasets'); 
 
 let PYTHON_PATH = 'python'; 
 const serverVenvPath = '/var/www/FinoraPulse/venv/bin/python3';
@@ -27,9 +27,18 @@ if (fs.existsSync(serverVenvPath)) {
     console.log(`🐍 Using Local Python Environment: ${PYTHON_PATH}`);
 }
 
+// Check and create datasets directory with robust permissions
 if (!fs.existsSync(DATASET_PATH)) {
-    fs.mkdirSync(DATASET_PATH);
+    fs.mkdirSync(DATASET_PATH, { recursive: true, mode: 0o777 });
     console.log("📁 Created datasets folder");
+} else {
+    // Attempt to test write permissions
+    try {
+        fs.accessSync(DATASET_PATH, fs.constants.W_OK);
+        console.log("📁 Dataset folder is writable.");
+    } catch (err) {
+        console.error("❌ CRITICAL: No write access to the datasets folder. Python will fail to save CSVs!");
+    }
 }
 
 // ==========================================
@@ -120,28 +129,46 @@ app.get('/predict', requireLogin, (req, res) => res.render('predict', { ticker: 
 app.get('/macro', requireLogin, (req, res) => res.render('macro', { country: req.query.country || 'IN' }));
 app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap'));
 
-
 // ==========================================
-// 4. PYTHON EXECUTION HELPER (Updated for Arrays)
+// 4. PYTHON EXECUTION HELPER (HEAVILY UPGRADED)
 // ==========================================
 function fetchPythonData(folder, scriptName, argsArray = []) {
     return new Promise((resolve) => {
-        const scriptPath = path.join(__dirname, 'python_engine', folder, scriptName);
+        const scriptPath = path.resolve(__dirname, 'python_engine', folder, scriptName);
         const args = [scriptPath, ...argsArray]; 
+        
+        // Log exactly what is being executed for easy debugging
+        console.log(`🚀 Executing: ${PYTHON_PATH} ${args.join(' ')}`);
         
         const pythonProcess = spawn(PYTHON_PATH, args);
         let dataString = '';
+        let errorString = '';
         
+        // Capture standard output (JSON from Python)
         pythonProcess.stdout.on('data', (data) => { dataString += data.toString(); });
-        pythonProcess.on('close', () => {
-            try { resolve(JSON.parse(dataString)); } 
-            catch (e) { resolve({ error: "Parse failed" }); }
+        
+        // Capture standard error (Crashes, warnings, missing libraries)
+        pythonProcess.stderr.on('data', (data) => { errorString += data.toString(); });
+        
+        pythonProcess.on('close', (code) => {
+            if (errorString) {
+                console.error(`\n[🐍 PYTHON STDERR] ${scriptName}:\n${errorString}\n`);
+            }
+            
+            try { 
+                const jsonData = JSON.parse(dataString);
+                resolve(jsonData); 
+            } catch (e) { 
+                console.error(`❌ [JSON PARSE ERROR] Failed to parse output from ${scriptName}.`);
+                console.error(`RAW OUTPUT RECEIVED:`, dataString);
+                resolve({ error: "Prediction engine failed on server. Check server console logs for Python errors." }); 
+            }
         });
     });
 }
 
 // ==========================================
-// 5. PREDICT PAGE CHART CACHE (3-Minute TTL)
+// 5. PREDICT PAGE CHART CACHE
 // ==========================================
 const predictCache = {}; 
 const PREDICT_CACHE_TTL = 3 * 60 * 1000; 
@@ -163,45 +190,35 @@ app.get('/api/stats', async (req, res) => {
     res.json(result);
 });
 
-
 // ==========================================
 // 6. MACRO BATCH DOWNLOADER & CACHE WARMER
 // ==========================================
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; 
 const apiCache = { macro: {}, liquidity: {}, correlation: null };
-// The Top 25 Global Economies (ISO Alpha-2 Codes)
 const SUPPORTED_COUNTRIES = [
     "US", "CN", "DE", "JP", "IN", "GB", "FR", "IT", "BR", "CA", 
     "KR", "AU", "MX", "ES", "ID", "NL", "SA", "CH", "TW", "PL", 
     "SE", "BE", "SG", "HK", "ZA"
-]; // Expanded list
+]; 
 
 async function runMacroBatchUpdate() {
     console.log("🌎 [MACRO BATCH] Starting Global Economic Sync...");
-    
-    // 1. Sync Global Correlation
     const corrData = await fetchPythonData('macro_quant', 'macro_engine.py', ['correlation']);
     if (!corrData.error) apiCache.correlation = { data: corrData, timestamp: Date.now() };
 
-    // 2. Sync Macro & Liquidity per country
     for (const country of SUPPORTED_COUNTRIES) {
         try {
-            // Fetch Macro Explorer Data
             const macroData = await fetchPythonData('macro_quant', 'macro_engine.py', ['macro', country]);
             if (!macroData.error) {
-                // Save to Disk for persistence
                 const filePath = path.join(DATASET_PATH, `${country}_macro.json`);
                 fs.writeFileSync(filePath, JSON.stringify(macroData));
-                // Save to RAM for instant access
                 apiCache.macro[country] = { data: macroData, timestamp: Date.now() };
                 console.log(`✅ Cached Macro: ${country}`);
             }
 
-            // Fetch Liquidity Data
             const liquidityData = await fetchPythonData('macro_quant', 'macro_engine.py', ['liquidity', country]);
             if (!liquidityData.error) apiCache.liquidity[country] = { data: liquidityData, timestamp: Date.now() };
 
-            // Wait 5 seconds between countries to respect API limits
             await new Promise(resolve => setTimeout(resolve, 5000)); 
         } catch (err) {
             console.error(`❌ Batch failed for ${country}:`, err.message);
@@ -210,58 +227,40 @@ async function runMacroBatchUpdate() {
     console.log("🏁 [MACRO BATCH] Sync Complete!");
 }
 
-// Run the heavy Macro batch every Sunday at 3:00 AM
 cron.schedule('0 3 * * 0', runMacroBatchUpdate);
-
-// Also run once on server start
 runMacroBatchUpdate();
 
-// --- MACRO API ROUTES ---
 // ==========================================
-// MACRO EXPLORER (Non-Blocking Cold Start)
+// API ROUTES (Macro, Features, Search)
 // ==========================================
 app.get('/api/macro-explorer', async (req, res) => {
     const country = (req.query.country || 'IN').toUpperCase();
     const diskPath = path.join(DATASET_PATH, `${country}_macro.json`);
 
-    // LAYER 1: Fast RAM Cache
-    if (apiCache.macro[country]) {
-        return res.json(apiCache.macro[country].data);
-    }
+    if (apiCache.macro[country]) return res.json(apiCache.macro[country].data);
 
-    // LAYER 2: Fast Disk Cache
     if (fs.existsSync(diskPath)) {
         try {
             const data = JSON.parse(fs.readFileSync(diskPath));
-            apiCache.macro[country] = { data, timestamp: Date.now() }; // Backfill RAM
+            apiCache.macro[country] = { data, timestamp: Date.now() }; 
             return res.json(data);
         } catch (e) { console.error("Disk read error", e); }
     }
 
-    // LAYER 3: The Cold Start Protector
-    // If a build is not already in progress, start one in the background
     if (!apiCache.macro[`building_${country}`]) {
         apiCache.macro[`building_${country}`] = true;
-        console.log(`☁️ Cache Miss: Building Macro Data for ${country} in background...`);
-
-        // Notice we DO NOT use 'await' here. We let it run in the background.
         fetchPythonData('macro_quant', 'macro_engine.py', ['macro', country]).then(liveData => {
             if (!liveData.error) {
                 fs.writeFileSync(diskPath, JSON.stringify(liveData));
                 apiCache.macro[country] = { data: liveData, timestamp: Date.now() };
-                console.log(`✅ Background Build Complete for ${country}.`);
             }
-            // Clear the building lock
             delete apiCache.macro[`building_${country}`];
         });
     }
 
-    // Instantly return a 202 Accepted status so the browser doesn't freeze
-    return res.status(202).json({ 
-        status: "building", 
-        message: "Compiling global economic data. Please wait a few seconds..." 
-    });
+    return res.status(202).json({ status: "building", message: "Compiling global economic data. Please wait a few seconds..." });
 });
+
 app.get('/api/global-liquidity', (req, res) => {
     const country = (req.query.country || 'US').toUpperCase();
     if (apiCache.liquidity[country] && (Date.now() - apiCache.liquidity[country].timestamp < CACHE_TTL_MS)) return res.json(apiCache.liquidity[country].data);
@@ -273,38 +272,24 @@ app.get('/api/correlation', (req, res) => {
     fetchPythonData('macro_quant', 'macro_engine.py', ['correlation']).then(data => res.json(data));
 });
 
-
-// ==========================================
-// 7. SMART FEATURE CACHE (NLP, Fundamentals, Peers)
-// ==========================================
 const featureCache = {};
 const TTL_MAP = {
-    'fundamentals': 24 * 60 * 60 * 1000, 
-    'peers':        24 * 60 * 60 * 1000, 
-    'smart_money':  24 * 60 * 60 * 1000, 
-    'sentiment':     4 * 60 * 60 * 1000, 
-    'earnings_nlp':  4 * 60 * 60 * 1000, 
-    'peer_history': 12 * 60 * 60 * 1000,
-    'heatmap':       1 * 60 * 60 * 1000  
+    'fundamentals': 24 * 60 * 60 * 1000, 'peers': 24 * 60 * 60 * 1000, 'smart_money': 24 * 60 * 60 * 1000, 
+    'sentiment': 4 * 60 * 60 * 1000, 'earnings_nlp': 4 * 60 * 60 * 1000, 'peer_history': 12 * 60 * 60 * 1000,
+    'heatmap': 1 * 60 * 60 * 1000  
 };
 
 async function getCachedFeature(featureType, folder, scriptName, argsArray) {
     const cacheKey = `${featureType}_${argsArray.join('_')}`;
     const ttl = TTL_MAP[featureType] || (4 * 60 * 60 * 1000); 
 
-    if (featureCache[cacheKey] && (Date.now() - featureCache[cacheKey].timestamp < ttl)) {
-        return featureCache[cacheKey].data;
-    }
+    if (featureCache[cacheKey] && (Date.now() - featureCache[cacheKey].timestamp < ttl)) return featureCache[cacheKey].data;
 
     const data = await fetchPythonData(folder, scriptName, argsArray);
-
-    if (!data.error) {
-        featureCache[cacheKey] = { data: data, timestamp: Date.now() };
-    }
+    if (!data.error) featureCache[cacheKey] = { data: data, timestamp: Date.now() };
     return data;
 }
 
-// Routed API Endpoints
 app.get('/api/fundamentals', async (req, res) => {
     if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
     res.json(await getCachedFeature('fundamentals', 'fundamentals', 'fundamentals_engine.py', ['fundamentals', req.query.ticker]));
@@ -335,14 +320,8 @@ app.get('/api/peer-history', async (req, res) => {
     res.json(await getCachedFeature('peer_history', 'ml_models', 'ml_engine.py', ['peers', req.query.ticker]));
 });
 
-app.get('/api/heatmap-data', async (req, res) => {
-    res.json(await getCachedFeature('heatmap', 'macro_quant', 'macro_engine.py', ['heatmap']));
-});
+app.get('/api/heatmap-data', async (req, res) => res.json(await getCachedFeature('heatmap', 'macro_quant', 'macro_engine.py', ['heatmap'])));
 
-
-// ==========================================
-// 8. YAHOO FINANCE SEARCH PROXY (Cached)
-// ==========================================
 const searchCache = {}; 
 const SEARCH_CACHE_TTL = 60 * 60 * 1000; 
 
@@ -350,9 +329,7 @@ app.get('/api/search-suggest', async (req, res) => {
     const query = req.query.q?.toLowerCase();
     if (!query) return res.json([]);
 
-    if (searchCache[query] && (Date.now() - searchCache[query].timestamp < SEARCH_CACHE_TTL)) {
-        return res.json(searchCache[query].data);
-    }
+    if (searchCache[query] && (Date.now() - searchCache[query].timestamp < SEARCH_CACHE_TTL)) return res.json(searchCache[query].data);
 
     try {
         const response = await axios.get(`https://query1.finance.yahoo.com/v1/finance/search?q=${query}`);
@@ -367,15 +344,11 @@ app.get('/api/search-suggest', async (req, res) => {
             };
         }).slice(0, 10);
 
-        if (query.includes('gold rate')) {
-            suggestions.unshift({ symbol: 'GC=F', name: 'Spot Gold Rate', region: '🇺🇸 Global/USA', type: 'Rate', exchange: 'COMEX' });
-        }
+        if (query.includes('gold rate')) suggestions.unshift({ symbol: 'GC=F', name: 'Spot Gold Rate', region: '🇺🇸 Global/USA', type: 'Rate', exchange: 'COMEX' });
         
         searchCache[query] = { data: suggestions, timestamp: Date.now() };
         res.json(suggestions);
-    } catch (err) {
-        res.json([]);
-    }
+    } catch (err) { res.json([]); }
 });
 
 function formatType(type) {
@@ -383,8 +356,5 @@ function formatType(type) {
     return types[type] || type;
 }
 
-// ==========================================
-// 9. START SERVER
-// ==========================================
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 FinoraPulse Live at: http://localhost:${PORT}`));
