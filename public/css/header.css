@@ -66,7 +66,27 @@
     z-index: 10;
 }
 
-.nav-logo { display: flex; align-items: center; gap: 15px; cursor: pointer; }
+/* In /css/header.css */
+
+.nav-logo {
+    display: flex; /* Makes items sit side-by-side */
+    align-items: center; /* Vertically centers the icon and text */
+    gap: 15px; /* Adds space between the icon and the hamburger button */
+    padding-left: 15px; /* Adds some space to the left of the button */
+    cursor: pointer; /* Keeps the click pointer for the entire logo section */
+}
+
+.hamburger-btn {
+    /* Existing styles, just make sure it sits well with the image */
+    margin: 0;
+    padding: 0;
+}
+
+.logo-full {
+    height: 46px; /* Adjust this to fit your header size */
+    width: auto; /* Maintains aspect ratio */
+    display: block; /* Removes any default inline padding/margins */
+}
 .nav-logo h2 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; color: #fff; }
 .accent { color: #00E5FF; text-shadow: 0 0 12px #00E5FF; }
 

@@ -1,12 +1,10 @@
 <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
 
-
-
 <nav class="navbar">
     <div class="nav-logo" onclick="window.location.href='/'">
         <button id="mobile-menu-btn" class="hamburger-btn">☰</button> 
-        <h2>Finora<span class="accent">Pulse</span></h2>
-    </div>
+        <img src="/images/finorapulse-logo-full.png" alt="FinoraPulse Logo" class="logo-full">
+        </div>
     
     <div class="nav-center">
         <div class="nav-links">
@@ -35,8 +33,6 @@
 </nav>
 
 <script>
-    // 1. Synchronize Top Ticker
-  
     // 1. Synchronize Top Ticker
     function updateHeaderMarketWatch() {
         fetch('/api/market').then(res => res.json()).then(data => {
