@@ -7,7 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
     
     <style>
         .nav-center { display: flex; align-items: center; gap: 40px; }
@@ -28,57 +30,122 @@
         /* Make main panel wider by overriding grid */
         .main-wrapper.wide { grid-template-columns: 280px 1fr; } 
     </style>
+    <style>
+        /* Active state for sidebar country selection */
+        .ticker-list-item.active {
+            background: var(--accent, #38bdf8);
+            color: #0f172a; /* Dark text for contrast */
+            font-weight: bold;
+        }
+        .ticker-list-item.active .symbol {
+            color: #0f172a;
+        }
+    </style>
 </head>
 <body>
+    <%- include('partials/header') %>
 
-    <div class="price-ticker-wrapper">
-        <div class="ticker-move">
-            <div class="ticker-item" data-ticker="RELIANCE.NS"><span>RELIANCE</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
-            <div class="ticker-item" data-ticker="TCS.NS"><span>TCS</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
-            <div class="ticker-item" data-ticker="HDFCBANK.NS"><span>HDFC BANK</span> <span class="price-val">₹--</span> <small class="change-val">--</small></div>
-        </div>
-    </div>
 
-    <nav class="navbar">
-        <div class="nav-logo" onclick="window.location.href='/'"><h2>StockPulse <span class="accent">AI</span></h2></div>
-        <div class="nav-center">
-            <div class="nav-links">
-                <a href="/" style="color:var(--text-muted); text-decoration:none; margin-right:20px;">Home</a>
-                <a href="/predict?ticker=RELIANCE.NS" style="color:var(--text-muted); text-decoration:none; margin-right:20px;">Predict Price</a>
-                <a href="/macro" style="color:var(--text-muted); text-decoration:none; margin-right:20px;">Macro Explorer</a>
-                <a href="/heatmap" style="color:white; font-weight:bold; text-decoration:none;">Sector Heatmap</a>
-            </div>
-            <form action="/predict" method="GET" class="nav-search" style="margin: 0;">
-                <input type="text" name="ticker" placeholder="Search Ticker (e.g. INFY.NS)..." required>
-            </form>
-        </div>
-        <div class="nav-auth">
-            <% if (user) { %>
-                <span style="margin-right: 15px; font-size: 0.85rem; color: var(--text-muted);">ID: <span style="color:white;"><%= user.username %></span></span>
-                <a href="/logout" class="btn" style="background: var(--border); color: var(--text-muted);">Logout</a>
-            <% } else { %>
-                <a href="/auth" class="btn">Login/Register</a>
-            <% } %>
-        </div>
-    </nav>
 
     <div class="main-wrapper wide">
         <aside class="ticker-sidebar">
-            <div class="sidebar-header">Market Watch</div>
-            <div class="vertical-scroll-container">
-                <div class="ticker-list-item" onclick="window.location.href='/predict?ticker=AAPL'"><span class="symbol">AAPL</span> <span class="price"><span class="price-val">$--</span></span></div>
-                <div class="ticker-list-item" onclick="window.location.href='/predict?ticker=TSLA'"><span class="symbol">TSLA</span> <span class="price"><span class="price-val">$--</span></span></div>
-                <div class="ticker-list-item" onclick="window.location.href='/predict?ticker=NVDA'"><span class="symbol">NVDA</span> <span class="price"><span class="price-val">$--</span></span></div>
-                <div class="ticker-list-item" onclick="window.location.href='/predict?ticker=SBIN.NS'"><span class="symbol">SBI</span> <span class="price"><span class="price-val">₹--</span></span></div>
+            <div class="sidebar-header">Global Markets</div>
+            <div class="vertical-scroll-container" style="overflow-y: auto; max-height: 75vh; padding-bottom: 20px;">
+                <div class="ticker-list-item <%= country === 'US' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=US'">
+                    <span class="symbol">🇺🇸 United States</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'CA' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=CA'">
+                    <span class="symbol">🇨🇦 Canada</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'MX' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=MX'">
+                    <span class="symbol">🇲🇽 Mexico</span>
+                </div>
+
+                <div class="ticker-list-item <%= country === 'IN' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=IN'">
+                    <span class="symbol">🇮🇳 India</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'CN' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=CN'">
+                    <span class="symbol">🇨🇳 China</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'HK' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=HK'">
+                    <span class="symbol">🇭🇰 Hong Kong</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'JP' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=JP'">
+                    <span class="symbol">🇯🇵 Japan</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'KR' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=KR'">
+                    <span class="symbol">🇰🇷 South Korea</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'TW' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=TW'">
+                    <span class="symbol">🇹🇼 Taiwan</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'AU' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=AU'">
+                    <span class="symbol">🇦🇺 Australia</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'SG' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=SG'">
+                    <span class="symbol">🇸🇬 Singapore</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'ID' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=ID'">
+                    <span class="symbol">🇮🇩 Indonesia</span>
+                </div>
+
+                <div class="ticker-list-item <%= country === 'GB' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=GB'">
+                    <span class="symbol">🇬🇧 United Kingdom</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'DE' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=DE'">
+                    <span class="symbol">🇩🇪 Germany</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'FR' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=FR'">
+                    <span class="symbol">🇫🇷 France</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'IT' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=IT'">
+                    <span class="symbol">🇮🇹 Italy</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'ES' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=ES'">
+                    <span class="symbol">🇪🇸 Spain</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'NL' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=NL'">
+                    <span class="symbol">🇳🇱 Netherlands</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'CH' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=CH'">
+                    <span class="symbol">🇨🇭 Switzerland</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'SE' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=SE'">
+                    <span class="symbol">🇸🇪 Sweden</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'PL' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=PL'">
+                    <span class="symbol">🇵🇱 Poland</span>
+                </div>
+
+                <div class="ticker-list-item <%= country === 'SA' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=SA'">
+                    <span class="symbol">🇸🇦 Saudi Arabia</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'TR' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=TR'">
+                    <span class="symbol">🇹🇷 Turkey</span>
+                </div>
+                <div class="ticker-list-item <%= country === 'ZA' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=ZA'">
+                    <span class="symbol">🇿🇦 South Africa</span>
+                </div>
+
+                <div class="ticker-list-item <%= country === 'BR' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=BR'">
+                    <span class="symbol">🇧🇷 Brazil</span>
+                </div>
             </div>
         </aside>
 
         <main class="content-panel">
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
                 <div>
-                    <h1 style="margin: 0; font-size: 2.2rem;">Live Market <span class="accent">Heatmap</span></h1>
+                   <h1 style="margin: 0; font-size: 2.2rem;">Live <span class="accent">
+    <%= country === 'US' ? 'United States' : 
+        country === 'IN' ? 'India' : 
+        country === 'CN' ? 'China' : 
+        country === 'GB' ? 'United Kingdom' : 
+        country === 'JP' ? 'Japan' : country %>
+</span> Heatmap</h1>
                     <p style="color: #94a3b8; margin-top: 5px;">Visualizing Market Cap (Size) & Daily Momentum (Color)</p>
                 </div>
+                
                 <div id="status-text" style="color: #f59e0b; font-weight: bold; animation: pulse 1.5s infinite;">
                     Generating Map...
                 </div>
@@ -93,7 +160,8 @@
     <script>
         async function loadHeatmap() {
             try {
-                const response = await fetch('/api/heatmap-data');
+                // Pass the EJS country variable to the API
+                const response = await fetch('/api/heatmap-data?country=<%= country %>');
                 const data = await response.json();
 
                 if(data.error) {

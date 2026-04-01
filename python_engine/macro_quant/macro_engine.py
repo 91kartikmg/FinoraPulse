@@ -146,12 +146,233 @@ def run_liquidity(country_code):
 # ==========================================
 # 3. HEATMAP ENGINE
 # ==========================================
-SECTORS = {
-    "Technology": ["TCS.NS", "INFY.NS", "WIPRO.NS", "HCLTECH.NS", "TECHM.NS"],
-    "Financials": ["HDFCBANK.NS", "ICICIBANK.NS", "SBIN.NS", "AXISBANK.NS", "KOTAKBANK.NS"],
-    "Energy & Oil": ["RELIANCE.NS", "ONGC.NS", "POWERGRID.NS", "COALINDIA.NS"],
-    "Automobile": ["TATAMOTORS.NS", "M&M.NS", "MARUTI.NS", "BAJAJ-AUTO.NS"],
-    "Consumer (FMCG)": ["ITC.NS", "HINDUNILVR.NS", "NESTLEIND.NS", "BRITANNIA.NS"]
+GLOBAL_SECTORS = {
+    # 1. UNITED STATES
+    "US": {
+        "Technology": ["AAPL", "MSFT", "NVDA", "GOOGL", "META"],
+        "Financials": ["JPM", "BAC", "WFC", "C", "GS"],
+        "Energy & Oil": ["XOM", "CVX", "COP", "SLB", "EOG"],
+        "Automobile": ["TSLA", "F", "GM", "TM", "HMC"],
+        "Healthcare": ["JNJ", "UNH", "LLY", "PFE", "MRK"],
+        "Consumer": ["PG", "KO", "PEP", "WMT", "COST"]
+    },
+    
+    # 2. INDIA (NSE)
+    "IN": {
+        "Technology": ["TCS.NS", "INFY.NS", "WIPRO.NS", "HCLTECH.NS", "TECHM.NS"],
+        "Financials": ["HDFCBANK.NS", "ICICIBANK.NS", "SBIN.NS", "AXISBANK.NS", "KOTAKBANK.NS"],
+        "Energy & Oil": ["RELIANCE.NS", "ONGC.NS", "POWERGRID.NS", "COALINDIA.NS", "NTPC.NS"],
+        "Automobile": ["TATAMOTORS.NS", "M&M.NS", "MARUTI.NS", "BAJAJ-AUTO.NS", "EICHERMOT.NS"],
+        "Healthcare": ["SUNPHARMA.NS", "CIPLA.NS", "DRREDDY.NS", "DIVISLAB.NS", "APOLLOHOSP.NS"],
+        "Consumer (FMCG)": ["ITC.NS", "HINDUNILVR.NS", "NESTLEIND.NS", "BRITANNIA.NS", "TITAN.NS"]
+    },
+    
+    # 3. CHINA (US ADRs & HK Listings for API Reliability)
+    "CN": { 
+        "Technology": ["BABA", "0700.HK", "JD", "BIDU", "NTES"],
+        "Financials": ["0939.HK", "1398.HK", "2318.HK", "3968.HK", "03988.HK"],
+        "Energy & Oil": ["0857.HK", "0386.HK", "0883.HK", "PTR", "SNP"],
+        "Automobile": ["NIO", "XPEV", "LI", "1211.HK", "0175.HK"],
+        "Consumer": ["PDD", "YUMC", "BILI", "TME", "ZTO"]
+    },
+
+    # 4. JAPAN (Tokyo Stock Exchange)
+    "JP": {
+        "Technology": ["9984.T", "6758.T", "8035.T", "6861.T", "6981.T"], # Softbank, Sony, Tokyo Electron
+        "Financials": ["8306.T", "8316.T", "8411.T", "8766.T", "8591.T"], # MUFG, SMFG
+        "Energy & Trading": ["8058.T", "8031.T", "8001.T", "5020.T", "1605.T"], # Mitsubishi, Mitsui, Eneos
+        "Automobile": ["7203.T", "7267.T", "7269.T", "7201.T", "7270.T"], # Toyota, Honda, Nissan
+        "Healthcare": ["4502.T", "4568.T", "4519.T", "4523.T", "4507.T"] # Takeda, Daiichi
+    },
+
+    # 5. UNITED KINGDOM (London Stock Exchange)
+    "GB": {
+        "Technology/Data": ["EXPN.L", "REL.L", "SGE.L", "HLMA.L", "INF.L"],
+        "Financials": ["HSBA.L", "BARC.L", "LLOY.L", "LSEG.L", "NWG.L"],
+        "Energy & Oil": ["SHEL.L", "BP.L", "NG.L", "SSE.L", "CNA.L"],
+        "Healthcare": ["AZN.L", "GSK.L", "HLN.L", "SN.L", "HIK.L"],
+        "Consumer & Auto": ["ULVR.L", "BATS.L", "DGE.L", "RR.L", "AML.L"] # Includes Rolls Royce & Aston Martin
+    },
+
+    # 6. GERMANY (Xetra)
+    "DE": {
+        "Technology": ["SAP.DE", "IFX.DE", "SY1.DE", "NEM.DE", "BEI.DE"],
+        "Financials": ["ALV.DE", "MUV2.DE", "DBK.DE", "CBK.DE", "TKA.DE"],
+        "Energy & Utilities": ["ENR.DE", "EOAN.DE", "RWE.DE", "SIE.DE", "SHL.DE"],
+        "Automobile": ["BMW.DE", "VOW3.DE", "MBG.DE", "PAH3.DE", "CON.DE"], # BMW, VW, Mercedes, Porsche
+        "Healthcare": ["BAYN.DE", "MRK.DE", "SRT3.DE", "FME.DE", "QIA.DE"]
+    },
+
+    # 7. FRANCE (Euronext Paris)
+    "FR": {
+        "Technology": ["CAP.PA", "DSY.PA", "STM.PA", "WLN.PA", "SO.PA"],
+        "Financials": ["BNP.PA", "GLE.PA", "ACA.PA", "CS.PA", "CNP.PA"],
+        "Energy & Oil": ["TTE.PA", "ENGI.PA", "LR.PA", "VK.PA", "GTT.PA"], # TotalEnergies
+        "Automobile & Aero": ["STE.PA", "RNO.PA", "AIR.PA", "SAF.PA", "HO.PA"], # Stellantis, Renault, Airbus
+        "Luxury & Consumer": ["MC.PA", "RMS.PA", "CDI.PA", "OR.PA", "KER.PA"] # LVMH, Hermes, L'Oreal
+    },
+
+    # 8. CANADA (Toronto Stock Exchange)
+    "CA": {
+        "Technology": ["SHOP.TO", "CSU.TO", "CGI.TO", "OTEX.TO", "KXS.TO"],
+        "Financials": ["RY.TO", "TD.TO", "BMO.TO", "BNS.TO", "CM.TO"],
+        "Energy & Oil": ["CNQ.TO", "SU.TO", "TRP.TO", "ENB.TO", "CVE.TO"],
+        "Mining & Materials": ["GOLD.TO", "NTR.TO", "TECK-B.TO", "FNV.TO", "WPM.TO"],
+        "Automobile & Rail": ["MG.TO", "BRP.TO", "CNR.TO", "CP.TO", "NFI.TO"] # Magna Int.
+    },
+
+    # 9. AUSTRALIA (ASX)
+    "AU": {
+        "Technology": ["WTC.AX", "XRO.AX", "CPU.AX", "REA.AX", "NXT.AX"],
+        "Financials": ["CBA.AX", "WBC.AX", "NAB.AX", "ANZ.AX", "MQG.AX"],
+        "Energy & Mining": ["BHP.AX", "RIO.AX", "WDS.AX", "FMG.AX", "STO.AX"],
+        "Healthcare": ["CSL.AX", "SHL.AX", "COH.AX", "RHC.AX", "FPH.AX"],
+        "Consumer": ["WOW.AX", "WES.AX", "COL.AX", "TLC.AX", "ALL.AX"]
+    },
+
+    # 10. SOUTH KOREA (KOSPI)
+    "KR": {
+        "Technology": ["005930.KS", "000660.KS", "035420.KS", "035720.KS", "018260.KS"], # Samsung, SK Hynix
+        "Financials": ["105560.KS", "055550.KS", "086790.KS", "316140.KS", "024110.KS"],
+        "Energy & Chem": ["096770.KS", "051910.KS", "010950.KS", "011780.KS", "267250.KS"],
+        "Automobile": ["005380.KS", "000270.KS", "012330.KS", "005385.KS", "028670.KS"], # Hyundai, Kia
+        "Consumer & Bio": ["207940.KS", "068270.KS", "051900.KS", "090430.KS", "028260.KS"]
+    },
+
+    # 11. BRAZIL (B3)
+    "BR": {
+        "Technology & FinTech": ["TOTVS3.SA", "PAGS", "STNE", "LWSA3.SA", "CIEL3.SA"],
+        "Financials": ["ITUB4.SA", "BBDC4.SA", "BBAS3.SA", "B3SA3.SA", "SANB11.SA"],
+        "Energy & Oil": ["PETR4.SA", "PETR3.SA", "PRIO3.SA", "UGPA3.SA", "VBBR3.SA"], # Petrobras
+        "Mining & Materials": ["VALE3.SA", "GGBR4.SA", "CSNA3.SA", "SUZB3.SA", "KLBN11.SA"],
+        "Consumer & Auto": ["WEGE3.SA", "RENT3.SA", "RADL3.SA", "LREN3.SA", "MGLU3.SA"]
+    },
+
+    # 12. ITALY (Borsa Italiana)
+    "IT": {
+        "Technology & Eng": ["STMMI.MI", "PRY.MI", "LEO.MI", "REC.MI", "BAMI.MI"],
+        "Financials": ["ISP.MI", "UCG.MI", "G.MI", "MB.MI", "PST.MI"],
+        "Energy & Utilities": ["ENEL.MI", "ENI.MI", "SRG.MI", "TRN.MI", "TEN.MI"],
+        "Automobile": ["RACE.MI", "PMA.MI", "STLA.MI", "PIA.MI", "BRE.MI"], # Ferrari, Pirelli
+        "Consumer": ["CPR.MI", "MONC.MI", "AMP.MI", "DIA.MI", "IG.MI"]
+    },
+
+    # 13. SPAIN (Bolsa de Madrid)
+    "ES": {
+        "Technology": ["AMADEUS.MC", "CLNX.MC", "IND.MC", "CABK.MC", "AENA.MC"],
+        "Financials": ["SAN.MC", "BBVA.MC", "CABK.MC", "SAB.MC", "BKT.MC"],
+        "Energy & Utilities": ["IBE.MC", "REP.MC", "NTGY.MC", "ELE.MC", "ENG.MC"], # Iberdrola, Repsol
+        "Automobile & Ind": ["CIE.MC", "ACS.MC", "FER.MC", "AENA.MC", "IAG.MC"],
+        "Consumer": ["ITX.MC", "GRF.MC", "MEL.MC", "VIS.MC", "FDR.MC"] # Inditex (Zara)
+    },
+
+    # 14. NETHERLANDS (Euronext Amsterdam)
+    "NL": {
+        "Technology": ["ASML.AS", "ADYEN.AS", "ASM.AS", "BESI.AS", "TKWY.AS"], # ASML, Adyen
+        "Financials": ["INGA.AS", "ABN.AS", "NN.AS", "ASRN.AS", "KPN.AS"],
+        "Energy & Chemicals": ["SHELL.AS", "AKZA.AS", "DSM.AS", "OCI.AS", "VOPA.AS"],
+        "Automobile & Ind": ["STLA.AS", "RAND.AS", "MT.AS", "IMCD.AS", "BOS.AS"], # Stellantis HQ
+        "Consumer": ["HEIA.AS", "AD.AS", "UNA.AS", "URW.AS", "JDEP.AS"]
+    },
+
+    # 15. SWITZERLAND (SIX Swiss Exchange)
+    "CH": {
+        "Technology": ["LOGN.SW", "SOON.SW", "AMS.SW", "TEMN.SW", "UHR.SW"], # Logitech
+        "Financials": ["UBSG.SW", "ZURN.SW", "SREN.SW", "SLHN.SW", "JULIUS.SW"], # UBS
+        "Healthcare (Massive)": ["NOVN.SW", "ROG.SW", "LONN.SW", "ALC.SW", "SON.SW"], # Novartis, Roche
+        "Industrials": ["ABBN.SW", "SIKA.SW", "GEBN.SW", "HOLN.SW", "KNIN.SW"],
+        "Consumer": ["NESN.SW", "CFR.SW", "UHR.SW", "LINDT.SW", "GIVN.SW"] # Nestle
+    },
+
+    # 16. TAIWAN (TWSE)
+    "TW": {
+        "Technology": ["2330.TW", "2317.TW", "2454.TW", "2308.TW", "2382.TW"], # TSMC, Foxconn, MediaTek
+        "Financials": ["2881.TW", "2882.TW", "2891.TW", "2886.TW", "2884.TW"],
+        "Energy & Plastics": ["6505.TW", "1301.TW", "1303.TW", "1326.TW", "2002.TW"],
+        "Automobile & Parts": ["2201.TW", "2207.TW", "2105.TW", "1536.TW", "2227.TW"],
+        "Telecom": ["2412.TW", "3045.TW", "4904.TW", "2603.TW", "2609.TW"]
+    },
+
+    # 17. SOUTH AFRICA (JSE)
+    "ZA": {
+        "Technology & Comms": ["NPN.JO", "PRX.JO", "MTN.JO", "VOD.JO", "TKG.JO"], # Naspers
+        "Financials": ["FSR.JO", "SBK.JO", "ABG.JO", "NED.JO", "DSY.JO"],
+        "Energy & Mining": ["SOL.JO", "AGL.JO", "GFI.JO", "SSW.JO", "ANG.JO"], # Sasol, Gold Fields
+        "Retail & Consumer": ["SHP.JO", "WHL.JO", "BVT.JO", "CPI.JO", "MRP.JO"],
+        "Healthcare": ["DSC.JO", "NTC.JO", "MEI.JO", "LHC.JO", "APN.JO"]
+    },
+
+    # 18. SWEDEN (Nasdaq Stockholm)
+    "SE": {
+        "Technology": ["ERIC-B.ST", "HEXA-B.ST", "SINCH.ST", "ENTRA.ST", "NOKIA.ST"], # Ericsson
+        "Financials": ["SEB-A.ST", "SHB-A.ST", "SWEDA.ST", "EQT.ST", "INVE-B.ST"],
+        "Automobile & Ind": ["VOLV-B.ST", "ASSA-B.ST", "ATCO-A.ST", "EPI-A.ST", "ALFA.ST"], # Volvo
+        "Healthcare": ["AZN.ST", "GETI-B.ST", "SOBI.ST", "VITR.ST", "ELEK-B.ST"],
+        "Consumer": ["HM-B.ST", "EVO.ST", "TELIA.ST", "SWMA.ST", "KINV-B.ST"]
+    },
+
+    # 19. SINGAPORE (SGX)
+    "SG": {
+        "Technology": ["V03.SI", "U96.SI", "F34.SI", "A17U.SI", "Z74.SI"],
+        "Financials": ["D05.SI", "O39.SI", "U11.SI", "S68.SI", "C38U.SI"], # DBS, OCBC, UOB
+        "Energy & Offshore": ["S51.SI", "C52.SI", "T39.SI", "BS6.SI", "CJLU.SI"],
+        "Industrials & Trans": ["C6L.SI", "S63.SI", "C31.SI", "U96.SI", "BQC.SI"], # Singtel, Airlines
+        "Real Estate": ["A17U.SI", "ME8U.SI", "N2IU.SI", "M44U.SI", "C38U.SI"]
+    },
+
+    # 20. INDONESIA (IDX)
+    "ID": {
+        "Technology": ["GOTO.JK", "EMTK.JK", "BUKA.JK", "DCII.JK", "MTEL.JK"],
+        "Financials": ["BBCA.JK", "BBRI.JK", "BMRI.JK", "BBNI.JK", "ARTO.JK"], # BCA, BRI
+        "Energy & Mining": ["BYAN.JK", "ADRO.JK", "PGAS.JK", "PTBA.JK", "MEDC.JK"],
+        "Automobile": ["ASII.JK", "AUTO.JK", "IMAS.JK", "SMSM.JK", "MASA.JK"], # Astra Int.
+        "Consumer": ["ICBP.JK", "UNVR.JK", "INDF.JK", "CPIN.JK", "KLBF.JK"]
+    },
+
+    # 21. SAUDI ARABIA (Tadawul)
+    "SA": {
+        "Technology & Comms": ["7010.SR", "7020.SR", "7030.SR", "7203.SR", "7110.SR"], # STC
+        "Financials": ["1120.SR", "1180.SR", "1060.SR", "1050.SR", "1080.SR"], # Al Rajhi
+        "Energy & Oil": ["2222.SR", "2380.SR", "2010.SR", "2020.SR", "2030.SR"], # Saudi Aramco
+        "Basic Materials": ["2010.SR", "2020.SR", "2250.SR", "2060.SR", "2280.SR"], # SABIC
+        "Healthcare": ["4002.SR", "4004.SR", "4005.SR", "4007.SR", "4013.SR"]
+    },
+
+    # 22. TURKEY (Borsa Istanbul)
+    "TR": {
+        "Technology & Defense": ["ASELS.IS", "LOGO.IS", "ARDYZ.IS", "KFEIN.IS", "MIATK.IS"],
+        "Financials": ["GARAN.IS", "AKBNK.IS", "YKBNK.IS", "ISCTR.IS", "SAHOL.IS"],
+        "Energy & Oil": ["TUPRS.IS", "ENJSA.IS", "ODAS.IS", "AKENR.IS", "GWIND.IS"],
+        "Automobile": ["TOASO.IS", "FROTO.IS", "DOAS.IS", "KARSN.IS", "OTKAR.IS"], # Tofas, Ford Otosan
+        "Consumer & Air": ["THYAO.IS", "PGSUS.IS", "BIMAS.IS", "CCOLA.IS", "MGROS.IS"] # Turkish Airlines
+    },
+
+    # 23. POLAND (Warsaw Stock Exchange)
+    "PL": {
+        "Technology (Gaming)": ["CDR.WA", "11B.WA", "TEN.WA", "PLW.WA", "PCF.WA"], # CD Projekt
+        "Financials": ["PKO.WA", "PEO.WA", "PZU.WA", "SPL.WA", "MBK.WA"],
+        "Energy & Resources": ["PKN.WA", "PGE.WA", "KGH.WA", "JSW.WA", "TPE.WA"], # PKN Orlen, KGHM
+        "Consumer": ["LPP.WA", "DNP.WA", "ALE.WA", "CCC.WA", "ACP.WA"],
+        "Telecom": ["OPL.WA", "CPS.WA", "NET.WA", "CMR.WA", "ATC.WA"]
+    },
+
+    # 24. MEXICO (BMV)
+    "MX": {
+        "Telecommunications": ["AMXL.MX", "TLEVISACPO.MX", "MEGACOA.MX", "AXTELCPO.MX", "TVEA.MX"], # America Movil
+        "Financials": ["GFNORTEO.MX", "BBAJIOO.MX", "GENTERA.MX", "Q.MX", "GCARSOA1.MX"],
+        "Materials & Mining": ["GMEXICOB.MX", "CEMEXCPO.MX", "PENOLES.MX", "ORBIA.MX", "GCC.MX"], # Cemex
+        "Consumer & Food": ["WALMEX.MX", "FEMSAUBD.MX", "BIMBOA.MX", "GRUMAB.MX", "AC.MX"],
+        "Industrials & Infra": ["ASURB.MX", "GAPB.MX", "OMAB.MX", "ALFAA.MX", "PINFRA.MX"]
+    },
+
+    # 25. HONG KONG (Hang Seng Local View)
+    "HK": {
+        "Technology": ["0700.HK", "3690.HK", "1810.HK", "9988.HK", "9618.HK"], # Tencent, Meituan, Xiaomi
+        "Financials": ["0005.HK", "1299.HK", "0388.HK", "2318.HK", "0011.HK"], # HSBC, AIA
+        "Energy & Resources": ["0883.HK", "0386.HK", "0857.HK", "0267.HK", "1088.HK"],
+        "Automobile": ["1211.HK", "0175.HK", "2015.HK", "2333.HK", "0425.HK"], # BYD, Geely
+        "Real Estate": ["0016.HK", "0001.HK", "0823.HK", "1109.HK", "1113.HK"] # Sun Hung Kai, CK Asset
+    }
 }
 
 def get_color(change):
@@ -161,17 +382,25 @@ def get_color(change):
     elif change < 0: return "#ef4444"      
     else: return "#475569"                 
 
-def run_heatmap():
+def run_heatmap(country_code="US"):
+    country_code = country_code.upper()
+    
+    # 1. Grab ONLY the requested country's sectors (Defaults to US)
+    sectors = GLOBAL_SECTORS.get(country_code, GLOBAL_SECTORS["US"])
+    
+    # 2. Extract all unique tickers for the API call
     all_tickers = []
-    for sector, tickers in SECTORS.items():
+    for sector, tickers in sectors.items():
         all_tickers.extend(tickers)
         
     try:
+        # Fetch data for all tickers at once
         data = yf.download(all_tickers, period="5d", progress=False)['Close']
         tickers_obj = yf.Tickers(" ".join(all_tickers))
         heatmap_data = []
         
-        for sector, tickers in SECTORS.items():
+        # Loop through the country's dictionary
+        for sector, tickers in sectors.items():
             sector_data = []
             for t in tickers:
                 try:
@@ -205,7 +434,6 @@ def run_heatmap():
         return heatmap_data
     except Exception as e:
         return {"error": str(e)}
-
 # ==========================================
 # 4. MACRO EXPLORER ENGINE
 # ==========================================
@@ -378,7 +606,7 @@ if __name__ == "__main__":
         elif action == "liquidity":
             result = run_liquidity(arg2)
         elif action == "heatmap":
-            result = run_heatmap()
+            result = run_heatmap(arg2)
         elif action == "macro":
             result = run_macro_explorer(arg2)
         else:

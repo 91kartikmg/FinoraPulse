@@ -21,8 +21,11 @@ warnings.filterwarnings('ignore')
 # ==========================================
 # 1. PREDICT ENGINE (XGBoost)
 # ==========================================
+# ==========================================
+# 1. PREDICT ENGINE (XGBoost)
+# ==========================================
 TF_MAP = {
-    "1h": {"interval": "1h", "period": "2y", "steps": 4, "sleep": 300},
+    # "1h" has been removed
     "90m": {"interval": "90m", "period": "2y", "steps": 4, "sleep": 300},
     "1d": {"interval": "1d", "period": "max", "steps": 5, "sleep": 3600},
     "1wk": {"interval": "1wk", "period": "max", "steps": 4, "sleep": 3600}
@@ -35,7 +38,8 @@ def run_predict(ticker, timeframe, save_dir):
     global cached_candle_time, cached_velocities
     
     is_crypto_or_forex = "-" in ticker or "=X" in ticker
-    CONFIG = TF_MAP.get(timeframe, TF_MAP["1h"])
+    # UPDATED FALLBACK from "1h" to "1d"
+    CONFIG = TF_MAP.get(timeframe, TF_MAP["1d"])
     INTERVAL = CONFIG["interval"]
     PERIOD = CONFIG["period"]
     STEPS = CONFIG["steps"]
@@ -436,7 +440,8 @@ if __name__ == "__main__":
         arg3 = sys.argv[3] if len(sys.argv) > 3 else None
         arg4 = sys.argv[4] if len(sys.argv) > 4 else None
 
-        if action == "predict": result = run_predict(ticker, arg3 if arg3 else "1h", arg4 if arg4 else ".")
+        # UPDATED FALLBACK from "1h" to "1d"
+        if action == "predict": result = run_predict(ticker, arg3 if arg3 else "1d", arg4 if arg4 else ".")
         elif action == "earnings": result = run_earnings_nlp(ticker)
         elif action == "peers": result = run_peer_history(ticker)
         elif action == "sentiment": result = run_sentiment(ticker)

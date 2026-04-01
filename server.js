@@ -127,7 +127,7 @@ app.get('/logout', (req, res) => {
 app.get('/', (req, res) => res.render('home'));
 app.get('/predict', requireLogin, (req, res) => res.render('predict', { ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase() }));
 app.get('/macro', requireLogin, (req, res) => res.render('macro', { country: req.query.country || 'IN' }));
-app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap'));
+app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap', { country: (req.query.country || 'US').toUpperCase() }));
 
 // ==========================================
 // 4. PYTHON EXECUTION HELPER (HEAVILY UPGRADED)
@@ -175,7 +175,7 @@ const PREDICT_CACHE_TTL = 3 * 60 * 1000;
 
 app.get('/api/stats', async (req, res) => {
     const ticker = req.query.ticker?.toUpperCase();
-    const timeframe = req.query.timeframe || '1h';
+    const timeframe = req.query.timeframe || '1d'; // <-- UPDATED
     
     if (!ticker) return res.status(400).json({ error: "Ticker required" });
     const cacheKey = `${ticker}_${timeframe}`;
@@ -273,20 +273,32 @@ app.get('/api/correlation', (req, res) => {
 });
 
 const featureCache = {};
+
+// 🎯 UPDATED CACHE STRATEGY 
 const TTL_MAP = {
-    'fundamentals': 24 * 60 * 60 * 1000, 'peers': 24 * 60 * 60 * 1000, 'smart_money': 24 * 60 * 60 * 1000, 
-    'sentiment': 4 * 60 * 60 * 1000, 'earnings_nlp': 4 * 60 * 60 * 1000, 'peer_history': 12 * 60 * 60 * 1000,
-    'heatmap': 1 * 60 * 60 * 1000  
+    'fundamentals': 15 * 24 * 60 * 60 * 1000,    // 15 Days (Core corporate data)
+    'peers': 15 * 24 * 60 * 60 * 1000,           // 15 Days (Competitors don't change often)
+    'smart_money_13f': 15 * 24 * 60 * 60 * 1000, // 15 Days (Quarterly institutional holdings)
+    'smart_money_smi': 24 * 60 * 60 * 1000,      // 24 Hours (End of day Smart Money Index)
+    'smart_money_options': 5 * 60 * 1000,        // 5 Minutes (Real-time whales/block trades)
+    'sentiment': 4 * 60 * 60 * 1000,             // 4 Hours (News cycles)
+    'earnings_nlp': 24 * 60 * 60 * 1000,         // 24 Hours (Earnings calls)
+    'peer_history': 12 * 60 * 60 * 1000,         // 12 Hours
+    'heatmap': 1 * 60 * 60 * 1000                // 1 Hour
 };
 
 async function getCachedFeature(featureType, folder, scriptName, argsArray) {
     const cacheKey = `${featureType}_${argsArray.join('_')}`;
     const ttl = TTL_MAP[featureType] || (4 * 60 * 60 * 1000); 
 
-    if (featureCache[cacheKey] && (Date.now() - featureCache[cacheKey].timestamp < ttl)) return featureCache[cacheKey].data;
+    if (featureCache[cacheKey] && (Date.now() - featureCache[cacheKey].timestamp < ttl)) {
+        return featureCache[cacheKey].data;
+    }
 
     const data = await fetchPythonData(folder, scriptName, argsArray);
-    if (!data.error) featureCache[cacheKey] = { data: data, timestamp: Date.now() };
+    if (!data.error) {
+        featureCache[cacheKey] = { data: data, timestamp: Date.now() };
+    }
     return data;
 }
 
@@ -300,9 +312,20 @@ app.get('/api/peers', async (req, res) => {
     res.json(await getCachedFeature('peers', 'fundamentals', 'fundamentals_engine.py', ['peers', req.query.ticker]));
 });
 
+// 🎯 UPDATED SMART MONEY ROUTE
 app.get('/api/smart-money', async (req, res) => {
-    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
-    res.json(await getCachedFeature('smart_money', 'fundamentals', 'fundamentals_engine.py', ['smart_money', req.query.ticker]));
+    const ticker = req.query.ticker;
+    const type = req.query.type || 'smi'; // Defaults to Smart Money Index if no type is passed
+    
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+
+    // Determine the correct cache key based on the type of smart money data
+    let cacheFeatureType = 'smart_money_smi';
+    if (type === '13f') cacheFeatureType = 'smart_money_13f';
+    if (type === 'options') cacheFeatureType = 'smart_money_options';
+
+    // Note: We now pass the 'type' to the python script so it knows what to scrape/calculate
+    res.json(await getCachedFeature(cacheFeatureType, 'fundamentals', 'fundamentals_engine.py', ['smart_money', ticker, type]));
 });
 
 app.get('/api/sentiment', async (req, res) => {
@@ -320,8 +343,11 @@ app.get('/api/peer-history', async (req, res) => {
     res.json(await getCachedFeature('peer_history', 'ml_models', 'ml_engine.py', ['peers', req.query.ticker]));
 });
 
-app.get('/api/heatmap-data', async (req, res) => res.json(await getCachedFeature('heatmap', 'macro_quant', 'macro_engine.py', ['heatmap'])));
-
+app.get('/api/heatmap-data', async (req, res) => {
+    const country = (req.query.country || 'US').toUpperCase();
+    const data = await fetchPythonData('macro_quant', 'macro_engine.py', ['heatmap', country]);
+    res.json(data);
+});
 const searchCache = {}; 
 const SEARCH_CACHE_TTL = 60 * 60 * 1000; 
 

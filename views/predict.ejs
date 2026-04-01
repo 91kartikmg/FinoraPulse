@@ -11,6 +11,7 @@
     
     <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
 
     <style>
         /* TECHNICAL ANALYSIS STYLES */
@@ -59,14 +60,12 @@
         <main class="content-panel">
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
                 <h1 style="margin: 0; font-size: 2.5rem;"><%= ticker %></h1>
-                <div style="text-align: right;">
+               <div style="text-align: right;">
                     <div class="tf-btn-group">
-                        <button class="tf-btn active" onclick="changeTimeframe('1h', this)">1 Hour</button>
-                        <button class="tf-btn" onclick="changeTimeframe('90m', this)">90 Min</button>
-                        <button class="tf-btn" onclick="changeTimeframe('1d', this)">1 Day</button>
+                        <button class="tf-btn active" onclick="changeTimeframe('1d', this)">1 Day</button>
                         <button class="tf-btn" onclick="changeTimeframe('1wk', this)">1 Week</button>
                     </div>
-                    <h4 id="forecast-title" style="margin: 0; color: #94a3b8;">4-Hour Forecast</h4>
+                    <h4 id="forecast-title" style="margin: 0; color: #94a3b8;">5-Day Forecast</h4>
                     <h2 id="forecast-header" style="margin: 0; font-size: 2rem;"><span id="currency-symbol">₹</span><span id="forecast-val">0.00</span></h2>
                     <div id="sync-status" style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">Connecting AI...</div>
                 </div>
@@ -311,7 +310,7 @@
 
     <script>
         const currentTicker = "<%= ticker %>";
-        let currentTimeframe = "1h"; 
+        let currentTimeframe = "1d"; // <-- UPDATED FROM '1h'
         let lastRenderedTimeframe = ""; 
         let stockChart;
 
@@ -320,7 +319,8 @@
             document.querySelectorAll('.tf-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
             
-            const titles = { '1h': '4-Hour Forecast', '90m': '6-Hour Forecast', '1d': '5-Day Forecast', '1wk': '1-Month Forecast' };
+            // Removed '1h' from this titles map just to keep it clean
+            const titles = { '90m': '6-Hour Forecast', '1d': '5-Day Forecast', '1wk': '1-Month Forecast' };
             document.getElementById('forecast-title').innerText = titles[tf];
             document.getElementById('sync-status').innerText = "Recalculating AI Model...";
             
