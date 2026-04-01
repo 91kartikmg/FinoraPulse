@@ -382,5 +382,38 @@ function formatType(type) {
     return types[type] || type;
 }
 
+
+const { SitemapStream, streamToPromise } = require('sitemap');
+const { Readable } = require('stream');
+
+// ==========================================
+// SITEMAP GENERATION
+// ==========================================
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        const links = [
+            { url: '/', changefreq: 'daily', priority: 1.0 },
+            { url: '/auth', changefreq: 'monthly', priority: 0.5 },
+            { url: '/predict', changefreq: 'daily', priority: 0.8 },
+            { url: '/macro', changefreq: 'weekly', priority: 0.7 },
+            { url: '/heatmap', changefreq: 'weekly', priority: 0.7 },
+        ];
+
+        // Create a stream to write to
+        const stream = new SitemapStream({ hostname: 'https://finorapulse.com' });
+
+        // Return a promise that resolves with the XML string
+        const xmlString = await streamToPromise(Readable.from(links).pipe(stream)).then((data) =>
+            data.toString()
+        );
+
+        res.header('Content-Type', 'application/xml');
+        res.send(xmlString);
+    } catch (e) {
+        console.error(e);
+        res.status(500).end();
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 FinoraPulse Live at: http://localhost:${PORT}`));

@@ -16,6 +16,7 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "mongoose": "^9.2.1",
-    "node-cron": "^4.2.1"
+    "node-cron": "^4.2.1",
+    "sitemap": "^9.0.1"
   }
 }
