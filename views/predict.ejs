@@ -126,9 +126,8 @@
 
             <div class="ai-metrics-bar">
                 <div class="metric-block">
-                    <span class="metric-label">Real-Time Price</span>
-                    <span class="metric-value" id="current-price-val">₹0.00</span>
-                </div>
+    <span class="metric-label">Previous Close Price</span> <span class="metric-value" id="current-price-val">₹0.00</span>
+</div>
                 <div class="metric-block">
                     <span class="metric-label">AI Direction</span>
                     <span class="metric-value" id="sentiment-val" style="color: #00E5FF;">Analyzing...</span>
@@ -182,21 +181,7 @@
                 </div>
             </div>
 
-            <div class="ta-section" style="margin-top: 20px;">
-                <div class="fundamentals-header" style="text-align: center; border: none; margin-bottom: 15px;">5-Year Peer Trajectory</div>
-                
-                <div class="fund-tabs" style="justify-content: center; margin-bottom: 20px;">
-                    <button class="fund-tab active" onclick="updatePeerHistory('Market Cap (B)', this)">Market Cap</button>
-                    <button class="fund-tab" onclick="updatePeerHistory('P/E Ratio', this)">P/E Ratio</button>
-                    <button class="fund-tab" onclick="updatePeerHistory('ROE (%)', this)">ROE</button>
-                    <button class="fund-tab" onclick="updatePeerHistory('EPS', this)">EPS</button>
-                </div>
-                
-                <div style="position: relative; height: 400px; width: 100%;">
-                    <div id="peer-history-loader" class="loading-pulse" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);">Syncing 5-Year Data...</div>
-                    <canvas id="peerHistoryChart"></canvas>
-                </div>
-            </div>
+            
 
 
             <div style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid rgba(168, 85, 247, 0.4); margin-bottom: 20px; box-shadow: 0 0 20px rgba(168, 85, 247, 0.1), inset 0 0 10px rgba(168, 85, 247, 0.05);">
@@ -261,9 +246,9 @@
                         <div class="loading-pulse">Running NLP on Latest Headlines...</div>
                     </div>
                 </div>
-            </div>
+            </div>  
             <br>
-            <div class="sentiment-container" style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: 100%;">
+            <div class="sentiment-container" style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: 400px;">
                     <div class="fundamentals-header" style="display: flex; justify-content: space-between;">
                         <span>Smart Money Flow</span>
                         <span id="sm-status" style="font-weight: bold; font-size: 0.85rem; color: #8E9BAE;">Scanning...</span>

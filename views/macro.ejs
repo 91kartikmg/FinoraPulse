@@ -298,6 +298,7 @@
                 }
 
                 // --- 2. CORE CHARTS ---
+                // --- 2. CORE CHARTS ---
                 if(data.gdp_total_trend && data.gdp_total_trend.length > 0) {
                     new Chart(document.getElementById('gdpTotalChart').getContext('2d'), {
                         type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Total GDP (USD)', data: data.gdp_total_trend, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
@@ -308,35 +309,35 @@
                 if(data.gdp_trend && data.inflation_trend) {
                     new Chart(document.getElementById('historyChart').getContext('2d'), {
                         type: 'line', data: { labels: data.history_years, datasets: [ { label: 'GDP Growth (%)', data: data.gdp_trend, borderColor: '#22c55e', borderWidth: 3, tension: 0.3, fill: false, pointRadius: 4 }, { label: 'Inflation (%)', data: data.inflation_trend, borderColor: '#ef4444', borderWidth: 3, borderDash: [5, 5], tension: 0.3, fill: false, pointRadius: 4 } ]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
                     });
                 }
 
                 if(data.unemployment_trend && data.unemployment_trend.length > 0) {
                     new Chart(document.getElementById('unemploymentChart').getContext('2d'), {
                         type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Unemployment Rate (%)', data: data.unemployment_trend, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
                     });
                 }
 
                 if(data.bond_trend && data.bond_trend.length > 0 && data.bond_trend.some(val => val !== null)) {
                     new Chart(document.getElementById('bondChart').getContext('2d'), {
                         type: 'line', data: { labels: data.history_years, datasets: [{ label: '10-Year Bond Yield (%)', data: data.bond_trend, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
                     });
                 }
 
                 if(data.interest_rate_trend && data.interest_rate_trend.length > 0) {
                     new Chart(document.getElementById('interestRateChart').getContext('2d'), {
                         type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Interest Rate (%)', data: data.interest_rate_trend, borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
                     });
                 }
 
                 if(data.debt_trend && data.debt_trend.length > 0) {
                     new Chart(document.getElementById('debtChart').getContext('2d'), {
                         type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Debt to GDP (%)', data: data.debt_trend, borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
                     });
                 }
 
@@ -354,7 +355,7 @@
                     
                     new Chart(document.getElementById('advancedExportChart').getContext('2d'), {
                         type: 'bar', data: { labels: expLabels, datasets: [{ label: '% of Total Exports', data: expValues, backgroundColor: '#38bdf8', borderRadius: 4 }] },
-                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => val + '%' } }, y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { weight: 'bold' } } } } }
+                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { weight: 'bold' } } } } }
                     });
                 }
 
