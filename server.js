@@ -1,79 +1,127 @@
 const express = require('express');
 const { spawn } = require('child_process');
 const path = require('path');
-const fs = require('fs'); 
+const fs = require('fs').promises; 
+const fsSync = require('fs'); 
 const mongoose = require('mongoose');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
-const User = require('./models/User'); 
-const axios = require('axios'); 
-const cron = require('node-cron'); 
+const User = require('./models/User');
+const Admin = require('./models/Admin'); // <-- Isolated Admin Model
+const axios = require('axios');
+const cron = require('node-cron');
+const { Mutex } = require('async-mutex');
+const { LRUCache } = require('lru-cache');
+
 const app = express();
 
 // ==========================================
 // 1. CONFIGURATION & ENVIRONMENT
 // ==========================================
-const MONGO_URI = 'mongodb://127.0.0.1:27017/stockpulse_db'; 
-const SESSION_SECRET = 'supersecret_stockpulse_key'; 
-const DATASET_PATH = path.resolve(__dirname, 'datasets'); 
-const CACHE_DIR = path.resolve(__dirname, 'server_cache'); // NEW: Dedicated disk cache folder
+const MONGO_URI = 'mongodb://127.0.0.1:27017/stockpulse_db';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'supersecret_stockpulse_key';
+const DATASET_PATH = path.resolve(__dirname, 'datasets');
+const CACHE_DIR = path.resolve(__dirname, 'server_cache');
 
-let PYTHON_PATH = 'python'; 
+let PYTHON_PATH = process.env.PYTHON_PATH || (process.platform === 'win32' ? 'python' : 'python3');
 const serverVenvPath = '/var/www/FinoraPulse/venv/bin/python3';
-
-if (fs.existsSync(serverVenvPath)) {
+if (fsSync.existsSync(serverVenvPath)) {
     PYTHON_PATH = serverVenvPath;
     console.log(`🐍 Using Server Python Environment: ${PYTHON_PATH}`);
 } else {
-    console.log(`🐍 Using Local Python Environment: ${PYTHON_PATH}`);
+    console.log(`🐍 Using Python: ${PYTHON_PATH}`);
 }
 
-// Check and create folders with robust permissions
-if (!fs.existsSync(DATASET_PATH)) {
-    fs.mkdirSync(DATASET_PATH, { recursive: true, mode: 0o777 });
-    console.log("📁 Created datasets folder");
-}
-if (!fs.existsSync(CACHE_DIR)) {
-    fs.mkdirSync(CACHE_DIR, { recursive: true, mode: 0o777 });
-    console.log("📁 Created server_cache folder for Disk Caching");
-}
-
-// ==========================================
-// 1.5 ASYNC DISK CACHE SYSTEM (Saves RAM)
-// ==========================================
-async function getDiskCache(rawKey, ttlMs) {
-    // Make key safe for filenames (removes weird characters)
-    const safeKey = rawKey.replace(/[^a-z0-9_]/gi, '_');
-    const filePath = path.join(CACHE_DIR, `${safeKey}.json`);
-    
-    try {
-        const stats = await fs.promises.stat(filePath);
-        if (Date.now() - stats.mtimeMs < ttlMs) {
-            const rawData = await fs.promises.readFile(filePath, 'utf-8');
-            return JSON.parse(rawData);
-        } else {
-            // Delete expired cache file to save disk space
-            await fs.promises.unlink(filePath).catch(() => {});
-        }
-    } catch (e) {
-        return null; // File doesn't exist or expired
+[ DATASET_PATH, CACHE_DIR ].forEach(dir => {
+    if (!fsSync.existsSync(dir)) {
+        fsSync.mkdirSync(dir, { recursive: true, mode: 0o755 });
+        console.log(`📁 Created ${path.basename(dir)} folder`);
     }
+});
+
+// ==========================================
+// 2. CACHE SYSTEM
+// ==========================================
+const memoryCache = new LRUCache({
+    max: 500,
+    ttl: 60 * 1000, 
+    allowStale: false,
+    updateAgeOnGet: true
+});
+
+const cacheMutexes = new Map();
+
+function sanitizeKey(rawKey) {
+    return rawKey.replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+}
+
+async function getCache(rawKey, ttlMs) {
+    const safeKey = sanitizeKey(rawKey);
+    const memData = memoryCache.get(safeKey);
+    if (memData !== undefined) return memData;
+
+    const filePath = path.join(CACHE_DIR, `${safeKey}.json`);
+    try {
+        const stats = await fs.stat(filePath);
+        if (Date.now() - stats.mtimeMs < ttlMs) {
+            const raw = await fs.readFile(filePath, 'utf-8');
+            const data = JSON.parse(raw);
+            memoryCache.set(safeKey, data);
+            return data;
+        } else {
+            fs.unlink(filePath).catch(() => {});
+        }
+    } catch (e) {}
     return null;
 }
 
-async function setDiskCache(rawKey, data) {
-    const safeKey = rawKey.replace(/[^a-z0-9_]/gi, '_');
+async function setCache(rawKey, data) {
+    const safeKey = sanitizeKey(rawKey);
     const filePath = path.join(CACHE_DIR, `${safeKey}.json`);
-    try {
-        await fs.promises.writeFile(filePath, JSON.stringify(data));
-    } catch (e) {
-        console.error(`❌ Disk Cache Write Error for ${safeKey}:`, e.message);
-    }
+    const tmpPath = `${filePath}.tmp`;
+
+    if (!cacheMutexes.has(safeKey)) cacheMutexes.set(safeKey, new Mutex());
+    const mutex = cacheMutexes.get(safeKey);
+
+    await mutex.runExclusive(async () => {
+        try {
+            await fs.writeFile(tmpPath, JSON.stringify(data));
+            await fs.rename(tmpPath, filePath);
+            memoryCache.set(safeKey, data);
+        } catch (err) {
+            console.error(`❌ Cache write error for ${safeKey}:`, err.message);
+            await fs.unlink(tmpPath).catch(() => {});
+            throw err;
+        }
+    });
 }
 
+async function cleanupExpiredCache() {
+    const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; 
+    try {
+        const files = await fs.readdir(CACHE_DIR);
+        const now = Date.now();
+        let deletedCount = 0;
+        for (const file of files) {
+            if (!file.endsWith('.json')) continue;
+            const filePath = path.join(CACHE_DIR, file);
+            try {
+                const stats = await fs.stat(filePath);
+                if (now - stats.mtimeMs > MAX_AGE_MS) {
+                    await fs.unlink(filePath);
+                    deletedCount++;
+                }
+            } catch (e) {}
+        }
+        if (deletedCount > 0) console.log(`🧹 Cleaned ${deletedCount} expired cache files`);
+    } catch (err) {}
+}
+
+cron.schedule('0 4 * * *', cleanupExpiredCache);
+cleanupExpiredCache();
 
 // ==========================================
-// 2. MIDDLEWARE & AUTHENTICATION
+// 3. MIDDLEWARE & AUTHENTICATION
 // ==========================================
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -83,7 +131,7 @@ app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 } 
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }
 }));
 
 app.set('view engine', 'ejs');
@@ -93,21 +141,32 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected"))
     .catch(err => console.error("❌ MongoDB Error:", err));
 
+// --- GATEKEEPERS ---
 const requireLogin = (req, res, next) => {
     if (!req.session.userId) return res.redirect('/auth');
+    next();
+};
+
+const requireAdmin = (req, res, next) => {
+    // Isolated check: Admin session must exist
+    if (!req.session.adminId) return res.redirect('/admin/login');
     next();
 };
 
 app.use(async (req, res, next) => {
     res.locals.user = null;
     if (req.session.userId) {
-        const user = await User.findById(req.session.userId);
-        if (user) res.locals.user = user;
+        try {
+            const user = await User.findById(req.session.userId);
+            if (user) res.locals.user = user;
+        } catch (e) {}
     }
     next();
 });
 
-// --- AUTH ROUTES ---
+// ==========================================
+// 4. USER AUTH ROUTES
+// ==========================================
 app.get('/auth', (req, res) => {
     if (req.session.userId) return res.redirect('/');
     res.render('auth');
@@ -153,20 +212,78 @@ app.get('/logout', (req, res) => {
 });
 
 // ==========================================
-// 3. FRONTEND PAGE ROUTES
+// ADMIN ROUTES (Combined View)
+// ==========================================
+
+// 1. Main Admin Route (Handles both Login UI and Dashboard UI)
+app.get('/admin', (req, res) => {
+    // We pass adminId and error to the EJS file so it knows which UI to render
+    res.render('admin', { 
+        adminId: req.session.adminId || null, 
+        error: null 
+    });
+});
+
+// 2. Process Admin Login
+app.post('/admin/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const admin = await Admin.findOne({ email: email.toLowerCase() });
+        if (!admin) return res.render('admin', { adminId: null, error: "Access Denied: Invalid Credentials" });
+
+        const isMatch = await bcrypt.compare(password, admin.password);
+        if (!isMatch) return res.render('admin', { adminId: null, error: "Access Denied: Invalid Credentials" });
+
+        // Success! Set session and reload the page (it will now show the dashboard)
+        req.session.adminId = admin._id;
+        res.redirect('/admin');
+    } catch (err) {
+        res.render('admin', { adminId: null, error: "System Error. Try again." });
+    }
+});
+
+// 3. Admin Logout
+app.get('/admin/logout', (req, res) => {
+    req.session.adminId = null;
+    res.redirect('/admin'); // Redirecting back to /admin will automatically show the login form
+});
+
+// 4. Admin API (Protected by manual check)
+app.get('/api/admin/analytics', async (req, res) => {
+    // We manually check here so no one can access the API without logging in
+    if (!req.session.adminId) return res.status(403).json({ error: "Unauthorized" });
+
+    try {
+        const totalUsers = await User.countDocuments();
+        res.json({
+            success: true,
+            totalSignups: totalUsers,
+            serverUptime: Math.floor(process.uptime() / 3600) + " Hours",
+            cachedItems: memoryCache.size,
+            activeModels: 4 
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: "Analytics fetch failed" });
+    }
+});
+
+// ==========================================
+// 6. FRONTEND PAGE ROUTES
 // ==========================================
 app.get('/', (req, res) => res.render('home'));
 app.get('/predict', requireLogin, (req, res) => res.render('predict', { ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase() }));
 app.get('/macro', requireLogin, (req, res) => res.render('macro', { country: req.query.country || 'IN' }));
 app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap', { country: (req.query.country || 'US').toUpperCase() }));
+app.get('/calculators', (req, res) => res.render('calculator'));
+
 
 // ==========================================
-// 4. PYTHON EXECUTION HELPER 
+// 8. PYTHON EXECUTION HELPER
 // ==========================================
 function fetchPythonData(folder, scriptName, argsArray = []) {
     return new Promise((resolve) => {
         const scriptPath = path.resolve(__dirname, 'python_engine', folder, scriptName);
-        const args = [scriptPath, ...argsArray]; 
+        const args = [scriptPath, ...argsArray];
         
         console.log(`🚀 Executing: ${PYTHON_PATH} ${args.join(' ')}`);
         
@@ -181,80 +298,211 @@ function fetchPythonData(folder, scriptName, argsArray = []) {
             if (errorString) {
                 console.error(`\n[🐍 PYTHON STDERR] ${scriptName}:\n${errorString}\n`);
             }
-            try { 
+            try {
                 const jsonData = JSON.parse(dataString);
-                resolve(jsonData); 
-            } catch (e) { 
+                resolve(jsonData);
+            } catch (e) {
                 console.error(`❌ [JSON PARSE ERROR] Failed to parse output from ${scriptName}.`);
-                resolve({ error: "Prediction engine failed on server. Check server console logs for Python errors." }); 
+                resolve({ error: "Prediction engine failed on server. Check server console logs for Python errors." });
             }
         });
     });
 }
 
 // ==========================================
-// 5. PREDICT PAGE CHART CACHE (Disk Based)
+// 9. CACHE TTL & APIS
 // ==========================================
-// ==========================================
-// 5. PREDICT PAGE CHART CACHE (Disk Based)
-// ==========================================
-const PREDICT_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 Hours
+const TTL = {
+    PREDICT: 12 * 60 * 60 * 1000,
+    MACRO: 12 * 60 * 60 * 1000,
+    FUNDAMENTALS: 15 * 24 * 60 * 60 * 1000,
+    PEERS: 15 * 24 * 60 * 60 * 1000,
+    SMART_MONEY_13F: 15 * 24 * 60 * 60 * 1000,
+    SMART_MONEY_SMI: 24 * 60 * 60 * 1000,
+    SMART_MONEY_OPTIONS: 5 * 60 * 1000,
+    SENTIMENT: 4 * 60 * 60 * 1000,
+    EARNINGS_NLP: 24 * 60 * 60 * 1000,
+    HEATMAP: 1 * 60 * 60 * 1000,
+    SEARCH: 30 * 60 * 1000,
+    CORRELATION: 12 * 60 * 60 * 1000
+};
+
+async function cachedFetch(cacheKey, ttlMs, fetchFn) {
+    const cached = await getCache(cacheKey, ttlMs);
+    if (cached !== null) {
+        console.log(`⚡ Cache HIT: ${cacheKey}`);
+        return cached;
+    }
+    console.log(`🔄 Cache MISS: ${cacheKey}, fetching fresh...`);
+    const data = await fetchFn();
+    if (data && !data.error) {
+        await setCache(cacheKey, data);
+    }
+    return data;
+}
 
 app.get('/api/stats', async (req, res) => {
     const ticker = req.query.ticker?.toUpperCase();
-    const timeframe = req.query.timeframe || '1d'; 
-    
+    const timeframe = req.query.timeframe || '1d';
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+    const todayDate = new Date().toISOString().split('T')[0];
+    const cacheKey = `predict_${ticker}_${timeframe}_${todayDate}`;
+    const result = await cachedFetch(cacheKey, TTL.PREDICT, () =>
+        fetchPythonData('ml_models', 'ml_engine.py', ['predict', ticker, timeframe, DATASET_PATH])
+    );
+    res.json(result);
+});
+
+app.get('/api/macro-explorer', async (req, res) => {
+    const country = (req.query.country || 'IN').toUpperCase();
+    const result = await cachedFetch(`macro_${country}`, TTL.MACRO, () =>
+        fetchPythonData('macro_quant', 'macro_engine.py', ['macro', country])
+    );
+    res.json(result);
+});
+
+app.get('/api/global-liquidity', async (req, res) => {
+    const country = (req.query.country || 'US').toUpperCase();
+    const result = await cachedFetch(`liquidity_${country}`, TTL.MACRO, () =>
+        fetchPythonData('macro_quant', 'macro_engine.py', ['liquidity', country])
+    );
+    res.json(result);
+});
+
+app.get('/api/correlation', async (req, res) => {
+    const result = await cachedFetch('macro_correlation', TTL.CORRELATION, () =>
+        fetchPythonData('macro_quant', 'macro_engine.py', ['correlation'])
+    );
+    res.json(result);
+});
+
+app.get('/api/fundamentals', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+    const result = await cachedFetch(`feature_fundamentals_${ticker}`, TTL.FUNDAMENTALS, () =>
+        fetchPythonData('fundamentals', 'fundamentals_engine.py', ['fundamentals', ticker])
+    );
+    res.json(result);
+});
+
+app.get('/api/peers', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+    const result = await cachedFetch(`feature_peers_${ticker}`, TTL.PEERS, () =>
+        fetchPythonData('fundamentals', 'fundamentals_engine.py', ['peers', ticker])
+    );
+    res.json(result);
+});
+
+app.get('/api/smart-money', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    const type = req.query.type || 'smi';
     if (!ticker) return res.status(400).json({ error: "Ticker required" });
 
-    const todayDate = new Date().toISOString().split('T')[0]; 
-    const cacheKey = `predict_${ticker}_${timeframe}_${todayDate}`;
+    let cacheKey, ttlMs;
+    if (type === '13f') { cacheKey = `feature_smart_money_13f_${ticker}`; ttlMs = TTL.SMART_MONEY_13F; }
+    else if (type === 'options') { cacheKey = `feature_smart_money_options_${ticker}`; ttlMs = TTL.SMART_MONEY_OPTIONS; }
+    else { cacheKey = `feature_smart_money_smi_${ticker}`; ttlMs = TTL.SMART_MONEY_SMI; }
 
-    // Read from Hard Drive instead of RAM
-    const cachedData = await getDiskCache(cacheKey, PREDICT_CACHE_TTL);
-    if (cachedData) {
-        console.log(`⚡ Serving locked daily prediction from DISK for ${ticker} (${timeframe})`);
-        return res.json(cachedData);
-    }
-
-    // Fetch data using the newly optimized Python script
-    const result = await fetchPythonData('ml_models', 'ml_engine.py', ['predict', ticker, timeframe, DATASET_PATH]);
-    
-    if (!result.error) {
-        await setDiskCache(cacheKey, result); // Save to Hard Drive
-    }
-    
-    res.json(result); 
+    const result = await cachedFetch(cacheKey, ttlMs, () =>
+        fetchPythonData('fundamentals', 'fundamentals_engine.py', ['smart_money', ticker, type])
+    );
+    res.json(result);
 });
+
+app.get('/api/sentiment', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+    const result = await cachedFetch(`feature_sentiment_${ticker}`, TTL.SENTIMENT, () =>
+        fetchPythonData('ml_models', 'ml_engine.py', ['sentiment', ticker])
+    );
+    res.json(result);
+});
+
+app.get('/api/earnings-nlp', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+    const result = await cachedFetch(`feature_earnings_nlp_${ticker}`, TTL.EARNINGS_NLP, () =>
+        fetchPythonData('ml_models', 'ml_engine.py', ['earnings', ticker])
+    );
+    res.json(result);
+});
+
+app.get('/api/heatmap-data', async (req, res) => {
+    const country = (req.query.country || 'US').toUpperCase();
+    const result = await cachedFetch(`heatmap_${country}`, TTL.HEATMAP, () =>
+        fetchPythonData('macro_quant', 'macro_engine.py', ['heatmap', country])
+    );
+    res.json(result);
+});
+
+function formatType(type) {
+    const types = {
+        'EQUITY': 'Stock', 'CRYPTO': 'Crypto', 'ETF': 'ETF', 'INDEX': 'Index',
+        'CURRENCY': 'Forex', 'MUTUALFUND': 'Fund', 'FUTURE': 'Commodity'
+    };
+    return types[type] || type;
+}
+
+app.get('/api/search-suggest', async (req, res) => {
+    const query = req.query.q?.toLowerCase();
+    if (!query) return res.json([]);
+
+    const result = await cachedFetch(`search_${query}`, TTL.SEARCH, async () => {
+        try {
+            const response = await axios.get(`https://query1.finance.yahoo.com/v1/finance/search?q=${query}`);
+            const suggestions = response.data.quotes.map(quote => {
+                const isIndian = quote.exchange === 'NSI' || quote.exchange === 'BSE' || (quote.symbol && quote.symbol.endsWith('.NS')) || (quote.symbol && quote.symbol.endsWith('.BO'));
+                return {
+                    symbol: quote.symbol,
+                    name: quote.shortname || quote.longname || quote.symbol,
+                    region: isIndian ? '🇮🇳 India' : '🇺🇸 Global/USA',
+                    type: formatType(quote.quoteType),
+                    exchange: quote.exchDisp
+                };
+            }).slice(0, 10);
+
+            if (query.includes('gold rate')) {
+                suggestions.unshift({
+                    symbol: 'GC=F', name: 'Spot Gold Rate', region: '🇺🇸 Global/USA', type: 'Rate', exchange: 'COMEX'
+                });
+            }
+            return suggestions;
+        } catch (err) {
+            return [];
+        }
+    });
+    res.json(result || []);
+});
+
 // ==========================================
-// 6. MACRO BATCH DOWNLOADER & CACHE WARMER
+// 10. MACRO BATCH PRE-WARMER
 // ==========================================
-const MACRO_CACHE_TTL_MS = 12 * 60 * 60 * 1000; 
 const SUPPORTED_COUNTRIES = [
-    "US", "CN", "DE", "JP", "IN", "GB", "FR", "IT", "BR", "CA", 
-    "KR", "AU", "MX", "ES", "ID", "NL", "SA", "CH", "TW", "PL", 
+    "US", "CN", "DE", "JP", "IN", "GB", "FR", "IT", "BR", "CA",
+    "KR", "AU", "MX", "ES", "ID", "NL", "SA", "CH", "TW", "PL",
     "SE", "BE", "SG", "HK", "ZA"
-]; 
+];
 
 async function runMacroBatchUpdate() {
     console.log("🌎 [MACRO BATCH] Starting Global Economic Sync...");
-    const corrData = await fetchPythonData('macro_quant', 'macro_engine.py', ['correlation']);
-    if (!corrData.error) await setDiskCache('macro_correlation', corrData);
+    try {
+        const corrData = await fetchPythonData('macro_quant', 'macro_engine.py', ['correlation']);
+        if (!corrData.error) await setCache('macro_correlation', corrData);
+    } catch (e) {}
 
     for (const country of SUPPORTED_COUNTRIES) {
         try {
             const macroData = await fetchPythonData('macro_quant', 'macro_engine.py', ['macro', country]);
             if (!macroData.error) {
-                await setDiskCache(`macro_${country}`, macroData);
-                console.log(`✅ Cached Macro to Disk: ${country}`);
+                await setCache(`macro_${country}`, macroData);
+                console.log(`✅ Cached Macro: ${country}`);
             }
-
             const liquidityData = await fetchPythonData('macro_quant', 'macro_engine.py', ['liquidity', country]);
-            if (!liquidityData.error) await setDiskCache(`liquidity_${country}`, liquidityData);
+            if (!liquidityData.error) await setCache(`liquidity_${country}`, liquidityData);
 
-            await new Promise(resolve => setTimeout(resolve, 5000)); 
-        } catch (err) {
-            console.error(`❌ Batch failed for ${country}:`, err.message);
-        }
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        } catch (err) {}
     }
     console.log("🏁 [MACRO BATCH] Sync Complete!");
 }
@@ -263,155 +511,11 @@ cron.schedule('0 3 * * 0', runMacroBatchUpdate);
 runMacroBatchUpdate();
 
 // ==========================================
-// API ROUTES (Macro, Features, Search)
+// 11. SITEMAP GENERATION
 // ==========================================
-const buildLocks = {}; // Tiny RAM object just to prevent simultaneous Python script spawns
-
-app.get('/api/macro-explorer', async (req, res) => {
-    const country = (req.query.country || 'IN').toUpperCase();
-    const cacheKey = `macro_${country}`;
-
-    const cachedData = await getDiskCache(cacheKey, MACRO_CACHE_TTL_MS);
-    if (cachedData) return res.json(cachedData);
-
-    if (!buildLocks[`building_${country}`]) {
-        buildLocks[`building_${country}`] = true;
-        fetchPythonData('macro_quant', 'macro_engine.py', ['macro', country]).then(async liveData => {
-            if (!liveData.error) {
-                await setDiskCache(cacheKey, liveData);
-            }
-            delete buildLocks[`building_${country}`];
-        });
-    }
-
-    return res.status(202).json({ status: "building", message: "Compiling global economic data. Please wait a few seconds..." });
-});
-
-app.get('/api/global-liquidity', async (req, res) => {
-    const country = (req.query.country || 'US').toUpperCase();
-    const cachedData = await getDiskCache(`liquidity_${country}`, MACRO_CACHE_TTL_MS);
-    if (cachedData) return res.json(cachedData);
-    
-    fetchPythonData('macro_quant', 'macro_engine.py', ['liquidity', country]).then(data => res.json(data));
-});
-
-app.get('/api/correlation', async (req, res) => {
-    const cachedData = await getDiskCache('macro_correlation', MACRO_CACHE_TTL_MS);
-    if (cachedData) return res.json(cachedData);
-
-    fetchPythonData('macro_quant', 'macro_engine.py', ['correlation']).then(data => res.json(data));
-});
-
-
-// 🎯 DISK CACHE STRATEGY FOR FEATURES
-const TTL_MAP = {
-    'fundamentals': 15 * 24 * 60 * 60 * 1000,    // 15 Days 
-    'peers': 15 * 24 * 60 * 60 * 1000,           // 15 Days 
-    'smart_money_13f': 15 * 24 * 60 * 60 * 1000, // 15 Days 
-    'smart_money_smi': 24 * 60 * 60 * 1000,      // 24 Hours 
-    'smart_money_options': 5 * 60 * 1000,        // 5 Minutes 
-    'sentiment': 4 * 60 * 60 * 1000,             // 4 Hours 
-    'earnings_nlp': 24 * 60 * 60 * 1000,         // 24 Hours 
-    'peer_history': 12 * 60 * 60 * 1000,         // 12 Hours
-    'heatmap': 1 * 60 * 60 * 1000                // 1 Hour
-};
-
-async function getCachedFeature(featureType, folder, scriptName, argsArray) {
-    const cacheKey = `feature_${featureType}_${argsArray.join('_')}`;
-    const ttl = TTL_MAP[featureType] || (4 * 60 * 60 * 1000); 
-
-    // Look for file on disk
-    const cachedData = await getDiskCache(cacheKey, ttl);
-    if (cachedData) return cachedData;
-
-    const data = await fetchPythonData(folder, scriptName, argsArray);
-    if (!data.error) {
-        await setDiskCache(cacheKey, data); // Write file to disk
-    }
-    return data;
-}
-
-app.get('/api/fundamentals', async (req, res) => {
-    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
-    res.json(await getCachedFeature('fundamentals', 'fundamentals', 'fundamentals_engine.py', ['fundamentals', req.query.ticker]));
-});
-
-app.get('/api/peers', async (req, res) => {
-    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
-    res.json(await getCachedFeature('peers', 'fundamentals', 'fundamentals_engine.py', ['peers', req.query.ticker]));
-});
-
-app.get('/api/smart-money', async (req, res) => {
-    const ticker = req.query.ticker;
-    const type = req.query.type || 'smi'; 
-    if (!ticker) return res.status(400).json({ error: "Ticker required" });
-
-    let cacheFeatureType = 'smart_money_smi';
-    if (type === '13f') cacheFeatureType = 'smart_money_13f';
-    if (type === 'options') cacheFeatureType = 'smart_money_options';
-
-    res.json(await getCachedFeature(cacheFeatureType, 'fundamentals', 'fundamentals_engine.py', ['smart_money', ticker, type]));
-});
-
-app.get('/api/sentiment', async (req, res) => {
-    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
-    res.json(await getCachedFeature('sentiment', 'ml_models', 'ml_engine.py', ['sentiment', req.query.ticker]));
-});
-
-app.get('/api/earnings-nlp', async (req, res) => {
-    if (!req.query.ticker) return res.status(400).json({ error: "Ticker required" });
-    res.json(await getCachedFeature('earnings_nlp', 'ml_models', 'ml_engine.py', ['earnings', req.query.ticker]));
-});
-
-app.get('/api/heatmap-data', async (req, res) => {
-    const country = (req.query.country || 'US').toUpperCase();
-    const data = await fetchPythonData('macro_quant', 'macro_engine.py', ['heatmap', country]);
-    res.json(data);
-});
-
-
-// 🎯 DISK CACHE STRATEGY FOR SEARCH
-const SEARCH_CACHE_TTL = 60 * 60 * 1000; 
-
-app.get('/api/search-suggest', async (req, res) => {
-    const query = req.query.q?.toLowerCase();
-    if (!query) return res.json([]);
-
-    const cacheKey = `search_${query}`;
-    const cachedData = await getDiskCache(cacheKey, SEARCH_CACHE_TTL);
-    if (cachedData) return res.json(cachedData);
-
-    try {
-        const response = await axios.get(`https://query1.finance.yahoo.com/v1/finance/search?q=${query}`);
-        const suggestions = response.data.quotes.map(quote => {
-            const isIndian = quote.exchange === 'NSI' || quote.exchange === 'BSE' || (quote.symbol && quote.symbol.endsWith('.NS')) || (quote.symbol && quote.symbol.endsWith('.BO'));
-            return {
-                symbol: quote.symbol,
-                name: quote.shortname || quote.longname || quote.symbol,
-                region: isIndian ? '🇮🇳 India' : '🇺🇸 Global/USA',
-                type: formatType(quote.quoteType),
-                exchange: quote.exchDisp
-            };
-        }).slice(0, 10);
-
-        if (query.includes('gold rate')) suggestions.unshift({ symbol: 'GC=F', name: 'Spot Gold Rate', region: '🇺🇸 Global/USA', type: 'Rate', exchange: 'COMEX' });
-        
-        await setDiskCache(cacheKey, suggestions); // Save Search to Disk
-        res.json(suggestions);
-    } catch (err) { res.json([]); }
-});
-
-function formatType(type) {
-    const types = { 'EQUITY': 'Stock', 'CRYPTO': 'Crypto', 'ETF': 'ETF', 'INDEX': 'Index', 'CURRENCY': 'Forex', 'MUTUALFUND': 'Fund', 'FUTURE': 'Commodity' };
-    return types[type] || type;
-}
-
 const { SitemapStream, streamToPromise } = require('sitemap');
 const { Readable } = require('stream');
 
-// ==========================================
-// SITEMAP GENERATION
-// ==========================================
 app.get('/sitemap.xml', async (req, res) => {
     try {
         const links = [
@@ -421,19 +525,33 @@ app.get('/sitemap.xml', async (req, res) => {
             { url: '/macro', changefreq: 'weekly', priority: 0.7 },
             { url: '/heatmap', changefreq: 'weekly', priority: 0.7 },
         ];
-
         const stream = new SitemapStream({ hostname: 'https://finorapulse.com' });
-        const xmlString = await streamToPromise(Readable.from(links).pipe(stream)).then((data) =>
-            data.toString()
-        );
-
+        const xmlString = await streamToPromise(Readable.from(links).pipe(stream)).then(data => data.toString());
         res.header('Content-Type', 'application/xml');
         res.send(xmlString);
     } catch (e) {
-        console.error(e);
         res.status(500).end();
     }
 });
 
-const PORT = 3000;
+// 🚨 TEMPORARY SETUP ROUTE: DELETE AFTER RUNNING ONCE 🚨
+// 🚨 TEMPORARY SETUP ROUTE: DELETE AFTER RUNNING ONCE 🚨
+app.get('/setup-admin', async (req, res) => {
+    try {
+        const hashedPassword = await bcrypt.hash('91kartikmg@KKK', 10);
+        const newAdmin = new Admin({
+            email: 'kartikgowda94@gmail.com', // Replace with your desired admin email
+            password: hashedPassword
+        });
+        await newAdmin.save();
+        res.send("Admin created successfully! Now delete this route from server.js.");
+    } catch (err) {
+        res.send("Error or admin already exists.");
+    }
+});
+
+// ==========================================
+// 12. START SERVER
+// ==========================================
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 FinoraPulse Live at: http://localhost:${PORT}`));
