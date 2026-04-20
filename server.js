@@ -248,25 +248,81 @@ app.get('/admin/logout', (req, res) => {
     res.redirect('/admin'); // Redirecting back to /admin will automatically show the login form
 });
 
+
 // 4. Admin API (Protected by manual check)
 app.get('/api/admin/analytics', async (req, res) => {
-    // We manually check here so no one can access the API without logging in
     if (!req.session.adminId) return res.status(403).json({ error: "Unauthorized" });
 
     try {
         const totalUsers = await User.countDocuments();
+        
+        // Fetch traffic data
+        const viewsDoc = await mongoose.connection.db.collection('site_analytics').findOne({ metric: 'total_views' });
+        const totalViews = viewsDoc ? viewsDoc.count : 0;
+
+        // Fetch the last 7 days of traffic for the chart
+        const past7Days = [...Array(7)].map((_, i) => {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            return d.toISOString().split('T')[0];
+        }).reverse();
+
+        const dailyStats = await mongoose.connection.db.collection('site_analytics')
+            .find({ metric: 'daily_views', date: { $in: past7Days } })
+            .toArray();
+
+        // Map the database results to the 7 days (filling missing days with 0)
+        const chartData = past7Days.map(date => {
+            const stat = dailyStats.find(s => s.date === date);
+            return stat ? stat.count : 0;
+        });
+
+        // Format dates for chart labels (e.g., "Mon", "Tue")
+        const chartLabels = past7Days.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' }));
+
         res.json({
             success: true,
             totalSignups: totalUsers,
+            totalPageViews: totalViews,
             serverUptime: Math.floor(process.uptime() / 3600) + " Hours",
-            cachedItems: memoryCache.size,
-            activeModels: 4 
+            activeModels: 4,
+            chartData: {
+                labels: chartLabels,
+                data: chartData
+            }
         });
     } catch (error) {
         res.status(500).json({ success: false, error: "Analytics fetch failed" });
     }
 });
 
+
+// --- TRAFFIC TRACKING MIDDLEWARE ---
+app.use(async (req, res, next) => {
+    // Only track GET requests that are actual page visits (not API calls, CSS, JS, or images)
+    if (req.method === 'GET' && !req.url.startsWith('/api') && !req.url.includes('.')) {
+        try {
+            const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            
+            // Track Total Views
+            await mongoose.connection.db.collection('site_analytics').updateOne(
+                { metric: 'total_views' },
+                { $inc: { count: 1 } },
+                { upsert: true }
+            );
+
+            // Track Views for Today (for the chart)
+            await mongoose.connection.db.collection('site_analytics').updateOne(
+                { metric: 'daily_views', date: today },
+                { $inc: { count: 1 } },
+                { upsert: true }
+            );
+        } catch (e) {
+            console.error("Tracking Error:", e.message);
+        }   
+    }
+    next();
+});
 // ==========================================
 // 6. FRONTEND PAGE ROUTES
 // ==========================================

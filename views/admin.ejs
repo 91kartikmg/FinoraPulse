@@ -97,8 +97,8 @@
                 <span class="metric-value" id="val-users">--</span>
             </div>
             <div class="metric-card" style="border-left-color: #38bdf8;">
-                <span class="metric-label">Items in Cache</span>
-                <span class="metric-value" id="val-cache">--</span>
+                <span class="metric-label">Total Page Views</span>
+                <span class="metric-value" id="val-views">--</span>
             </div>
             <div class="metric-card" style="border-left-color: #00FF9D;">
                 <span class="metric-label">Server Uptime</span>
@@ -122,34 +122,45 @@
     </div>
 
     <script>
+        let activityChartInstance = null;
+
         async function loadAdminAnalytics() {
             try {
                 const response = await fetch('/api/admin/analytics');
                 const data = await response.json();
                 if (data.success) {
                     document.getElementById('val-users').innerText = data.totalSignups;
-                    document.getElementById('val-cache').innerText = data.cachedItems;
-                    document.getElementById('val-uptime').innerText = data.serverUptime.split(' ')[0]; // Just the number
+                    // UPDATED THIS LINE
+                    document.getElementById('val-views').innerText = data.totalPageViews;
+                    document.getElementById('val-uptime').innerText = data.serverUptime.split(' ')[0];
                     document.getElementById('val-models').innerText = data.activeModels;
+
+                    // Initialize or update the chart with REAL data
+                    initChart(data.chartData.labels, data.chartData.data);
                 }
-            } catch (err) {}
+            } catch (err) {
+                console.error("Error loading analytics:", err);
+            }
         }
 
-        function initChart() {
+        function initChart(labels, data) {
             const ctx = document.getElementById('activityChart').getContext('2d');
             
-            // Adding a beautiful gradient to the bars
             let gradient = ctx.createLinearGradient(0, 0, 0, 400);
             gradient.addColorStop(0, '#a855f7');   
             gradient.addColorStop(1, 'rgba(168, 85, 247, 0.1)');
 
-            new Chart(ctx, {
+            if (activityChartInstance) {
+                activityChartInstance.destroy(); // Destroy old chart before drawing new one
+            }
+
+            activityChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    labels: labels, // Real dates
                     datasets: [{
-                        label: 'Estimated API Calls',
-                        data: [120, 190, 300, 250, 400, 320, 450],
+                        label: 'Page Views',
+                        data: data, // Real numbers
                         backgroundColor: gradient,
                         borderRadius: 6,
                         borderWidth: 1,
@@ -166,7 +177,7 @@
                     scales: {
                         y: { 
                             grid: { color: 'rgba(51, 65, 85, 0.5)', drawBorder: false }, 
-                            ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } } 
+                            ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' }, stepSize: 1 } 
                         },
                         x: { 
                             grid: { display: false }, 
@@ -176,8 +187,8 @@
                 }
             });
         }
+        
         loadAdminAnalytics();
-        initChart();
     </script>
 
 <% } else { %>
