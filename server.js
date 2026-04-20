@@ -256,9 +256,13 @@ app.get('/api/admin/analytics', async (req, res) => {
     try {
         const totalUsers = await User.countDocuments();
         
-        // Fetch traffic data
+        // Fetch Page Views
         const viewsDoc = await mongoose.connection.db.collection('site_analytics').findOne({ metric: 'total_views' });
         const totalViews = viewsDoc ? viewsDoc.count : 0;
+
+        // 👇 NEW: Fetch API Requests 👇
+        const apiDoc = await mongoose.connection.db.collection('site_analytics').findOne({ metric: 'total_api_requests' });
+        const totalApiRequests = apiDoc ? apiDoc.count : 0;
 
         // Fetch the last 7 days of traffic for the chart
         const past7Days = [...Array(7)].map((_, i) => {
@@ -271,55 +275,51 @@ app.get('/api/admin/analytics', async (req, res) => {
             .find({ metric: 'daily_views', date: { $in: past7Days } })
             .toArray();
 
-        // Map the database results to the 7 days (filling missing days with 0)
         const chartData = past7Days.map(date => {
             const stat = dailyStats.find(s => s.date === date);
             return stat ? stat.count : 0;
         });
 
-        // Format dates for chart labels (e.g., "Mon", "Tue")
         const chartLabels = past7Days.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' }));
 
         res.json({
             success: true,
             totalSignups: totalUsers,
             totalPageViews: totalViews,
+            totalApiRequests: totalApiRequests, // <-- Added here
             serverUptime: Math.floor(process.uptime() / 3600) + " Hours",
-            activeModels: 4,
-            chartData: {
-                labels: chartLabels,
-                data: chartData
-            }
+            chartData: { labels: chartLabels, data: chartData }
         });
     } catch (error) {
         res.status(500).json({ success: false, error: "Analytics fetch failed" });
     }
 });
 
-
 // --- TRAFFIC TRACKING MIDDLEWARE ---
 app.use(async (req, res, next) => {
-    // Only track GET requests that are actual page visits (not API calls, CSS, JS, or images)
-    if (req.method === 'GET' && !req.url.startsWith('/api') && !req.url.includes('.')) {
+    // Only track GET requests (ignore CSS, JS, or images)
+    if (req.method === 'GET' && !req.url.includes('.')) {
         try {
-            const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            const today = new Date().toISOString().split('T')[0]; 
             
-            // Track Total Views
-            await mongoose.connection.db.collection('site_analytics').updateOne(
-                { metric: 'total_views' },
-                { $inc: { count: 1 } },
-                { upsert: true }
-            );
-
-            // Track Views for Today (for the chart)
-            await mongoose.connection.db.collection('site_analytics').updateOne(
-                { metric: 'daily_views', date: today },
-                { $inc: { count: 1 } },
-                { upsert: true }
-            );
+            // IF it's a normal page visit (not an API call)
+            if (!req.url.startsWith('/api')) {
+                await mongoose.connection.db.collection('site_analytics').updateOne(
+                    { metric: 'total_views' }, { $inc: { count: 1 } }, { upsert: true }
+                );
+                await mongoose.connection.db.collection('site_analytics').updateOne(
+                    { metric: 'daily_views', date: today }, { $inc: { count: 1 } }, { upsert: true }
+                );
+            } 
+            // IF it IS an API call (but ignore the admin dashboard polling itself)
+            else if (req.url.startsWith('/api') && !req.url.includes('/admin/analytics')) {
+                await mongoose.connection.db.collection('site_analytics').updateOne(
+                    { metric: 'total_api_requests' }, { $inc: { count: 1 } }, { upsert: true }
+                );
+            }
         } catch (e) {
             console.error("Tracking Error:", e.message);
-        }   
+        }
     }
     next();
 });
