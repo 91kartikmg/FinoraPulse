@@ -3,12 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinoraPulse AI | Professional Terminal</title>
+    
+    <title>FinoraPulse AI | Real-Time Stock Market Predictions & Terminal</title>
+    <meta name="title" content="FinoraPulse AI | Real-Time Stock Market Predictions & Terminal">
+    <meta name="description" content="FinoraPulse is an advanced AI-powered stock market prediction terminal. Access real-time algorithmic analysis, live tick data, market sentiment, and liquidity matrices.">
+    <meta name="keywords" content="AI stock predictions, algorithmic trading dashboard, real-time market sentiment, stock market AI, FinoraPulse, financial analytics, FII DII data, live stock charts, crypto prediction">
+    <meta name="author" content="Kartik M G (FinoraPulse.com)">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    
+    <link rel="canonical" href="https://finorapulse.com/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://finorapulse.com/">
+    <meta property="og:title" content="FinoraPulse AI | Real-Time Stock Market Terminal">
+    <meta property="og:description" content="Advanced algorithmic stock market analysis and AI sentiment dashboard. Detect market pulse and trends in real-time.">
+    <meta property="og:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://finorapulse.com/">
+    <meta property="twitter:title" content="FinoraPulse AI | Market Prediction Terminal">
+    <meta property="twitter:description" content="Advanced algorithmic stock market analysis and AI sentiment dashboard. Detect market pulse and trends in real-time.">
+    <meta property="twitter:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
     <link rel="icon" type="image/x-icon" href="/favicon.png">
+    
     <meta name="google-adsense-account" content="ca-pub-9322873035906803">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "FinoraPulse AI Terminal",
+      "url": "https://finorapulse.com",
+      "description": "An advanced AI-powered dashboard for real-time stock market predictions, algorithmic sentiment analysis, and liquidity tracking.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web Browser",
+      "author": {
+        "@type": "Person",
+        "name": "Kartik M G"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FinoraPulse",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://finorapulse.com/images/finorapulse-log.png"
+        }
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Real-time AI market sentiment",
+        "Algorithmic stock predictions",
+        "FII/DII Liquidity Matrix",
+        "Live technical charting"
+      ]
+    }
+    </script>
+
     <style>
         /* =========================================
            NEXT-LEVEL TERMINAL THEME
@@ -25,6 +84,12 @@
         }
 
         body { background: var(--term-bg); color: var(--text-main); margin: 0; }
+
+        /* Visually hide H1 for SEO but keep it readable for screen readers */
+        .sr-only {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; 
+            overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+        }
 
         /* CRT Screen Effect */
         .crt-overlay {
@@ -91,8 +156,7 @@
             background: rgba(0, 255, 65, 0.05); border: 1px solid rgba(0, 255, 65, 0.3);
             transform: translateX(5px); box-shadow: -5px 0 15px rgba(0, 255, 65, 0.1);
         }
-    </style>
-    <style>
+        
         .pinora{
             width: 100%;
             height: 200px;
@@ -109,16 +173,16 @@
     <div class="main-wrapper">
         <%- include('partials/sidebar') %>
 
-        
-
         <main class="content-panel" style="padding: 30px;">
+            
+            <h1 class="sr-only">FinoraPulse AI - Stock Market Prediction Terminal</h1>
+            
             <div class="pinora">
-                <img src="/images/finorapulse-log.png" alt="FinoraPulse Logo" width="60%">
-        </div>
+                <img src="/images/finorapulse-log.png" alt="FinoraPulse AI Stock Prediction Terminal Logo" width="60%">
+            </div>
             
             <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                 <div>
-                    
                     <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
                         <span style="height: 8px; width: 8px; background: var(--neon-green); border-radius: 50%; animation: pulse-glow 2s infinite;"></span>
                         <span style="font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono'; letter-spacing: 1px;">
@@ -143,7 +207,6 @@
                 <div class="crt-overlay"></div>
                 <div class="radar-scan" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></div>
                 
-               
                 <canvas id="tv-chart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; cursor: crosshair;"></canvas>
 
                 <div class="chart-hud">

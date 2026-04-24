@@ -126,24 +126,29 @@
     </div>
 
     <script>
-        let activityChartInstance = null;
-
         async function loadAdminAnalytics() {
     try {
         const response = await fetch('/api/admin/analytics');
         const data = await response.json();
         if (data.success) {
             document.getElementById('val-users').innerText = data.totalSignups;
-            document.getElementById('val-cache').innerText = data.cachedItems; // If you still have this card
+            
+            // ❌ REMOVED: document.getElementById('val-cache').innerText = data.cachedItems; 
+            // This was causing a fatal TypeError because 'val-cache' doesn't exist in the HTML.
+            
             document.getElementById('val-uptime').innerText = data.serverUptime.split(' ')[0];
             
-            // 👇 Check if you have a card with id 'val-views' or 'val-api' and update them
             if(document.getElementById('val-views')) document.getElementById('val-views').innerText = data.totalPageViews;
             if(document.getElementById('val-api')) document.getElementById('val-api').innerText = data.totalApiRequests;
+            
+            // ✅ ADDED: Update the Active Models card (Placeholder value, update as needed)
+            if(document.getElementById('val-models')) document.getElementById('val-models').innerText = "4"; 
 
             initChart(data.chartData.labels, data.chartData.data);
         }
-    } catch (err) {}
+    } catch (err) {
+        console.error("Dashboard error:", err);
+    }
 }
 
         function initChart(labels, data) {

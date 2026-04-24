@@ -225,6 +225,7 @@ app.get('/admin', (req, res) => {
 });
 
 // 2. Process Admin Login
+// 2. Process Admin Login
 app.post('/admin/login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -234,9 +235,12 @@ app.post('/admin/login', async (req, res) => {
         const isMatch = await bcrypt.compare(password, admin.password);
         if (!isMatch) return res.render('admin', { adminId: null, error: "Access Denied: Invalid Credentials" });
 
-        // Success! Set session and reload the page (it will now show the dashboard)
+        // CRITICAL FIX: Force the session to save before redirecting
         req.session.adminId = admin._id;
-        res.redirect('/admin');
+        req.session.save((err) => {
+            if (err) console.error("Session save error:", err);
+            res.redirect('/admin');
+        });
     } catch (err) {
         res.render('admin', { adminId: null, error: "System Error. Try again." });
     }
@@ -330,7 +334,7 @@ app.get('/', (req, res) => res.render('home'));
 app.get('/predict', requireLogin, (req, res) => res.render('predict', { ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase() }));
 app.get('/macro', requireLogin, (req, res) => res.render('macro', { country: req.query.country || 'IN' }));
 app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap', { country: (req.query.country || 'US').toUpperCase() }));
-app.get('/calculators', (req, res) => res.render('calculator'));
+app.get('/ ', (req, res) => res.render('calculator'));
 
 
 // ==========================================
