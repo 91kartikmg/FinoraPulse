@@ -49,6 +49,39 @@
         
         .chart-card { min-height: 450px; }
         #liveChart { display: block; width: 100% !important; height: 100% !important; }
+
+        /* ✨ MOBILE SCROLL WRAPPERS ✨ */
+        .scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+        }
+        
+        .scroll-wrapper::-webkit-scrollbar { height: 6px; }
+        .scroll-wrapper::-webkit-scrollbar-track { background: #080a0c; border-radius: 10px; }
+        .scroll-wrapper::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        @media screen and (max-width: 768px) {
+            .ai-metrics-bar {
+                display: flex;
+                flex-wrap: nowrap !important;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                gap: 15px;
+                padding-bottom: 10px;
+                /* Optional smooth scrolling behavior */
+                scroll-behavior: smooth;
+            }
+            .ai-metrics-bar::-webkit-scrollbar { height: 6px; }
+            .ai-metrics-bar::-webkit-scrollbar-track { background: #080a0c; border-radius: 10px; }
+            .ai-metrics-bar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+            .metric-block {
+                min-width: 200px;
+                flex-shrink: 0;
+            }
+        }
     </style>
 </head> 
 <body>
@@ -120,15 +153,19 @@
 
             <div class="chart-card">
                 <div class="fundamentals-header" style="border: none; padding-bottom: 0; color: #8E9BAE;">AI Projection Path</div>
-                <div style="position: relative; height: 400px; width: 100%;">
-                    <canvas id="liveChart"></canvas>
+                
+                <div class="scroll-wrapper" id="main-chart-scroll">
+                    <div style="position: relative; height: 400px; min-width: 800px;">
+                        <canvas id="liveChart"></canvas>
+                    </div>
                 </div>
+
             </div>
 
-            <div class="ai-metrics-bar">
+            <div class="ai-metrics-bar" id="metrics-scroll">
                 <div class="metric-block">
-    <span class="metric-label">Previous Close Price</span> <span class="metric-value" id="current-price-val">₹0.00</span>
-</div>
+                    <span class="metric-label">Previous Close Price</span> <span class="metric-value" id="current-price-val">₹0.00</span>
+                </div>
                 <div class="metric-block">
                     <span class="metric-label">AI Direction</span>
                     <span class="metric-value" id="sentiment-val" style="color: #00E5FF;">Analyzing...</span>
@@ -276,15 +313,21 @@
                     <button class="fund-tab" onclick="updateFundChart('mc', this)">Market Cap Growth</button>
                     <button class="fund-tab" onclick="updateFundChart('roe', this)">ROE Momentum</button>
                 </div>
-                <div style="position: relative; height: 350px; width: 100%;">
-                    <canvas id="fundamentalHistoryChart"></canvas>
+                
+                <div class="scroll-wrapper" id="fund-chart-scroll">
+                    <div style="position: relative; height: 350px; min-width: 800px;">
+                        <canvas id="fundamentalHistoryChart"></canvas>
+                    </div>
                 </div>
             </div>
 
             <div class="fund-chart-container" id="income-stmt-section" style="margin-top: 20px;">
                 <div class="fundamentals-header">Quarterly Profit & Loss (Revenue vs Net Income)</div>
-                <div style="position: relative; height: 350px; width: 100%;">
-                    <canvas id="incomeStmtChart"></canvas>
+                
+                <div class="scroll-wrapper" id="income-chart-scroll">
+                    <div style="position: relative; height: 350px; min-width: 800px;">
+                        <canvas id="incomeStmtChart"></canvas>
+                    </div>
                 </div>
             </div>
             
@@ -296,16 +339,24 @@
 
     <script>
         const currentTicker = "<%= ticker %>";
-        let currentTimeframe = "1d"; // <-- UPDATED FROM '1h'
+        let currentTimeframe = "1d"; 
         let lastRenderedTimeframe = ""; 
         let stockChart;
+
+        // ✨ AUTO-SCROLL FUNCTION ✨
+        function scrollToLatest() {
+            const wrappers = document.querySelectorAll('.scroll-wrapper, .ai-metrics-bar');
+            wrappers.forEach(container => {
+                // Instantly snaps scroll to the right edge
+                container.scrollLeft = container.scrollWidth;
+            });
+        }
 
         function changeTimeframe(tf, btnElement) {
             currentTimeframe = tf;
             document.querySelectorAll('.tf-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
             
-            // Removed '1h' from this titles map just to keep it clean
             const titles = { '90m': '6-Hour Forecast', '1d': '5-Day Forecast', '1wk': '1-Month Forecast' };
             document.getElementById('forecast-title').innerText = titles[tf];
             document.getElementById('sync-status').innerText = "Recalculating AI Model...";
@@ -330,8 +381,6 @@
 
             const allLabels = [...historyTimes, ...futureTimes];
             const actualLine = [...historyPrices, ...new Array(futurePrices.length).fill(null)];
-            
-            // Align AI past tracking correctly
             const aiPastLine = [...historyAIPrices, ...new Array(futurePrices.length).fill(null)];
 
             const predictedLine = new Array(historyPrices.length - 1).fill(null);
@@ -364,6 +413,9 @@
                     }
                 }
             });
+
+            // Call scroll function slightly after chart init
+            setTimeout(scrollToLatest, 100);
         }
 
         function refresh() {
@@ -499,8 +551,6 @@
                         initChart(data); 
                     } else {
                         stockChart.data.labels = [...data.history_times, ...data.future_times];
-                        
-                        // THIS WAS THE FIX: Make sure Actual, Tracking, and Future datasets match our array structure!
                         stockChart.data.datasets[0].data = data.history_prices.concat(new Array(data.future_prices.length).fill(null));
                         
                         if(data.history_ai_prices) {
@@ -512,6 +562,7 @@
                         stockChart.data.datasets[2].data = predictedLine.concat(data.future_prices);
                         
                         stockChart.update('none');
+                        setTimeout(scrollToLatest, 100);
                     }
 
                 }).catch(err => console.log("Waiting for network...", err));
@@ -570,6 +621,9 @@
             else if (type === 'mc') { gradient.addColorStop(0, 'rgba(0, 255, 157, 0.4)'); gradient.addColorStop(1, 'rgba(0, 255, 157, 0.0)'); datasets = [ { type: 'line', label: 'Market Cap', data: fundHistoryData.market_cap, borderColor: '#00FF9D', backgroundColor: gradient, borderWidth: 3, fill: true, tension: 0.4, pointRadius: 1 } ]; yAxisConfig.ticks.callback = function(val) { let curSy = document.getElementById('currency-symbol').innerText; if (val >= 1e12) return curSy + (val / 1e12).toFixed(2) + 'T'; if (val >= 1e9) return curSy + (val / 1e9).toFixed(2) + 'B'; return curSy + val; }; }
             else if (type === 'roe') { gradient.addColorStop(0, 'rgba(255, 0, 127, 0.4)'); gradient.addColorStop(1, 'rgba(255, 0, 127, 0.0)'); datasets = [ { type: 'line', label: 'ROE (%)', data: fundHistoryData.roe, borderColor: '#FF007F', backgroundColor: gradient, borderWidth: 3, fill: true, tension: 0.4, pointRadius: 1 } ]; yAxisConfig.ticks.callback = function(val) { return val + '%'; }; }
             advancedFundChart = new Chart(ctx, { data: { labels: fundHistoryData.years, datasets: datasets }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#ffffff', font: { weight: 'bold' } } } }, scales: { x: { grid: { display: false }, ticks: { color: '#8E9BAE', font: { weight: 'bold' }, autoSkip: true, maxTicksLimit: 12 } }, y: yAxisConfig } } });
+            
+            // Auto-scroll logic
+            setTimeout(scrollToLatest, 100);
         }
 
         function renderIncomeChart(curSy) {
@@ -614,6 +668,9 @@
                     } 
                 } 
             });
+
+            // Auto-scroll logic
+            setTimeout(scrollToLatest, 100);
         }
         
         fetchFundamentals(currentTicker); 
@@ -637,7 +694,6 @@
                 const response = await fetch(`/api/peers?ticker=${ticker}`);
                 const data = await response.json();
                 
-                // Elegant Error Message
                 if (data.error || !data.target) {
                     const ctx = peerTarget.getContext('2d');
                     ctx.fillStyle = '#8E9BAE';
@@ -647,7 +703,6 @@
                     return;
                 }
 
-                // Format data for the two distinct colors
                 const targetPoint = { x: data.target.pe, y: data.target.roce, name: data.target.name, ticker: data.target.ticker };
                 const peerPoints = data.peers.map(p => ({ x: p.pe, y: p.roce, name: p.name, ticker: p.ticker }));
 
@@ -660,7 +715,7 @@
                             {
                                 label: 'Target Asset',
                                 data: [targetPoint],
-                                backgroundColor: '#a855f7', // Glowing Purple
+                                backgroundColor: '#a855f7', 
                                 borderColor: '#fff',
                                 borderWidth: 2,
                                 pointRadius: 8,
@@ -669,7 +724,7 @@
                             {
                                 label: 'Industry Competitors',
                                 data: peerPoints,
-                                backgroundColor: 'rgba(56, 189, 248, 0.6)', // Light Blue
+                                backgroundColor: 'rgba(56, 189, 248, 0.6)',
                                 borderColor: '#38bdf8',
                                 borderWidth: 1,
                                 pointRadius: 6,
@@ -720,15 +775,8 @@
             }
         }
         
-
-        // This was missing from your script!
         loadPeerComparison(currentTicker);
 
-
-
-
-
-        // --- SMART MONEY FETCH LOGIC ---
         async function fetchSmartMoney(ticker) {
             try {
                 const response = await fetch(`/api/smart-money?ticker=${ticker}`);
@@ -747,7 +795,6 @@
                     return;
                 }
 
-                // 1. Color Code Insider Status
                 statusEl.innerText = data.insider_status;
                 if(data.insider_status === "Bullish") {
                     statusEl.style.color = "#00FF9D";
@@ -764,11 +811,8 @@
                 }
                 insiderText.innerText = data.insider_text;
 
-                // 2. Set Institutional Holding %
                 instPct.innerText = `${data.inst_percent || '--'} Held`;
 
-                // 3. List Top Institutions
-                // 3. List Top Institutions
                 if(data.institutions && data.institutions.length > 0) {
                     instTarget.innerHTML = data.institutions.map(inst => `
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 15px;">
@@ -785,129 +829,7 @@
             }
         }
         
-        // Make sure to call it!
         fetchSmartMoney(currentTicker);
-
-    </script>
-
-    <script>
-        // --- EARNINGS NLP FETCH LOGIC ---
-        async function fetchEarningsNLP(ticker) {
-            try {
-                const response = await fetch(`/api/earnings-nlp?ticker=${ticker}`);
-                const data = await response.json();
-                
-                const toneEl = document.getElementById('nlp-tone');
-                const keywordsEl = document.getElementById('nlp-keywords');
-                const bulletsEl = document.getElementById('nlp-bullets');
-
-                if (data.error || !data.keywords) {
-                    toneEl.innerText = "N/A";
-                    toneEl.style.color = "#8E9BAE";
-                    keywordsEl.innerHTML = `<span style="color:#64748b; font-size: 0.85rem;">Transcript data unavailable.</span>`;
-                    bulletsEl.innerHTML = `<li style="color:#64748b;">Not applicable for this asset.</li>`;
-                    return;
-                }
-
-                // Set Tone
-                toneEl.innerText = data.tone;
-                toneEl.style.color = data.color;
-                toneEl.style.textShadow = `0 0 10px ${data.color}`;
-
-                // Render Keyword Pills
-                keywordsEl.innerHTML = data.keywords.map(kw => {
-                    let bg = kw.sentiment === 'bull' ? 'rgba(0, 255, 157, 0.1)' : (kw.sentiment === 'bear' ? 'rgba(255, 0, 127, 0.1)' : 'rgba(142, 155, 174, 0.1)');
-                    let border = kw.sentiment === 'bull' ? 'rgba(0, 255, 157, 0.3)' : (kw.sentiment === 'bear' ? 'rgba(255, 0, 127, 0.3)' : 'rgba(142, 155, 174, 0.3)');
-                    let text = kw.sentiment === 'bull' ? '#00FF9D' : (kw.sentiment === 'bear' ? '#FF007F' : '#8E9BAE');
-                    
-                    return `
-                        <div style="background: ${bg}; border: 1px solid ${border}; color: #f8fafc; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; display: flex; align-items: center; gap: 8px;">
-                            <span>${kw.word}</span>
-                            <span style="background: ${text}; color: #000; padding: 2px 6px; border-radius: 10px; font-weight: bold; font-size: 0.7rem;">${kw.count}</span>
-                        </div>
-                    `;
-                }).join('');
-
-                // Render Truth Bullets
-                bulletsEl.innerHTML = data.bullets.map(b => `<li style="margin-bottom: 8px;">${b}</li>`).join('');
-
-            } catch (err) {
-                console.error("NLP Error:", err);
-            }
-        }
-        
-        // Execute it!
-        fetchEarningsNLP(currentTicker);
-    </script>
-    <script>
-        // --- HISTORICAL PEER TRENDS LOGIC ---
-        let peerHistoryData = null;
-        let peerHistoryChartObj = null;
-
-        async function loadPeerHistory(ticker) {
-            try {
-                const response = await fetch(`/api/peer-history?ticker=${ticker}`);
-                const data = await response.json();
-                
-                document.getElementById('peer-history-loader').style.display = 'none';
-
-                if (data.error || !data.metrics) {
-                    console.error("Peer History Error");
-                    return;
-                }
-
-                peerHistoryData = data;
-                // Render Default View (Market Cap)
-                updatePeerHistory('Market Cap (B)', document.querySelector('.fund-tabs button.active'));
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        window.updatePeerHistory = function(metricName, btnElement) {
-            if (!peerHistoryData) return;
-
-            // Update active button styling
-            const tabs = btnElement.parentElement.querySelectorAll('.fund-tab');
-            tabs.forEach(btn => btn.classList.remove('active'));
-            btnElement.classList.add('active');
-
-            const ctx = document.getElementById('peerHistoryChart').getContext('2d');
-            const datasets = peerHistoryData.metrics[metricName];
-
-            if (peerHistoryChartObj) {
-                peerHistoryChartObj.destroy();
-            }
-
-            peerHistoryChartObj = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: peerHistoryData.years,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { labels: { color: '#e2e8f0', font: { family: 'Inter', weight: 'bold' } } },
-                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.9)', titleColor: '#fff', bodyColor: '#fff', borderColor: '#334155', borderWidth: 1 }
-                    },
-                    scales: {
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8E9BAE', font: { weight: 'bold' } } },
-                        y: { 
-                            grid: { color: 'rgba(255,255,255,0.05)' }, 
-                            ticks: { color: '#8E9BAE' },
-                            title: { display: true, text: metricName, color: '#8E9BAE' }
-                        }
-                    }
-                }
-            });
-        };
-
-        // Trigger the fetch when the page loads
-        loadPeerHistory(currentTicker);
     </script>
 </body>
-
 </html>

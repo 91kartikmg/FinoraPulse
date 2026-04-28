@@ -68,6 +68,31 @@
 
         /* SIP Chart Container */
         .chart-container { height: 250px; width: 250px; margin: 0 auto; }
+
+        /* ✨ MOBILE RESPONSIVE & HAMBURGER MENU CSS ✨ */
+        @media screen and (max-width: 768px) {
+            .main-wrapper { padding: 0 !important; }
+            .content-panel { padding: 15px !important; border-radius: 0 !important; border-left: none; border-right: none; }
+            
+            /* Full width cards on mobile */
+            .stat-card {
+                margin-left: -15px; 
+                margin-right: -15px;
+                border-radius: 0 !important; 
+                border-left: none !important; 
+                border-right: none !important;
+            }
+
+            /* Hamburger Mobile Sidebar Setup */
+            .ticker-sidebar { display: none; }
+            .ticker-sidebar.open {
+                display: block; position: fixed; top: 0; left: 0;
+                width: 80%; max-width: 300px; height: 100vh; z-index: 2000;
+                background: #0f172a; border-right: 1px solid var(--accent);
+                box-shadow: 10px 0 50px rgba(0, 0, 0, 0.9);
+                overflow-y: auto;
+            }
+        }
     </style>
 </head>
 <body>
@@ -120,7 +145,7 @@
                 <div class="result-panel" style="margin-top: 20px;">
                     <div class="result-item">
                         <span class="result-label">Total Invested</span>
-                        <span class="result-value" id="sip-invested">₹6,00,000</span>
+                        <span class="result-value" id="sip-invested">₹6,00,000</span>   
                     </div>
                     <div class="result-item">
                         <span class="result-label" style="color:var(--accent);">Est. Returns</span>
@@ -239,15 +264,41 @@
     </div>
 
     <script>
+        // --- 0. HAMBURGER MENU LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Targets the hamburger button that lives inside your partials/header
+            const menuBtn = document.querySelector('.hamburger-btn') || document.getElementById('mobile-menu-btn');
+            const sidebar = document.querySelector('.ticker-sidebar');
+            
+            if(menuBtn && sidebar) {
+                menuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    sidebar.classList.toggle('open');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuBtn) {
+                        sidebar.classList.remove('open');
+                    }
+                });
+            }
+        });
+
         // --- 1. UI NAVIGATION LOGIC ---
         function switchTool(toolId, listElement) {
-            // Update Sidebar
+            // Update Sidebar visually
             document.querySelectorAll('.tool-nav li').forEach(el => el.classList.remove('active'));
             listElement.classList.add('active');
 
-            // Update Main Content
+            // Update Main Content visually
             document.querySelectorAll('.calc-section').forEach(el => el.classList.remove('active'));
             document.getElementById('tool-' + toolId).classList.add('active');
+
+            // Automatically close the sidebar on mobile when a tool is clicked!
+            const sidebar = document.querySelector('.ticker-sidebar');
+            if (sidebar) {
+                sidebar.classList.remove('open');
+            }
         }
 
         const fmt = (num) => new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(num);
@@ -318,7 +369,7 @@
             const fees = parseFloat(document.getElementById('pnl-fees').value) || 0;
 
             const totalCost = (buy * qty) + fees;
-            const totalRevenue = (sell * qty) - fees; // Fees paid on sell too usually, simplifying here based on user input
+            const totalRevenue = (sell * qty) - fees; 
             const net = totalRevenue - totalCost;
             const roi = totalCost > 0 ? (net / totalCost) * 100 : 0;
 

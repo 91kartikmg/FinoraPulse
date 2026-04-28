@@ -51,6 +51,57 @@
         .health-text { flex-grow: 1; }
         .health-title { font-size: 0.8rem; color: #a855f7; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
         .health-summary { font-size: 1.15rem; color: #f8fafc; line-height: 1.6; }
+
+        /* ✨ MOBILE RESPONSIVE FIXES & SCROLL WRAPPERS ✨ */
+        .scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+        }
+        
+        .scroll-wrapper::-webkit-scrollbar { height: 6px; }
+        .scroll-wrapper::-webkit-scrollbar-track { background: #080a0c; border-radius: 10px; }
+        .scroll-wrapper::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        @media screen and (max-width: 768px) {
+            .main-wrapper { padding: 0 !important; gap: 0 !important; }
+            .content-panel { padding: 15px !important; border-radius: 0 !important; }
+            
+            .macro-header { flex-direction: column; align-items: flex-start; gap: 15px; margin-bottom: 20px; }
+            .search-bar { width: 100%; }
+            .search-bar input { flex-grow: 1; width: auto !important; }
+            
+            /* Stack charts vertically on mobile */
+            .charts-grid { grid-template-columns: 1fr; gap: 15px; }
+            
+            /* Full bleed edge-to-edge for panels */
+            .chart-box, .health-panel, .stat-card {
+                margin-left: -15px; 
+                margin-right: -15px; 
+                border-radius: 0 !important; 
+                border-left: none !important; 
+                border-right: none !important; 
+            }
+
+            /* ⚠️ GRAPH FIXES ⚠️ */
+            /* 1. Let normal Line Charts shrink to fit the screen */
+            .chart-box .scroll-wrapper > div { min-width: 100% !important; }
+            
+            /* 2. FORCE Correlation Matrix to stay wide so it triggers the left/right swipe */
+            #correlation-chart { min-width: 600px !important; }
+            
+            /* Stack gauge and text */
+            .health-panel { flex-direction: column; text-align: center; gap: 15px; padding: 20px; }
+            .health-text { text-align: center; }
+            
+            /* Fix Liquidity Matrix alignment */
+            .liquidity-header-flex { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+            .liquidity-row { flex-wrap: wrap; justify-content: space-between; margin-bottom: 15px; }
+            .liquidity-label { width: 45% !important; font-size: 0.9rem !important; }
+            .liquidity-val { width: 50% !important; text-align: right; font-size: 1rem !important; }
+            .liquidity-bar-wrapper { flex: 0 0 100% !important; order: 3; margin-top: 8px; }
+        }
     </style>
 </head>
 <body>
@@ -94,7 +145,7 @@
             </div>
 
             <div class="stat-card" style="background: var(--card-bg); padding:25px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: opacity 0.3s;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div class="liquidity-header-flex" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                     <div>
                         <h3 style="margin:0; color:var(--text-main); font-size: 1.4rem;">Institutional Liquidity Matrix</h3>
                         <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">Live estimated capital flow for the <strong class="accent"><%= fullName %></strong> benchmark equity market.</p>
@@ -105,20 +156,20 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div id="label-foreign" style="width: 140px; font-weight: bold; color: #f8fafc; font-size: 0.85rem;">Foreign Flow</div>
-                        <div style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
+                    <div class="liquidity-row" style="display: flex; align-items: center; gap: 15px;">
+                        <div id="label-foreign" class="liquidity-label" style="width: 140px; font-weight: bold; color: #f8fafc; font-size: 0.85rem;">Foreign Flow</div>
+                        <div class="liquidity-bar-wrapper" style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
                             <div id="bar-foreign" style="height: 100%; width: 0%; transition: all 1s ease-out;"></div>
                         </div>
-                        <div id="val-foreign" style="width: 130px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">--</div>
+                        <div id="val-foreign" class="liquidity-val" style="width: 130px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">--</div>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div id="label-domestic" style="width: 140px; font-weight: bold; color: #f8fafc; font-size: 0.85rem;">Local Flow</div>
-                        <div style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
+                    <div class="liquidity-row" style="display: flex; align-items: center; gap: 15px;">
+                        <div id="label-domestic" class="liquidity-label" style="width: 140px; font-weight: bold; color: #f8fafc; font-size: 0.85rem;">Local Flow</div>
+                        <div class="liquidity-bar-wrapper" style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
                             <div id="bar-domestic" style="height: 100%; width: 0%; transition: all 1s ease-out;"></div>
                         </div>
-                        <div id="val-domestic" style="width: 130px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">--</div>
+                        <div id="val-domestic" class="liquidity-val" style="width: 130px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">--</div>
                     </div>
 
                     <div style="border-top: 1px dashed #334155; margin: 10px 0;"></div>
@@ -149,44 +200,60 @@
             <div class="charts-grid">
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">Total GDP (USD)</h3>
-                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="gdpTotalChart"></canvas></div>
+                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="gdpTotalChart"></canvas></div>
+                    </div>
                 </div>
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">Growth vs. Inflation (%)</h3>
-                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="historyChart"></canvas></div>
+                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="historyChart"></canvas></div>
+                    </div>
                 </div>
             </div>
 
             <div class="charts-grid">
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">Unemployment Rate (%)</h3>
-                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="unemploymentChart"></canvas></div>
+                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="unemploymentChart"></canvas></div>
+                    </div>
                 </div>
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">10-Year Gov Bond Yield (%)</h3>
-                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="bondChart"></canvas></div>
+                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="bondChart"></canvas></div>
+                    </div>
                 </div>
             </div>
 
             <div class="charts-grid">
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">Currency Strength <br><span id="currency-pair-label" style="font-size:0.8rem; color:#a855f7;"></span></h3>
-                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="currencyChart"></canvas></div>
+                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="currencyChart"></canvas></div>
+                    </div>
                 </div>
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">Detailed Export Sectors</h3>
-                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="advancedExportChart"></canvas></div>
+                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="advancedExportChart"></canvas></div>
+                    </div>
                 </div>
             </div>
             
              <div class="charts-grid">
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">Central Bank Interest Rate (%)</h3>
-                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="interestRateChart"></canvas></div>
+                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="interestRateChart"></canvas></div>
+                    </div>
                 </div>
                 <div class="chart-box">
                     <h3 style="margin-top:0; color:var(--text-muted);">Govt Debt to GDP (%)</h3>
-                    <div style="position: relative; flex-grow: 1; width: 100%;"><canvas id="debtChart"></canvas></div>
+                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="debtChart"></canvas></div>
+                    </div>
                 </div>
             </div>
 
@@ -198,7 +265,10 @@
                     </div>
                 </div>
                 <div id="correlation-loader" style="color:var(--text-muted); font-style: italic; padding: 20px 0;">Crunching 1-Year Historical Data...</div>
-                <div id="correlation-chart" style="min-height: 350px;"></div>
+                
+                <div class="scroll-wrapper" style="padding-bottom: 15px;">
+                    <div id="correlation-chart" style="min-height: 350px; min-width: 600px;"></div>
+                </div>
             </div>
 
             <div class="stat-card" style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border); transition: opacity 0.3s;">
@@ -299,7 +369,6 @@
                     document.getElementById('macro-health-panel').style.display = 'flex';
                 }
 
-                // --- 2. CORE CHARTS ---
                 // --- 2. CORE CHARTS ---
                 if(data.gdp_total_trend && data.gdp_total_trend.length > 0) {
                     new Chart(document.getElementById('gdpTotalChart').getContext('2d'), {
@@ -463,6 +532,12 @@
 
                 const chart = new ApexCharts(document.querySelector("#correlation-chart"), options);
                 chart.render();
+
+                // Snap scroll to right for matrix if needed
+                setTimeout(() => {
+                    const scrollWrappers = document.querySelectorAll('.scroll-wrapper');
+                    scrollWrappers.forEach(w => w.scrollLeft = w.scrollWidth);
+                }, 200);
 
             } catch (err) {
                 console.error("Correlation Error:", err);

@@ -334,7 +334,7 @@ app.get('/', (req, res) => res.render('home'));
 app.get('/predict', requireLogin, (req, res) => res.render('predict', { ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase() }));
 app.get('/macro', requireLogin, (req, res) => res.render('macro', { country: req.query.country || 'IN' }));
 app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap', { country: (req.query.country || 'US').toUpperCase() }));
-app.get('/ ', (req, res) => res.render('calculator'));
+app.get('/calculator', (req, res) => res.render('calculator'));
 
 
 // ==========================================

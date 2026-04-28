@@ -30,9 +30,7 @@
         
         /* Make main panel wider by overriding grid */
         .main-wrapper.wide { grid-template-columns: 280px 1fr; } 
-    </style>
-    <style>
-        
+
         /* Active state for sidebar country selection */
         .ticker-list-item.active {
             background: var(--accent, #38bdf8);
@@ -42,12 +40,43 @@
         .ticker-list-item.active .symbol {
             color: #0f172a;
         }
+
+        /* ✨ MOBILE RESPONSIVE FIXES & SCROLL WRAPPERS ✨ */
+        .scroll-wrapper {
+            width: 100%;
+            height: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+        }
+        
+        .scroll-wrapper::-webkit-scrollbar { height: 6px; }
+        .scroll-wrapper::-webkit-scrollbar-track { background: #080a0c; border-radius: 10px; }
+        .scroll-wrapper::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        @media screen and (max-width: 768px) {
+            .main-wrapper.wide { display: flex; flex-direction: column; padding: 0 !important; }
+            .ticker-sidebar { display: none; } /* Hides sidebar on mobile to save space */
+            .content-panel { padding: 15px !important; border-radius: 0 !important; }
+            
+            /* Make container full bleed on mobile */
+            .heatmap-container {
+                margin-left: -15px; 
+                margin-right: -15px;
+                border-radius: 0 !important; 
+                border-left: none !important; 
+                border-right: none !important;
+                padding: 15px 0 0 0 !important; /* Remove side padding so chart touches edge */
+                height: 70vh; /* Adjust height slightly for mobile */
+            }
+
+            /* Force the treemap to stay wide so it triggers horizontal scrolling */
+            #treemapChart { min-width: 800px !important; padding: 0 15px; }
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
-
-
 
     <div class="main-wrapper wide">
         <aside class="ticker-sidebar">
@@ -154,7 +183,9 @@
             </div>
 
             <div class="heatmap-container">
-                <div id="treemapChart" style="flex-grow: 1; width: 100%;"></div>
+                <div class="scroll-wrapper">
+                    <div id="treemapChart" style="flex-grow: 1; height: 100%;"></div>
+                </div>
             </div>
         </main>
     </div>

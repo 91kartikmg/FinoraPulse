@@ -3,17 +3,14 @@ import json
 import yfinance as yf
 import pandas as pd
 import numpy as np
-import time
 import os
 import pytz
-import math
-import requests
 import datetime
 from xgboost import XGBRegressor
-from datetime import timedelta
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from pandas.tseries.offsets import CustomBusinessDay
 import warnings
+import requests
 
 # Force UTF-8 encoding for standard output to prevent server-side decoding crashes
 sys.stdout.reconfigure(encoding='utf-8')
@@ -29,15 +26,11 @@ TF_MAP = {
 
 def run_predict(ticker, timeframe, save_dir):
     CONFIG = TF_MAP.get(timeframe, TF_MAP["1d"])
-    INTERVAL = CONFIG["interval"]
     PERIOD = CONFIG["period"]
     STEPS = CONFIG["steps"]
     
-    # ALWAYS save and load from the 1d file to save bandwidth
     CSV_FILE = os.path.join(save_dir, f"data_{ticker}_1d.csv")
-
     is_crypto_or_forex = "-" in ticker or "=X" in ticker
-    is_indian = ticker.endswith('.NS') or ticker.endswith('.BO')
 
     def get_market_data():
         stock = yf.Ticker(ticker)
@@ -46,18 +39,18 @@ def run_predict(ticker, timeframe, save_dir):
             try:
                 old_df = pd.read_csv(CSV_FILE, index_col=0)
                 old_df.index = pd.to_datetime(old_df.index, utc=True)
-                new_df = stock.history(period="5d", interval="1d") # Always fetch daily
+                new_df = stock.history(period="5d", interval="1d")
                 if not new_df.empty:
                     new_df.index = pd.to_datetime(new_df.index, utc=True)
                     combined_df = pd.concat([old_df, new_df])
                     df = combined_df[~combined_df.index.duplicated(keep='last')]
                 else:
                     df = old_df
-            except Exception as e:
+            except Exception:
                 df = None 
                 
         if df is None or len(df) < 200:
-            df = stock.history(period=PERIOD, interval="1d") # Always fetch daily
+            df = stock.history(period=PERIOD, interval="1d")
             if not df.empty:
                 df.index = pd.to_datetime(df.index, utc=True)
 
@@ -81,56 +74,55 @@ def run_predict(ticker, timeframe, save_dir):
 
     raw_df = raw_df[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
 
-    # ---------------------------------------------------------
-    # ✨ THE UPGRADE: RESAMPLE DAILY TO WEEKLY IN MEMORY ✨
-    # ---------------------------------------------------------
     if timeframe == '1wk':
-        # Group the daily data by week, taking the first Open, highest High, lowest Low, last Close, and sum of Volume
         df = raw_df.resample('W-FRI').agg({
-            'Open': 'first',
-            'High': 'max',
-            'Low': 'min',
-            'Close': 'last',
-            'Volume': 'sum'
+            'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'
         }).dropna()
     else:
         df = raw_df
 
+    # Features
     df['Velocity'] = df['Close'].diff()
     df['Body'] = df['Close'] - df['Open']
     df['Volatility'] = df['Close'].rolling(10).std()
 
-    # ATR for Dynamic Stop Loss
+    # ATR
     df['Prev_Close'] = df['Close'].shift(1)
     df['TR'] = np.maximum(df['High'] - df['Low'], np.maximum(abs(df['High'] - df['Prev_Close']), abs(df['Low'] - df['Prev_Close'])))
     df['ATR'] = df['TR'].rolling(window=14, min_periods=1).mean()
 
-    # MACD
+    # Advanced Features
+    df['ROC'] = df['Close'].pct_change(periods=5) * 100
+    df['MA20'] = df['Close'].rolling(20).mean()
+    df['STD20'] = df['Close'].rolling(20).std()
+    df['Upper_BB'] = df['MA20'] + (df['STD20'] * 2)
+    df['Lower_BB'] = df['MA20'] - (df['STD20'] * 2)
+    df['BB_Pos'] = (df['Close'] - df['Lower_BB']) / (df['Upper_BB'] - df['Lower_BB'] + 1e-9)
+
+    # MACD & RSI
     df['MACD'] = df['Close'].ewm(span=12, adjust=False).mean() - df['Close'].ewm(span=26, adjust=False).mean()
     df['MACD_Signal'] = df['MACD'].ewm(span=9, adjust=False).mean()
-
-    # RSI
+    
     delta = df['Close'].diff()
     gain = delta.clip(lower=0).rolling(14).mean()
     loss = (-delta.clip(upper=0)).rolling(14).mean()
-    rs = gain / loss
+    rs = gain / (loss + 1e-9)
     df['RSI'] = 100 - (100 / (1 + rs))
 
-    # SMA
+    # SMA Distances
     df['SMA_5'] = df['Close'].rolling(5).mean()
     df['SMA_10'] = df['Close'].rolling(10).mean()
     df['SMA_20'] = df['Close'].rolling(20).mean()
     df['SMA_50'] = df['Close'].rolling(50).mean()
     df['SMA_100'] = df['Close'].rolling(100).mean()
     df['SMA_200'] = df['Close'].rolling(200).mean()
-
     df['SMA_5_Dist'] = (df['Close'] - df['SMA_5']) / df['SMA_5'] * 100
-    df['Vol_Ratio'] = df['Volume'] / df['Volume'].rolling(10).mean()
+    df['Vol_Ratio'] = df['Volume'] / (df['Volume'].rolling(10).mean() + 1e-9)
 
-    # TARGET
+    # ✨ SHARP TARGET: Reverted back to raw 1-day percentage change to catch every glitch
     df['Target'] = df['Close'].pct_change().shift(-1) * 100
 
-    features = ['Velocity', 'Body', 'Volatility', 'RSI', 'SMA_5_Dist', 'MACD', 'MACD_Signal', 'Vol_Ratio']
+    features = ['Velocity', 'Body', 'Volatility', 'RSI', 'SMA_5_Dist', 'MACD', 'MACD_Signal', 'Vol_Ratio', 'ROC', 'BB_Pos']
 
     train_df = df.dropna(subset=features + ['Target', 'ATR'])
     
@@ -139,17 +131,24 @@ def run_predict(ticker, timeframe, save_dir):
     X_train = train_df[features]
     y_train = train_df['Target']
 
-    # ===============================
-    # MODEL
-    # ===============================
-    model = XGBRegressor(n_estimators=300, max_depth=5, learning_rate=0.05, random_state=42)
+    # ✨ SHARP MODEL: Tuned to be highly responsive to sudden changes
+    model = XGBRegressor(
+        n_estimators=300,        
+        max_depth=5,             # Deeper trees allow catching sharp glitches
+        learning_rate=0.05,      # Faster learning
+        gamma=0.0,               # Removed gamma restriction to allow sharp splits
+        subsample=0.9,
+        random_state=42
+    )
     model.fit(X_train, y_train)
 
     eval_df = df.dropna(subset=features + ['ATR']).copy()
     eval_df['Pred_Return'] = model.predict(eval_df[features])
+    
+    # ✨ SHARP TRACKING: Removed EWM smoothing. It will now jump with every daily prediction.
     eval_df['Past_AI_Price'] = eval_df['Close'].shift(1) * (1 + (eval_df['Pred_Return'].shift(1) / 100))
 
-    # Stats for UI (Safe Float Casts)
+    # Stats for UI
     actual_dir = np.sign(eval_df['Close'] - eval_df['Close'].shift(1))
     pred_dir = np.sign(eval_df['Past_AI_Price'] - eval_df['Close'].shift(1))
     dir_matches = (actual_dir == pred_dir)
@@ -163,16 +162,13 @@ def run_predict(ticker, timeframe, save_dir):
     eval_df['AI_Signal'] = pred_dir.shift(1) 
     eval_df['AI_Strategy_Return'] = (eval_df['AI_Signal'] * eval_df['Actual_Pct_Change']) - 0.0005
     
-    # Adjust backtest window based on timeframe (252 days in a year, or 52 weeks in a year)
     backtest_window = 52 if timeframe == '1wk' else 252
     roi_df = eval_df.tail(backtest_window)
     
     ai_cumulative_roi = float((1 + roi_df['AI_Strategy_Return'].fillna(0)).prod() - 1)
     market_cumulative_roi = float((1 + roi_df['Actual_Pct_Change'].fillna(0)).prod() - 1)
 
-    # ===============================
     # PREDICTION LOOP
-    # ===============================
     current_close = float(eval_df['Close'].iloc[-1]) 
     current_atr = float(eval_df['ATR'].iloc[-1]) if pd.notna(eval_df['ATR'].iloc[-1]) else float(current_close * 0.015)
 
@@ -181,15 +177,12 @@ def run_predict(ticker, timeframe, save_dir):
     c_price = current_close
 
     last_row = eval_df.iloc[-1]
-
     current_vars = {
-        'vel': float(last_row['Velocity']),
-        'body': float(last_row['Body']),
-        'vol': float(last_row['Volatility']),
-        'rsi': float(last_row['RSI']),
-        'macd': float(last_row['MACD']),
-        'macd_sig': float(last_row['MACD_Signal']),
-        'vol_ratio': float(last_row['Vol_Ratio'] if not pd.isna(last_row['Vol_Ratio']) else 1.0)
+        'vel': float(last_row['Velocity']), 'body': float(last_row['Body']),
+        'vol': float(last_row['Volatility']), 'rsi': float(last_row['RSI']),
+        'macd': float(last_row['MACD']), 'macd_sig': float(last_row['MACD_Signal']),
+        'vol_ratio': float(last_row['Vol_Ratio'] if not pd.isna(last_row['Vol_Ratio']) else 1.0),
+        'roc': float(last_row['ROC']), 'bb_pos': float(last_row['BB_Pos'])
     }
 
     for _ in range(STEPS):
@@ -199,7 +192,8 @@ def run_predict(ticker, timeframe, save_dir):
         input_row = np.array([[
             current_vars['vel'], current_vars['body'], current_vars['vol'], 
             current_vars['rsi'], sma_5_dist, current_vars['macd'], 
-            current_vars['macd_sig'], current_vars['vol_ratio']
+            current_vars['macd_sig'], current_vars['vol_ratio'],
+            current_vars['roc'], current_vars['bb_pos']
         ]])
 
         pred_return = float(model.predict(input_row)[0])
@@ -236,10 +230,7 @@ def run_predict(ticker, timeframe, save_dir):
     history_prices = [float(round(x, 2)) for x in history['Close']]
     history_ai_prices = [float(round(x, 2)) for x in history['Past_AI_Price']]
     
-    if timeframe == '1wk':
-        history_times = [t.strftime('%b %d, %Y') for t in history.index]
-    else:
-        history_times = [t.strftime('%b %d') for t in history.index]
+    history_times = [t.strftime('%b %d, %Y') if timeframe == '1wk' else t.strftime('%b %d') for t in history.index]
 
     smas = {
         "SMA_5": float(df['SMA_5'].iloc[-1]), "SMA_10": float(df['SMA_10'].iloc[-1]),
@@ -267,7 +258,6 @@ def run_predict(ticker, timeframe, save_dir):
     }
 
     is_bullish = future_prices[-1] > current_close
-    
     sl_price = float(current_close - current_atr if is_bullish else current_close + current_atr)
     tp_price = float(current_close + (current_atr * 2) if is_bullish else current_close - (current_atr * 2))
     
@@ -358,7 +348,6 @@ def run_peer_history(target_ticker):
             peers = ["TCS.NS", "HDFCBANK.NS", "INFY.NS"] if target_ticker.endswith('.NS') else ["AAPL", "MSFT", "GOOGL"]
             
         symbols = [target_ticker] + peers
-
         current_year = datetime.datetime.now().year
         years = [str(current_year - i) for i in range(4, -1, -1)]
         
