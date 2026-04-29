@@ -1,1 +1,1 @@
-{"foreign_label":"Foreign Inst.","domestic_label":"UK Funds","currency":"M £","foreign_val":90.61,"domestic_val":-45.31,"net":45.31,"status":"Neutral Flow"}
+{"foreign_label":"Foreign Flow","domestic_label":"Local Flow","currency":"Units","foreign_val":1245.5,"domestic_val":-450.75,"net":794.75,"status":"Estimated Flow"}
