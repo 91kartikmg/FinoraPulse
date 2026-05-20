@@ -428,7 +428,8 @@ const TTL = {
     EARNINGS_NLP: 24 * 60 * 60 * 1000,
     HEATMAP: 1 * 60 * 60 * 1000,
     SEARCH: 30 * 60 * 1000,
-    CORRELATION: 12 * 60 * 60 * 1000
+    CORRELATION: 12 * 60 * 60 * 1000,
+    TECHNICAL: 4 * 60 * 60 * 1000
 };
 
 async function cachedFetch(cacheKey, ttlMs, fetchFn) {
@@ -731,7 +732,10 @@ app.get('/pattern-test', requireLogin, (req, res) => {
 
 app.get('/api/patterns', async (req, res) => {
     const ticker = req.query.ticker?.toUpperCase() || 'RELIANCE.NS';
-    const result = await fetchPythonData('ml_models', 'pattern_engine.py', [ticker]);
+    const cacheKey = `patterns_${ticker}`;
+    const result = await cachedFetch(cacheKey, TTL.TECHNICAL, () =>
+        fetchPythonData('ml_models', 'pattern_engine.py', [ticker])
+    );
     res.json(result);
 });
 
@@ -740,8 +744,8 @@ app.get('/api/chart-svg', async (req, res) => {
     const ticker = req.query.ticker || 'RELIANCE.NS';
     const timeframe = req.query.timeframe || '1d'; // <-- ADD THIS
 
-    // 🚨 FIX: Update cache key and pass timeframe to Python
-    const result = await cachedFetch(`svg_chart_${ticker}_${timeframe}`, 60000, () =>
+    // Pass timeframe to Python and cache using Technical TTL (4 hours)
+    const result = await cachedFetch(`svg_chart_${ticker}_${timeframe}`, TTL.TECHNICAL, () =>
         fetchPythonData('ml_models', 'ohlc_engine.py', [ticker, DATASET_PATH, timeframe])
     );
     res.json(result);

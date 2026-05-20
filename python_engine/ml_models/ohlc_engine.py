@@ -10,12 +10,18 @@ def get_live_data(ticker, dataset_path, timeframe="1d"):
         
         # 1. SMART IMPORT
         if dataset_path:
-            file_1 = os.path.join(dataset_path, f"{ticker}_{timeframe}.csv")
-            file_2 = os.path.join(dataset_path, f"{ticker}.csv")
+            file_1 = os.path.join(dataset_path, f"data_{ticker}_{timeframe}.csv")
+            file_2 = os.path.join(dataset_path, f"data_{ticker}.csv")
+            file_3 = os.path.join(dataset_path, f"{ticker}_{timeframe}.csv")
+            file_4 = os.path.join(dataset_path, f"{ticker}.csv")
             if os.path.exists(file_1):
                 df = pd.read_csv(file_1, index_col=0, parse_dates=True)
             elif timeframe == "1d" and os.path.exists(file_2):
                 df = pd.read_csv(file_2, index_col=0, parse_dates=True)
+            elif os.path.exists(file_3):
+                df = pd.read_csv(file_3, index_col=0, parse_dates=True)
+            elif timeframe == "1d" and os.path.exists(file_4):
+                df = pd.read_csv(file_4, index_col=0, parse_dates=True)
         
         # 2. FALLBACK
         if df is None or df.empty:
