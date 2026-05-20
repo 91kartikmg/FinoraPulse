@@ -132,6 +132,64 @@
 }
 
 @media screen and (max-width: 768px) {
-    .nav-logo { justify-content: space-between; } 
-    .hamburger-btn { display: block; }
+    .navbar {
+        display: flex;
+        flex-direction: column;
+        padding: 15px;
+        gap: 15px;
+        height: auto;
+        position: relative;
+    }
+    
+    .hamburger-btn { 
+        display: block; 
+        position: absolute;
+        left: 15px;
+        top: 20px;
+        margin: 0;
+    }
+    
+    .nav-logo { 
+        width: 100%; 
+        justify-content: flex-end;
+        padding-left: 0;
+    }
+
+    .nav-center { 
+        display: flex; 
+        flex-direction: column; 
+        width: 100%; 
+        gap: 15px; 
+    }
+    
+    .nav-search { 
+        order: 1; 
+        width: 100%; 
+    }
+    .nav-search input { 
+        width: 100%; 
+        max-width: 100%; 
+    }
+
+    .nav-links { 
+        order: 2; 
+        display: flex; 
+        flex-direction: row; 
+        flex-wrap: nowrap;
+        overflow-x: auto; 
+        -webkit-overflow-scrolling: touch; 
+        white-space: nowrap; 
+        width: calc(100% + 30px);
+        margin-left: -15px;
+        padding: 0 15px 5px 15px;
+        justify-content: flex-start; 
+        gap: 15px;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+
+    .nav-auth {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+    }
 }

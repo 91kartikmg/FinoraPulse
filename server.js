@@ -1,13 +1,14 @@
 const express = require('express');
 const { spawn } = require('child_process');
 const path = require('path');
-const fs = require('fs').promises; 
-const fsSync = require('fs'); 
+const fs = require('fs').promises;
+const fsSync = require('fs');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 const Admin = require('./models/Admin'); // <-- Isolated Admin Model
+const Suggestion = require('./models/Suggestion');
 const axios = require('axios');
 const cron = require('node-cron');
 const { Mutex } = require('async-mutex');
@@ -32,7 +33,7 @@ if (fsSync.existsSync(serverVenvPath)) {
     console.log(`🐍 Using Python: ${PYTHON_PATH}`);
 }
 
-[ DATASET_PATH, CACHE_DIR ].forEach(dir => {
+[DATASET_PATH, CACHE_DIR].forEach(dir => {
     if (!fsSync.existsSync(dir)) {
         fsSync.mkdirSync(dir, { recursive: true, mode: 0o755 });
         console.log(`📁 Created ${path.basename(dir)} folder`);
@@ -44,7 +45,7 @@ if (fsSync.existsSync(serverVenvPath)) {
 // ==========================================
 const memoryCache = new LRUCache({
     max: 500,
-    ttl: 60 * 1000, 
+    ttl: 60 * 1000,
     allowStale: false,
     updateAgeOnGet: true
 });
@@ -69,9 +70,9 @@ async function getCache(rawKey, ttlMs) {
             memoryCache.set(safeKey, data);
             return data;
         } else {
-            fs.unlink(filePath).catch(() => {});
+            fs.unlink(filePath).catch(() => { });
         }
-    } catch (e) {}
+    } catch (e) { }
     return null;
 }
 
@@ -90,14 +91,14 @@ async function setCache(rawKey, data) {
             memoryCache.set(safeKey, data);
         } catch (err) {
             console.error(`❌ Cache write error for ${safeKey}:`, err.message);
-            await fs.unlink(tmpPath).catch(() => {});
+            await fs.unlink(tmpPath).catch(() => { });
             throw err;
         }
     });
 }
 
 async function cleanupExpiredCache() {
-    const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; 
+    const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
     try {
         const files = await fs.readdir(CACHE_DIR);
         const now = Date.now();
@@ -111,10 +112,10 @@ async function cleanupExpiredCache() {
                     await fs.unlink(filePath);
                     deletedCount++;
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
         if (deletedCount > 0) console.log(`🧹 Cleaned ${deletedCount} expired cache files`);
-    } catch (err) {}
+    } catch (err) { }
 }
 
 cron.schedule('0 4 * * *', cleanupExpiredCache);
@@ -159,7 +160,7 @@ app.use(async (req, res, next) => {
         try {
             const user = await User.findById(req.session.userId);
             if (user) res.locals.user = user;
-        } catch (e) {}
+        } catch (e) { }
     }
     next();
 });
@@ -218,9 +219,9 @@ app.get('/logout', (req, res) => {
 // 1. Main Admin Route (Handles both Login UI and Dashboard UI)
 app.get('/admin', (req, res) => {
     // We pass adminId and error to the EJS file so it knows which UI to render
-    res.render('admin', { 
-        adminId: req.session.adminId || null, 
-        error: null 
+    res.render('admin', {
+        adminId: req.session.adminId || null,
+        error: null
     });
 });
 
@@ -259,7 +260,7 @@ app.get('/api/admin/analytics', async (req, res) => {
 
     try {
         const totalUsers = await User.countDocuments();
-        
+
         // Fetch Page Views
         const viewsDoc = await mongoose.connection.db.collection('site_analytics').findOne({ metric: 'total_views' });
         const totalViews = viewsDoc ? viewsDoc.count : 0;
@@ -304,8 +305,8 @@ app.use(async (req, res, next) => {
     // Only track GET requests (ignore CSS, JS, or images)
     if (req.method === 'GET' && !req.url.includes('.')) {
         try {
-            const today = new Date().toISOString().split('T')[0]; 
-            
+            const today = new Date().toISOString().split('T')[0];
+
             // IF it's a normal page visit (not an API call)
             if (!req.url.startsWith('/api')) {
                 await mongoose.connection.db.collection('site_analytics').updateOne(
@@ -314,7 +315,7 @@ app.use(async (req, res, next) => {
                 await mongoose.connection.db.collection('site_analytics').updateOne(
                     { metric: 'daily_views', date: today }, { $inc: { count: 1 } }, { upsert: true }
                 );
-            } 
+            }
             // IF it IS an API call (but ignore the admin dashboard polling itself)
             else if (req.url.startsWith('/api') && !req.url.includes('/admin/analytics')) {
                 await mongoose.connection.db.collection('site_analytics').updateOne(
@@ -328,10 +329,53 @@ app.use(async (req, res, next) => {
     next();
 });
 // ==========================================
+// 5. SUGGESTION ROUTES
+// ==========================================
+app.post('/api/suggestion', async (req, res) => {
+    try {
+        const { text } = req.body;
+        if (!text || text.trim() === '') return res.status(400).json({ error: "Suggestion text is required" });
+
+        let username = 'Anonymous';
+        let userId = null;
+        if (req.session.userId) {
+            const user = await User.findById(req.session.userId);
+            if (user) {
+                username = user.username;
+                userId = user._id;
+            }
+        }
+
+        const newSuggestion = new Suggestion({ text, username, userId });
+        await newSuggestion.save();
+
+        res.json({ success: true, message: "Suggestion submitted successfully!" });
+    } catch (err) {
+        console.error("Suggestion Error:", err);
+        res.status(500).json({ success: false, error: "Failed to submit suggestion" });
+    }
+});
+
+app.get('/api/admin/suggestions', async (req, res) => {
+    if (!req.session.adminId) return res.status(403).json({ error: "Unauthorized" });
+    try {
+        const suggestions = await Suggestion.find().sort({ createdAt: -1 }).limit(50);
+        res.json({ success: true, suggestions });
+    } catch (err) {
+        console.error("Admin Suggestions Error:", err);
+        res.status(500).json({ success: false, error: "Failed to fetch suggestions" });
+    }
+});
+
+// ==========================================
 // 6. FRONTEND PAGE ROUTES
 // ==========================================
 app.get('/', (req, res) => res.render('home'));
 app.get('/predict', requireLogin, (req, res) => res.render('predict', { ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase() }));
+app.get('/technical', requireLogin, (req, res) => res.render('technical', {
+    ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase(),
+    timeframe: req.query.timeframe || '1d' // <-- ADD THIS
+}));
 app.get('/macro', requireLogin, (req, res) => res.render('macro', { country: req.query.country || 'IN' }));
 app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap', { country: (req.query.country || 'US').toUpperCase() }));
 app.get('/calculator', (req, res) => res.render('calculator'));
@@ -344,16 +388,16 @@ function fetchPythonData(folder, scriptName, argsArray = []) {
     return new Promise((resolve) => {
         const scriptPath = path.resolve(__dirname, 'python_engine', folder, scriptName);
         const args = [scriptPath, ...argsArray];
-        
+
         console.log(`🚀 Executing: ${PYTHON_PATH} ${args.join(' ')}`);
-        
+
         const pythonProcess = spawn(PYTHON_PATH, args);
         let dataString = '';
         let errorString = '';
-        
+
         pythonProcess.stdout.on('data', (data) => { dataString += data.toString(); });
         pythonProcess.stderr.on('data', (data) => { errorString += data.toString(); });
-        
+
         pythonProcess.on('close', (code) => {
             if (errorString) {
                 console.error(`\n[🐍 PYTHON STDERR] ${scriptName}:\n${errorString}\n`);
@@ -549,7 +593,7 @@ async function runMacroBatchUpdate() {
     try {
         const corrData = await fetchPythonData('macro_quant', 'macro_engine.py', ['correlation']);
         if (!corrData.error) await setCache('macro_correlation', corrData);
-    } catch (e) {}
+    } catch (e) { }
 
     for (const country of SUPPORTED_COUNTRIES) {
         try {
@@ -562,7 +606,7 @@ async function runMacroBatchUpdate() {
             if (!liquidityData.error) await setCache(`liquidity_${country}`, liquidityData);
 
             await new Promise(resolve => setTimeout(resolve, 5000));
-        } catch (err) {}
+        } catch (err) { }
     }
     console.log("🏁 [MACRO BATCH] Sync Complete!");
 }
@@ -594,6 +638,77 @@ app.get('/sitemap.xml', async (req, res) => {
     }
 });
 
+// Add this inside the TTL object definition near the top:
+// STRATEGY: 4 * 60 * 60 * 1000
+
+app.get('/api/strategy/overload', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    const timeframe = req.query.timeframe || '1d';
+
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+
+    const cacheKey = `strategy_overload_${ticker}_${timeframe}`;
+
+    // Uses 4-hour cache TTL (14400000 ms) to save server resources
+    const result = await cachedFetch(cacheKey, 14400000, () =>
+        fetchPythonData('ml_models', 'technical_engine.py', [ticker, timeframe, DATASET_PATH])
+    );
+
+    res.json(result);
+});
+
+// Add to your server.js API section
+app.get('/api/strategy/trend', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    const timeframe = req.query.timeframe || '1d';
+    const type = req.query.type || 'sma'; // 'sma', 'macd', or 'psar'
+
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+
+    const cacheKey = `strategy_trend_${type}_${ticker}_${timeframe}`;
+
+    // Using 4-hour cache (14400000 ms)
+    const result = await cachedFetch(cacheKey, 14400000, () =>
+        fetchPythonData('ml_models', 'trend_engine.py', [ticker, timeframe, DATASET_PATH, type])
+    );
+
+    res.json(result);
+});
+
+app.get('/api/strategy/momentum', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    const timeframe = req.query.timeframe || '1d';
+    const type = req.query.type || 'bollinger'; // 'bollinger', 'rsi_div', or 'stochastic'
+
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+
+    const cacheKey = `strategy_momentum_${type}_${ticker}_${timeframe}`;
+
+    // Using 4-hour cache (14400000 ms)
+    const result = await cachedFetch(cacheKey, 14400000, () =>
+        fetchPythonData('ml_models', 'momentum_engine.py', [ticker, timeframe, DATASET_PATH, type])
+    );
+
+    res.json(result);
+});
+
+app.get('/api/strategy/volatility', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    const timeframe = req.query.timeframe || '1d';
+    const type = req.query.type || 'donchian'; // 'donchian', 'squeeze', or 'vol_breakout'
+
+    if (!ticker) return res.status(400).json({ error: "Ticker required" });
+
+    const cacheKey = `strategy_volatility_${type}_${ticker}_${timeframe}`;
+
+    // Using 4-hour cache (14400000 ms)
+    const result = await cachedFetch(cacheKey, 14400000, () =>
+        fetchPythonData('ml_models', 'volatility_engine.py', [ticker, timeframe, DATASET_PATH, type])
+    );
+
+    res.json(result);
+});
+
 // 🚨 TEMPORARY SETUP ROUTE: DELETE AFTER RUNNING ONCE 🚨
 // 🚨 TEMPORARY SETUP ROUTE: DELETE AFTER RUNNING ONCE 🚨
 app.get('/setup-admin', async (req, res) => {
@@ -608,6 +723,33 @@ app.get('/setup-admin', async (req, res) => {
     } catch (err) {
         res.send("Error or admin already exists.");
     }
+});
+
+app.get('/pattern-test', requireLogin, (req, res) => {
+    res.render('pattern_test', { ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase() });
+});
+
+app.get('/api/patterns', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase() || 'RELIANCE.NS';
+    const result = await fetchPythonData('ml_models', 'pattern_engine.py', [ticker]);
+    res.json(result);
+});
+
+// --- CANDLESTICK CHART API ---
+app.get('/api/chart-svg', async (req, res) => {
+    const ticker = req.query.ticker || 'RELIANCE.NS';
+    const timeframe = req.query.timeframe || '1d'; // <-- ADD THIS
+
+    // 🚨 FIX: Update cache key and pass timeframe to Python
+    const result = await cachedFetch(`svg_chart_${ticker}_${timeframe}`, 60000, () =>
+        fetchPythonData('ml_models', 'ohlc_engine.py', [ticker, DATASET_PATH, timeframe])
+    );
+    res.json(result);
+});
+
+// --- PAGE ROUTE ---
+app.get('/chart-view', requireLogin, (req, res) => {
+    res.render('chart_view', { ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase() });
 });
 
 // ==========================================

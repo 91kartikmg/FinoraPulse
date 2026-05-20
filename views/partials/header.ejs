@@ -1,23 +1,25 @@
 <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
 
 <nav class="navbar">
+    <button id="mobile-menu-btn" class="hamburger-btn">☰</button>
     <div class="nav-logo" onclick="window.location.href='/'">
-        <button id="mobile-menu-btn" class="hamburger-btn">☰</button> 
         <img src="/images/finorapulse-logo-full.png" alt="FinoraPulse Logo" class="logo-full">
-        </div>
-    
+    </div>
+
     <div class="nav-center">
         <div class="nav-links">
             <a href="/" style="color:white;">Home</a>
             <a href="/predict?ticker=RELIANCE.NS" style="color:var(--text-muted, #8E9BAE);">Predict Price</a>
             <a href="/macro" style="color:var(--text-muted, #8E9BAE);">Macro Explorer</a>
-            <a href="/heatmap" style="color:var(--text-muted, #8E9BAE);">Haetmap Explorer</a>
+            <a href="/heatmap" style="color:var(--text-muted, #8E9BAE);">Heatmap Explorer</a>
             <a href="/calculator" style="color:var(--text-muted, #8E9BAE);">Pro Calculators</a>
+            <a href="#" id="openSuggestionBtn" style="color:var(--text-muted, #8E9BAE);">💡 Suggestion</a>
         </div>
-        
+
         <form action="/predict" method="GET" class="nav-search">
             <div>
-                <input type="text" name="ticker" id="stockSearch" placeholder="Search Asset (e.g. AAPL, BTC-USD)..." autocomplete="off" required>
+                <input type="text" name="ticker" id="stockSearch" placeholder="Search Asset (e.g. AAPL, BTC-USD)..."
+                    autocomplete="off" required>
                 <div id="searchSuggestions" class="suggestions-box"></div>
             </div>
             <button type="submit" class="btn">Search</button>
@@ -25,58 +27,87 @@
     </div>
 
     <div class="nav-auth">
-        <% if (typeof user !== 'undefined' && user) { %>
-            <span style="margin-right: 15px; font-size: 0.85rem; color: var(--text-muted, #8E9BAE);">ID: <span style="color:white;"><%= user.username %></span></span>
-            <a href="/logout" class="btn" style="background: var(--border, #334155); color: var(--text-muted, #8E9BAE);">Logout</a>
-        <% } else { %>
-            <a href="/auth" class="btn">Login/Register</a>
-        <% } %>
+        <% if (typeof user !=='undefined' && user) { %>
+            <span style="margin-right: 15px; font-size: 0.85rem; color: var(--text-muted, #8E9BAE);">ID: <span
+                    style="color:white;">
+                    <%= user.username %>
+                </span></span>
+            <a href="/logout" class="btn"
+                style="background: var(--border, #334155); color: var(--text-muted, #8E9BAE);">Logout</a>
+            <% } else { %>
+                <a href="/auth" class="btn">Login/Register</a>
+                <% } %>
     </div>
 </nav>
 
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        
+        // Contextual Sidebar Logic
+        if (mobileBtn) {
+            mobileBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Find any .ticker-sidebar on the page
+                const sidebar = document.querySelector('.ticker-sidebar');
+                if (sidebar) {
+                    sidebar.classList.toggle('open');
+                }
+            });
+        }
+        
+        // Close sidebar if clicked outside
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.ticker-sidebar.open');
+            if (sidebar && !sidebar.contains(e.target) && e.target !== mobileBtn) {
+                sidebar.classList.remove('open');
+            }
+        });
+    });
+
     // 1. Synchronize Top Ticker
     function updateHeaderMarketWatch() {
         fetch('/api/market').then(res => res.json()).then(data => {
             document.querySelectorAll('#header-ticker [data-ticker]').forEach(el => {
                 const ticker = el.getAttribute('data-ticker');
                 if (data[ticker]) {
-                    const priceEl = el.querySelector('.price-val'); 
+                    const priceEl = el.querySelector('.price-val');
                     const changeEl = el.querySelector('.change-val');
-                    
+
                     const isIndian = ticker.includes('.NS') || ticker.includes('.BO') || ticker === 'INR=X' || ticker === '^NSEI';
                     const isEuro = ticker.includes('EUR');
                     const isPound = ticker.includes('GBP');
                     const isYen = ticker.includes('JPY');
-                    
-                    let sym = "$"; 
+
+                    let sym = "$";
                     if (isIndian) sym = "₹";
                     if (isEuro) sym = "€";
                     if (isPound) sym = "£";
                     if (isYen) sym = "¥";
                     if (ticker.includes('^')) sym = "";
-                    
-                    const change = data[ticker].change; 
-                    const isUp = change >= 0; 
-                    
-                    // FORCE COLORS VIA JAVASCRIPT
-                    const textColor = isUp ? '#00FF41' : '#ff4d4d'; 
 
-                    if (priceEl) { 
-                        priceEl.innerText = sym + data[ticker].price.toFixed(2); 
+                    const change = data[ticker].change;
+                    const isUp = change >= 0;
+
+                    // FORCE COLORS VIA JAVASCRIPT
+                    const textColor = isUp ? '#00FF41' : '#ff4d4d';
+
+                    if (priceEl) {
+                        priceEl.innerText = sym + data[ticker].price.toFixed(2);
                         priceEl.style.color = textColor; // Apply color to price
                     }
-                    if (changeEl) { 
-                        changeEl.innerText = (isUp ? '▲ ' : '▼ ') + Math.abs(change).toFixed(2) + '%'; 
+                    if (changeEl) {
+                        changeEl.innerText = (isUp ? '▲ ' : '▼ ') + Math.abs(change).toFixed(2) + '%';
                         changeEl.style.color = textColor; // Apply color to change %
                     }
                 }
             });
         }).catch(err => console.log("Market sync paused..."));
     }
-    
-    updateHeaderMarketWatch(); 
+
+    updateHeaderMarketWatch();
     // Set to 15 minutes (900,000 milliseconds)
     setInterval(updateHeaderMarketWatch, 900000);
 
@@ -85,7 +116,7 @@
     const searchInput = document.getElementById('stockSearch');
     const suggestionsBox = document.getElementById('searchSuggestions');
 
-    if(searchInput && suggestionsBox) {
+    if (searchInput && suggestionsBox) {
         searchInput.addEventListener('input', async (e) => {
             const query = e.target.value;
             if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
@@ -93,7 +124,7 @@
             try {
                 const res = await fetch(`/api/search-suggest?q=${query}`);
                 const suggestions = await res.json();
-                
+
                 if (suggestions.length > 0) {
                     suggestionsBox.innerHTML = suggestions.map(s => `
                         <div class="suggestion-item" onclick="window.location.href='/predict?ticker=${s.symbol}'">
@@ -111,4 +142,102 @@
             if (!searchInput.contains(e.target)) suggestionsBox.style.display = 'none';
         });
     }
+
+    // 3. Suggestion Modal Logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const suggestionModal = document.getElementById('suggestionModal');
+        const openSuggestionBtn = document.getElementById('openSuggestionBtn');
+        const closeSuggestionBtn = document.getElementById('closeSuggestionBtn');
+        const submitSuggestionBtn = document.getElementById('submitSuggestionBtn');
+        const suggestionText = document.getElementById('suggestionText');
+        const suggestionStatus = document.getElementById('suggestionStatus');
+
+        if (openSuggestionBtn && suggestionModal) {
+            openSuggestionBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                suggestionModal.style.display = 'flex';
+                suggestionStatus.style.display = 'none';
+                suggestionText.value = '';
+            });
+
+            closeSuggestionBtn.addEventListener('click', () => {
+                suggestionModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', (e) => {
+                if (e.target === suggestionModal) {
+                    suggestionModal.style.display = 'none';
+                }
+            });
+
+            submitSuggestionBtn.addEventListener('click', async () => {
+                const text = suggestionText.value.trim();
+                if (!text) return;
+
+                submitSuggestionBtn.disabled = true;
+                submitSuggestionBtn.innerText = 'Submitting...';
+
+                try {
+                    const response = await fetch('/api/suggestion', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text })
+                    });
+                    const data = await response.json();
+
+                    suggestionStatus.style.display = 'block';
+                    if (data.success) {
+                        suggestionStatus.style.color = '#00FF41';
+                        suggestionStatus.innerText = data.message;
+                        setTimeout(() => {
+                            suggestionModal.style.display = 'none';
+                        }, 2000);
+                    } else {
+                        suggestionStatus.style.color = '#f43f5e';
+                        suggestionStatus.innerText = data.error || 'Failed to submit.';
+                    }
+                } catch (err) {
+                    suggestionStatus.style.display = 'block';
+                    suggestionStatus.style.color = '#f43f5e';
+                    suggestionStatus.innerText = 'An error occurred.';
+                } finally {
+                    submitSuggestionBtn.disabled = false;
+                    submitSuggestionBtn.innerText = 'Submit';
+                }
+            });
+        }
+    });
 </script>
+
+<!-- Suggestion Modal -->
+<div id="suggestionModal" class="modal-overlay"
+    style="display:none; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; backdrop-filter: blur(5px);">
+    <div class="modal-content"
+        style="position:relative; width:90%; max-width:550px; background:rgba(10, 15, 25, 0.95); border:1px solid #0ff; border-radius:12px; padding:35px; box-shadow:0 0 25px rgba(0, 255, 255, 0.2); font-family: 'Courier New', Courier, monospace; color:#b0c4de;">
+        <span id="closeSuggestionBtn"
+            style="position:absolute; top:15px; right:20px; font-size:1.8rem; color:#ff0055; cursor:pointer; font-weight:bold; transition: 0.3s;"
+            onmouseover="this.style.textShadow='0 0 10px #ff0055'"
+            onmouseout="this.style.textShadow='none'">&times;</span>
+
+        <h2
+            style="margin-top:0; margin-bottom: 20px; color:#0ff; text-align:center; font-size:2rem; letter-spacing:3px; font-weight:normal; text-shadow:0 0 10px rgba(0,255,255,0.5);">
+            Suggestion</h2>
+
+        <p style="font-size:0.95rem; line-height:1.6; margin-bottom:20px; color:#a0aab5; text-align:center;">
+            Help us improve FinoraPulse. Leave your review or suggestion below.
+        </p>
+
+        <textarea id="suggestionText" rows="6" placeholder="Write your review or suggestion here..."
+            style="width:100%; padding:15px; background:rgba(0, 0, 0, 0.6); border:1px solid #334155; color:#0ff; border-radius:8px; outline:none; box-sizing:border-box; resize:vertical; margin-bottom:20px; font-family:inherit; font-size:0.95rem; transition: 0.3s; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);"
+            onfocus="this.style.borderColor='#0ff'; this.style.boxShadow='0 0 10px rgba(0, 255, 255, 0.2)'"
+            onblur="this.style.borderColor='#334155'; this.style.boxShadow='inset 0 0 5px rgba(0,0,0,0.5)'"></textarea>
+
+        <button id="submitSuggestionBtn" class="btn"
+            style="width:100%; background:transparent; border:1px solid #0ff; color:#0ff; padding:12px; cursor:pointer; font-family:inherit; font-weight:bold; font-size:1.1rem; border-radius:6px; transition:0.3s; margin-bottom: 5px; text-transform:uppercase; letter-spacing:1px;"
+            onmouseover="this.style.background='rgba(0, 255, 255, 0.1)'; this.style.boxShadow='0 0 15px rgba(0, 255, 255, 0.3)'"
+            onmouseout="this.style.background='transparent'; this.style.boxShadow='none'">Submit</button>
+        <p id="suggestionStatus"
+            style="display:none; margin-top:10px; margin-bottom:0; font-weight:bold; text-align:center; font-size:1rem;">
+        </p>
+    </div>
+</div>

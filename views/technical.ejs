@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Scalper: <%= ticker %> (<%= timeframe %>) | FinoraPulse</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
+
+    <style>
+        .strategy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .crosshair {
+            stroke: #475569;
+            stroke-dasharray: 4;
+            pointer-events: none;
+        }
+
+        .price-text {
+            fill: #94a3b8;
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .time-text {
+            fill: #64748b;
+            font-size: 10px;
+            text-anchor: middle;
+        }
+
+        #svg-container {
+            position: relative;
+            height: 450px;
+            width: 100%;
+            cursor: crosshair;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .sub-chart {
+            height: 220px;
+            width: 100%;
+            user-select: none;
+            overflow: hidden;
+            border-top: 1px dashed #334155;
+            margin-top: 15px;
+            padding-top: 15px;
+            display: none;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            background: #0d1117;
+            padding: 6px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: #8E9BAE;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .tool-btn.active {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: #38bdf8;
+            color: #38bdf8;
+        }
+
+        .tool-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .chart-card:fullscreen, .chart-card:-webkit-full-screen {
+            padding: 15px !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            background: #0d1117 !important;
+            overflow: hidden !important;
+            z-index: 9999 !important;
+        }
+
+        .close-fullscreen-btn {
+            display: none;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(239, 83, 80, 0.2);
+            color: #ef5350;
+            border: 1px solid rgba(239, 83, 80, 0.4);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 100000;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding-bottom: 4px;
+        }
+
+        .close-fullscreen-btn:hover {
+            background: rgba(239, 83, 80, 0.4);
+            color: #fff;
+        }
+
+        .chart-card:fullscreen .close-fullscreen-btn,
+        .chart-card:-webkit-full-screen .close-fullscreen-btn,
+        .rotate-mobile .close-fullscreen-btn {
+            display: flex !important;
+        }
+
+        .chart-card:fullscreen #svg-container,
+        .chart-card:-webkit-full-screen #svg-container,
+        .chart-card:fullscreen #pattern-container,
+        .chart-card:-webkit-full-screen #pattern-container,
+        .fake-fullscreen #svg-container,
+        .fake-fullscreen #pattern-container {
+            flex: 1 1 0 !important;
+            height: auto !important;
+        }
+
+        @media screen and (max-width: 768px) {
+            .chart-card:fullscreen .sub-chart,
+            .chart-card:-webkit-full-screen .sub-chart,
+            .fake-fullscreen .sub-chart {
+                height: 120px !important;
+            }
+        }
+
+        .rotate-mobile {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            width: 100vh !important;
+            height: 100vw !important;
+            transform: translate(-50%, -50%) rotate(90deg) !important;
+            z-index: 99999 !important;
+            padding: 15px !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            background: #0d1117 !important;
+            overflow: hidden !important;
+        }
+
+        .rotate-mobile #svg-container,
+        .rotate-mobile #pattern-container {
+            flex: 1 1 0 !important;
+            height: auto !important;
+        }
+
+        .rotate-mobile .sub-chart {
+            height: 120px !important;
+            flex-shrink: 0 !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <%- include('partials/header') %>
+
+        <div class="main-wrapper">
+            <%- include('partials/sidebar') %>
+
+                <main class="content-panel">
+                    <div class="strategy-header">
+                        <div>
+                            <a href="/predict?ticker=<%= ticker %>"
+                                style="color: #8E9BAE; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; margin-bottom: 10px;">
+                                ← Back to AI Prediction
+                            </a>
+                            <h1 style="margin: 0; font-size: 2.2rem;">Pro Chart: <span class="accent">
+                                    <%= ticker %>
+                                </span></h1>
+                            <p style="margin: 5px 0 0 0; color: #8E9BAE; font-size: 0.9rem;">Timeframe: <strong
+                                    style="color: #fff;">
+                                    <%= timeframe %>
+                                </strong></p>
+                        </div>
+                    </div>
+
+                    <div class="chart-card" style="padding-bottom: 25px;">
+                        <button class="close-fullscreen-btn" onclick="exitFullScreen(this)" title="Close Full Screen">×</button>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                            <h3 style="margin: 0; color: #e2e8f0;">Advanced Technical Canvas <span
+                                    style="font-size: 0.75rem; color: #64748b; font-weight: normal; margin-left: 10px;">(Hold
+                                    Ctrl to Zoom)</span></h3>
+
+                            <div class="toolbar">
+                                <button class="tool-btn" id="btn-fullscreen-main" style="color: #fff; background: rgba(255,255,255,0.1);">⛶ Full View</button>
+                                <button class="tool-btn active" id="tool-pan">✋ Pan</button>
+                                <button class="tool-btn" id="tool-hz">➖ S/R Line</button>
+                                <button class="tool-btn" id="tool-trend">📈 Trendline</button>
+                                <button class="tool-btn" id="tool-fib">📐 Fibonacci</button>
+                                <button class="tool-btn" id="tool-clear" style="color: #ef5350;">🗑️ Clear</button>
+
+                                <div style="width: 1px; height: 20px; background: #30363d; margin: 0 5px;"></div>
+
+                                <label class="tool-checkbox" style="color: #38bdf8;"><input type="checkbox"
+                                        id="toggle-sma20"> SMA 20</label>
+                                <label class="tool-checkbox" style="color: #f59e0b;"><input type="checkbox"
+                                        id="toggle-sma50"> SMA 50</label>
+                                <label class="tool-checkbox" style="color: #22d3ee; margin-left: 5px;"><input
+                                        type="checkbox" id="toggle-ema9"> EMA 9</label>
+                                <label class="tool-checkbox" style="color: #818cf8; margin-left: 5px;"><input
+                                        type="checkbox" id="toggle-ema21"> EMA 21</label>
+                                <label class="tool-checkbox" style="color: #fbbf24; margin-left: 5px;"><input
+                                        type="checkbox" id="toggle-vwap"> VWAP</label>
+                                <label class="tool-checkbox" style="color: #a78bfa; margin-left: 5px;"><input
+                                        type="checkbox" id="toggle-ichimoku"> Ichimoku</label>
+                                <label class="tool-checkbox" style="color: #4ade80; margin-left: 5px;"><input
+                                        type="checkbox" id="toggle-supertrend"> SuperTrend</label>
+                                <label class="tool-checkbox" style="color: #f43f5e; margin-left: 5px;"><input
+                                        type="checkbox" id="toggle-fvg"> FVG</label>
+                                <label class="tool-checkbox" style="color: #00E5FF; margin-left: 5px;"><input
+                                        type="checkbox" id="toggle-bb"> Bollinger Bands</label>
+                                <label class="tool-checkbox" style="color: #f472b6; margin-left: 5px;"><input
+                                        type="checkbox" id="toggle-psar"> Trend Dots</label>
+                                <label class="tool-checkbox" style="color: #cbd5e1; margin-left: 5px;"><input
+                                        type="checkbox" id="toggle-vpvr" checked> Vol Profile</label>
+                                <label class="tool-checkbox" style="color: #4ade80; margin-left: 5px;"><input
+                                        type="checkbox" id="toggle-candlesignals" checked> Signals</label>
+
+                                <div style="width: 1px; height: 20px; background: #30363d; margin: 0 5px;"></div>
+
+                                <span
+                                    style="color: #8E9BAE; font-size: 0.75rem; font-weight: bold; text-transform: uppercase;">Oscillator:</span>
+                                <button class="tool-btn active" id="tab-rsi"
+                                    style="color: #a855f7; border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.1);">RSI</button>
+                                <button class="tool-btn" id="tab-macd" style="color: #4ade80;">MACD</button>
+                                <button class="tool-btn" id="tab-stoch" style="color: #fbbf24;">Stoch</button>
+                                <button class="tool-btn" id="tab-atr" style="color: #38bdf8;">ATR</button>
+                                <button class="tool-btn" id="tab-ao" style="color: #f472b6;">AO</button>
+                                <button class="tool-btn" id="tab-none" style="color: #ef5350;">Off</button>
+                            </div>
+                        </div>
+
+                        <div id="svg-container">
+                            <svg id="main-svg" style="width: 100%; height: 100%; display: block;">
+                                <g id="grid-layer"></g>
+                                <g id="volume-layer" opacity="0.15"></g>
+                                <g id="overlay-layer"></g>
+                                <g id="candle-layer" style="shape-rendering: crispEdges;"></g>
+                                <g id="signal-layer"></g>
+                                <g id="drawing-layer"></g>
+                                <g id="time-layer"></g>
+                                <line id="cross-h" class="crosshair" x1="0" y1="0" x2="100%" y2="0" />
+                                <line id="cross-v" class="crosshair" x1="0" y1="0" x2="0" y2="100%" />
+                            </svg>
+                        </div>
+
+                        <div id="rsi-container" class="sub-chart" style="display: block;">
+                            <svg id="rsi-svg" style="width: 100%; height: 100%; display: block;">
+                                <g id="rsi-grid-layer"></g>
+                                <g id="rsi-line-layer"></g>
+                            </svg>
+                        </div>
+
+                        <div id="macd-container" class="sub-chart" style="display: none;">
+                            <svg id="macd-svg" style="width: 100%; height: 100%; display: block;">
+                                <g id="macd-grid-layer"></g>
+                                <g id="macd-hist-layer" style="shape-rendering: crispEdges;"></g>
+                                <g id="macd-line-layer"></g>
+                            </svg>
+                        </div>
+                        
+                        <div id="stoch-container" class="sub-chart" style="display: none;">
+                            <svg id="stoch-svg" style="width: 100%; height: 100%; display: block;">
+                                <g id="stoch-grid-layer"></g>
+                                <g id="stoch-line-layer"></g>
+                            </svg>
+                        </div>
+                        
+                        <div id="atr-container" class="sub-chart" style="display: none;">
+                            <svg id="atr-svg" style="width: 100%; height: 100%; display: block;">
+                                <g id="atr-grid-layer"></g>
+                                <g id="atr-line-layer"></g>
+                            </svg>
+                        </div>
+                        
+                        <div id="ao-container" class="sub-chart" style="display: none;">
+                            <svg id="ao-svg" style="width: 100%; height: 100%; display: block;">
+                                <g id="ao-grid-layer"></g>
+                                <g id="ao-hist-layer" style="shape-rendering: crispEdges;"></g>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <button class="close-fullscreen-btn" onclick="exitFullScreen(this)" title="Close Full Screen">×</button>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                            <h3 style="margin: 0; color: #e2e8f0;">Pattern Recognition Canvas <span
+                                    style="font-size: 0.75rem; color: #64748b; font-weight: normal; margin-left: 10px;">(Hold
+                                    Ctrl to Zoom)</span></h3>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <button class="tool-btn" id="btn-fullscreen-pattern" style="color: #fff; background: rgba(255,255,255,0.1); border: 1px solid transparent; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">⛶ Full View</button>
+                                <label class="tool-checkbox"
+                                    style="color: #fbbf24; padding: 4px 10px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.4); border-radius: 4px;">
+                                    <input type="checkbox" id="toggle-pattern-auto" checked> Auto Patterns
+                                </label>
+                                <label class="tool-checkbox"
+                                    style="color: #26a69a; padding: 4px 10px; background: rgba(38, 166, 154, 0.1); border: 1px solid rgba(38, 166, 154, 0.4); border-radius: 4px;">
+                                    <input type="checkbox" id="toggle-pattern-trendline" checked> Auto Trendline
+                                </label>
+                                <label class="tool-checkbox"
+                                    style="color: #a855f7; padding: 4px 10px; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 4px;">
+                                    <input type="checkbox" id="toggle-pattern-sr"> Auto S/R
+                                </label>
+                                <label class="tool-checkbox"
+                                    style="color: #f43f5e; padding: 4px 10px; background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.4); border-radius: 4px;">
+                                    <input type="checkbox" id="toggle-pattern-fib"> Auto Fib
+                                </label>
+                                <label class="tool-checkbox"
+                                    style="color: #60a5fa; padding: 4px 10px; background: rgba(96, 165, 250, 0.1); border: 1px solid rgba(96, 165, 250, 0.4); border-radius: 4px;">
+                                    <input type="checkbox" id="toggle-pattern-pivot"> Pivot Points
+                                </label>
+                            </div>
+                        </div>
+                        <div id="pattern-container"
+                            style="height: 350px; width: 100%; user-select: none; overflow: hidden; display: block; cursor: crosshair;">
+                            <svg id="pattern-svg" style="width: 100%; height: 100%; display: block;">
+                                <g id="pattern-grid-layer"></g>
+                                <g id="pattern-candle-layer" style="shape-rendering: crispEdges;"></g>
+                                <g id="pattern-signal-layer"></g>
+                                <g id="pattern-time-layer"></g>
+                                <g id="pattern-drawing-layer"></g>
+                                <line id="cross-h-pat" class="crosshair" x1="0" y1="0" x2="100%" y2="0" />
+                                <line id="cross-v-pat" class="crosshair" x1="0" y1="0" x2="0" y2="100%" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div style="height:60px;"></div>
+                </main>
+                <aside class="side-panel right"></aside>
+        </div>
+
+        <script>
+            const currentTicker = "<%= ticker %>";
+            const currentTimeframe = "<%= timeframe %>";
+
+            let ohlcData = [];
+
+            // State Management
+            let visibleCount = 80; let offset = 0; let dragAccumulator = 0;
+            let chartState = { minP: 0, maxP: 0, range: 0, candleW: 0, chartH: 0, padT: 20, padB: 40, padR: 55 };
+
+            let patternVisibleCount = 80; let patternOffset = 0; let patternDragAccumulator = 0;
+            let patternState = { minP: 0, maxP: 0, range: 0, candleW: 0, chartH: 0, padT: 20, padB: 40, padR: 55 };
+
+            // UI States
+            let showSMA20 = false, showSMA50 = false, showEMA9 = false, showEMA21 = false, showVWAP = false;
+            let showBB = false, showVPVR = true, showIchimoku = false, showSuperTrend = false, showFVG = false;
+            let showPSAR = false, showCandleSignals = true;
+            
+            // NEW STATES FOR PATTERN CANVAS
+            let showPatternSR = false, showAutoPatterns = true, showAutoTrendline = true, showAutoFib = false, showPivotPoints = false;
+
+            let activeSubChart = 'RSI', activeTool = 'pan';
+            let drawnLines = [], tempTrendline = null, tempFib = null;
+
+            const svgContainer = document.getElementById('svg-container');
+            const patternContainer = document.getElementById('pattern-container');
+            const chartContainers = [svgContainer, patternContainer];
+
+            // Tools
+            const tools = { 'tool-pan': 'pan', 'tool-hz': 'hz', 'tool-trend': 'trend', 'tool-fib': 'fib' };
+            Object.keys(tools).forEach(id => {
+                document.getElementById(id).onclick = (e) => {
+                    document.querySelectorAll('#tool-pan, #tool-hz, #tool-trend, #tool-fib').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    activeTool = tools[id];
+                    const cursorStyle = activeTool === 'pan' ? 'grab' : 'crosshair';
+                    svgContainer.style.cursor = cursorStyle; patternContainer.style.cursor = cursorStyle;
+                };
+            });
+
+            // Top Chart Listeners
+            document.getElementById('tool-clear').onclick = () => { drawnLines = []; renderAll(); };
+            document.getElementById('toggle-sma20').onchange = (e) => { showSMA20 = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-sma50').onchange = (e) => { showSMA50 = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-ema9').onchange = (e) => { showEMA9 = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-ema21').onchange = (e) => { showEMA21 = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-vwap').onchange = (e) => { showVWAP = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-ichimoku').onchange = (e) => { showIchimoku = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-supertrend').onchange = (e) => { showSuperTrend = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-fvg').onchange = (e) => { showFVG = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-bb').onchange = (e) => { showBB = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-vpvr').onchange = (e) => { showVPVR = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-psar').onchange = (e) => { showPSAR = e.target.checked; renderSVG(); };
+            document.getElementById('toggle-candlesignals').onchange = (e) => { showCandleSignals = e.target.checked; renderAll(); };
+
+            // Pattern Chart Listeners
+            document.getElementById('toggle-pattern-sr').onchange = (e) => { showPatternSR = e.target.checked; renderPatternChart(); };
+            document.getElementById('toggle-pattern-auto').onchange = (e) => { showAutoPatterns = e.target.checked; renderPatternChart(); };
+            document.getElementById('toggle-pattern-trendline').onchange = (e) => { showAutoTrendline = e.target.checked; renderPatternChart(); };
+            document.getElementById('toggle-pattern-fib').onchange = (e) => { showAutoFib = e.target.checked; renderPatternChart(); };
+            document.getElementById('toggle-pattern-pivot').onchange = (e) => { showPivotPoints = e.target.checked; renderPatternChart(); };
+
+            document.getElementById('tab-rsi').onclick = () => setSubChart('RSI');
+            document.getElementById('tab-macd').onclick = () => setSubChart('MACD');
+            document.getElementById('tab-stoch').onclick = () => setSubChart('STOCH');
+            document.getElementById('tab-atr').onclick = () => setSubChart('ATR');
+            document.getElementById('tab-ao').onclick = () => setSubChart('AO');
+            document.getElementById('tab-none').onclick = () => setSubChart('OFF');
+
+            function setSubChart(type) {
+                activeSubChart = type;
+                const btns = ['tab-rsi', 'tab-macd', 'tab-stoch', 'tab-atr', 'tab-ao', 'tab-none'].map(id => document.getElementById(id));
+                const colors = { 'RSI': 'rgba(168, 85, 247,', 'MACD': 'rgba(74, 222, 128,', 'STOCH': 'rgba(251, 191, 36,', 'ATR': 'rgba(56, 189, 248,', 'AO': 'rgba(244, 114, 182,', 'OFF': 'rgba(239, 83, 80,' };
+                
+                btns.forEach(btn => { btn.style.borderColor = 'transparent'; btn.style.background = 'transparent'; btn.classList.remove('active'); });
+                ['rsi', 'macd', 'stoch', 'atr', 'ao'].forEach(id => document.getElementById(id + '-container').style.display = 'none');
+
+                if (type !== 'OFF') {
+                    const activeBtn = document.getElementById('tab-' + type.toLowerCase());
+                    const c = colors[type];
+                    activeBtn.style.borderColor = c + ' 0.4)'; activeBtn.style.background = c + ' 0.1)'; activeBtn.classList.add('active');
+                    document.getElementById(type.toLowerCase() + '-container').style.display = 'block';
+                } else {
+                    const offBtn = document.getElementById('tab-none');
+                    offBtn.style.borderColor = colors['OFF'] + ' 0.4)'; offBtn.style.background = colors['OFF'] + ' 0.1)'; offBtn.classList.add('active');
+                }
+                renderSVG();
+            }
+
+            async function fetchOHLCData() {
+                try {
+                    const res = await fetch(`/api/chart-svg?ticker=${currentTicker}&timeframe=${currentTimeframe}`);
+                    let data = await res.json();
+
+                    if (data.error || !Array.isArray(data)) {
+                        document.getElementById('overlay-layer').innerHTML = `<text x="50%" y="50%" fill="#ef5350" font-size="20" font-weight="bold" text-anchor="middle">⚠️ Error: ${data.error || 'Invalid Data'}</text>`;
+                        return;
+                    }
+                    if (data.length > 0 && Array.isArray(data[0])) { data = data.map(d => ({ date: d[0], open: d[1], high: d[2], low: d[3], close: d[4], volume: d[5] })); }
+
+                    ohlcData = data;
+                    offset = Math.max(0, ohlcData.length - visibleCount);
+                    patternOffset = Math.max(0, ohlcData.length - patternVisibleCount);
+                    renderAll();
+                } catch (e) { 
+                    document.getElementById('overlay-layer').innerHTML = `<text x="50%" y="50%" fill="#ef5350" font-size="16" font-weight="bold" text-anchor="middle">Network Error: ${e.message}</text>`; 
+                }
+            }
+
+            function getPriceFromY(y, container) {
+                const state = container === svgContainer ? chartState : patternState;
+                return state.range === 0 ? 0 : state.minP + state.range * ((container.clientHeight - state.padB - y) / state.chartH);
+            }
+            function getIndexFromX(x, container) {
+                return (container === svgContainer ? offset : patternOffset) + Math.floor(x / (container === svgContainer ? chartState : patternState).candleW);
+            }
+
+            // Controls (Mouse & Touch)
+            function getLocalCoords(clientX, clientY, container) {
+                const isRotated = container.closest('.chart-card').classList.contains('rotate-mobile');
+                const rect = container.getBoundingClientRect();
+                if (isRotated) {
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    const dx_screen = clientX - centerX;
+                    const dy_screen = clientY - centerY;
+                    const dx_local = dy_screen;
+                    const dy_local = -dx_screen;
+                    return { x: container.clientWidth / 2 + dx_local, y: container.clientHeight / 2 + dy_local };
+                }
+                return { x: clientX - rect.left, y: clientY - rect.top };
+            }
+
+            const handleWheel = (e, container) => {
+                const isRotated = container.closest('.chart-card').classList.contains('rotate-mobile');
+                let deltaX = isRotated ? e.deltaY : e.deltaX;
+                let deltaY = isRotated ? -e.deltaX : e.deltaY;
+
+                const isMain = container === svgContainer;
+                let currentVis = isMain ? visibleCount : patternVisibleCount;
+                let currentOff = isMain ? offset : patternOffset;
+                let currentDrag = isMain ? dragAccumulator : patternDragAccumulator;
+
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    e.preventDefault(); currentDrag -= deltaX;
+                    const candleW = (container.clientWidth - 55) / currentVis;
+                    const moves = Math.trunc(currentDrag / candleW);
+                    if (moves !== 0) {
+                        currentOff = Math.min(Math.max(currentOff - moves, 0), ohlcData.length - currentVis);
+                        currentDrag -= (moves * candleW);
+                        if (isMain) { offset = currentOff; dragAccumulator = currentDrag; renderSVG(); }
+                        else { patternOffset = currentOff; patternDragAccumulator = currentDrag; renderPatternChart(); }
+                    }
+                    return;
+                }
+
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault(); const delta = Math.sign(deltaY);
+                    const oldVis = currentVis;
+                    currentVis = Math.min(Math.max(currentVis + (delta * Math.ceil(currentVis * 0.15)), 10), ohlcData.length);
+                    currentOff = Math.min(Math.max(currentOff + Math.floor((oldVis - currentVis) / 2), 0), ohlcData.length - currentVis);
+                    if (isMain) { offset = currentOff; visibleCount = currentVis; renderSVG(); }
+                    else { patternOffset = currentOff; patternVisibleCount = currentVis; renderPatternChart(); }
+                }
+            };
+
+            svgContainer.addEventListener('wheel', (e) => handleWheel(e, svgContainer), { passive: false });
+            patternContainer.addEventListener('wheel', (e) => handleWheel(e, patternContainer), { passive: false });
+
+            chartContainers.forEach(container => {
+                let tStartX = 0, tStartY = 0, tIsPan = false;
+                container.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 1) {
+                        const coords = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
+                        tStartX = coords.x; tStartY = coords.y; tIsPan = false;
+                        if (container === svgContainer) dragAccumulator = 0; else patternDragAccumulator = 0;
+                    }
+                }, { passive: true });
+                container.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 1 && activeTool === 'pan') {
+                        const coords = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
+                        const dx = coords.x - tStartX, dy = coords.y - tStartY;
+                        if (!tIsPan) {
+                            if (Math.abs(dx) > Math.abs(dy) + 5) tIsPan = true; else if (Math.abs(dy) > Math.abs(dx) + 5) return;
+                        }
+                        if (tIsPan) {
+                            e.preventDefault();
+                            const isMain = container === svgContainer;
+                            let cVis = isMain ? visibleCount : patternVisibleCount;
+                            let cOff = isMain ? offset : patternOffset;
+                            let cDrag = isMain ? dragAccumulator : patternDragAccumulator;
+                            cDrag += dx; tStartX = coords.x;
+                            const cW = (container.clientWidth - 55) / cVis;
+                            const moves = Math.trunc(cDrag / cW);
+                            if (moves !== 0) {
+                                cOff = Math.min(Math.max(cOff - moves, 0), ohlcData.length - cVis); cDrag -= (moves * cW);
+                                if (isMain) { offset = cOff; dragAccumulator = cDrag; renderSVG(); }
+                                else { patternOffset = cOff; patternDragAccumulator = cDrag; renderPatternChart(); }
+                            }
+                        }
+                    }
+                }, { passive: false });
+            });
+
+            let isDragging = false, lastMouseX = 0, activeDragContainer = null;
+
+            chartContainers.forEach(container => {
+                container.onmousedown = (e) => {
+                    const coords = getLocalCoords(e.clientX, e.clientY, container);
+                    const mx = coords.x, my = coords.y;
+                    if (activeTool === 'pan') {
+                        isDragging = true; lastMouseX = coords.x;
+                        if (container === svgContainer) dragAccumulator = 0; else patternDragAccumulator = 0;
+                        container.style.cursor = 'grabbing'; activeDragContainer = container;
+                    } else {
+                        if (activeTool === 'hz') { drawnLines.push({ type: 'horizontal', price: getPriceFromY(my, container) }); renderAll(); }
+                        else if (activeTool === 'trend') { isDragging = true; const sIdx = getIndexFromX(mx, container), sPr = getPriceFromY(my, container); tempTrendline = { type: 'trend', startIdx: sIdx, startPrice: sPr, endIdx: sIdx, endPrice: sPr }; activeDragContainer = container; }
+                        else if (activeTool === 'fib') { isDragging = true; const sIdx = getIndexFromX(mx, container), sPr = getPriceFromY(my, container); tempFib = { type: 'fib', startIdx: sIdx, startPrice: sPr, endIdx: sIdx, endPrice: sPr }; activeDragContainer = container; }
+                    }
+                };
+
+                container.onmousemove = (e) => {
+                    const coords = getLocalCoords(e.clientX, e.clientY, container);
+                    const mx = coords.x, my = coords.y;
+                    if (container === svgContainer) { document.getElementById('cross-h').setAttribute('y1', my); document.getElementById('cross-h').setAttribute('y2', my); document.getElementById('cross-v').setAttribute('x1', mx); document.getElementById('cross-v').setAttribute('x2', mx); }
+                    else if (container === patternContainer) { document.getElementById('cross-h-pat').setAttribute('y1', my); document.getElementById('cross-h-pat').setAttribute('y2', my); document.getElementById('cross-v-pat').setAttribute('x1', mx); document.getElementById('cross-v-pat').setAttribute('x2', mx); }
+
+                    if (isDragging && activeDragContainer === container) {
+                        if (activeTool === 'pan') {
+                            const isMain = container === svgContainer;
+                            let cVis = isMain ? visibleCount : patternVisibleCount;
+                            let cOff = isMain ? offset : patternOffset;
+                            let cDrag = isMain ? dragAccumulator : patternDragAccumulator;
+                            const dx = coords.x - lastMouseX; lastMouseX = coords.x; cDrag += dx;
+                            const cW = (container.clientWidth - 55) / cVis; const moves = Math.trunc(cDrag / cW);
+                            if (moves !== 0) {
+                                cOff = Math.min(Math.max(cOff - moves, 0), ohlcData.length - cVis); cDrag -= (moves * cW);
+                                if (isMain) { offset = cOff; dragAccumulator = cDrag; renderSVG(); } else { patternOffset = cOff; patternDragAccumulator = cDrag; renderPatternChart(); }
+                            }
+                        } else {
+                            if (activeTool === 'trend' && tempTrendline) { tempTrendline.endIdx = getIndexFromX(mx, container); tempTrendline.endPrice = getPriceFromY(my, container); renderAll(); }
+                            else if (activeTool === 'fib' && tempFib) { tempFib.endIdx = getIndexFromX(mx, container); tempFib.endPrice = getPriceFromY(my, container); renderAll(); }
+                        }
+                    }
+                };
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDragging && activeTool === 'trend' && tempTrendline) { drawnLines.push(tempTrendline); tempTrendline = null; renderAll(); }
+                if (isDragging && activeTool === 'fib' && tempFib) { drawnLines.push(tempFib); tempFib = null; renderAll(); }
+                isDragging = false; activeDragContainer = null;
+                const cStyle = activeTool === 'pan' ? 'grab' : 'crosshair';
+                svgContainer.style.cursor = cStyle; patternContainer.style.cursor = cStyle;
+            });
+
+            function renderAll() { renderSVG(); renderPatternChart(); }
+
+            // Render Logic
+            function renderSVG() {
+                if (!ohlcData.length) return;
+                const w = svgContainer.clientWidth, h = svgContainer.clientHeight;
+                chartState.padR = 55; chartState.padB = 40; chartState.padT = 20;
+                const chartW = w - chartState.padR; chartState.chartH = h - chartState.padB - chartState.padT;
+                const displayData = ohlcData.slice(offset, offset + visibleCount);
+                if (displayData.length === 0) return;
+
+                let highs = displayData.map(d => d.high), lows = displayData.map(d => d.low);
+                if (showBB) { displayData.forEach(d => { if (d.bbUpper) highs.push(d.bbUpper); if (d.bbLower) lows.push(d.bbLower); }); }
+
+                chartState.maxP = Math.max(...highs); chartState.minP = Math.min(...lows);
+                chartState.range = chartState.maxP - chartState.minP || 1;
+                chartState.candleW = chartW / displayData.length;
+                const getY = (p) => (h - chartState.padB) - ((p - chartState.minP) / chartState.range) * chartState.chartH;
+
+                let gridHtml = '';
+                for (let i = 0; i <= 8; i++) {
+                    const p = chartState.minP + (chartState.range * (i / 8));
+                    gridHtml += `<line x1="0" y1="${getY(p)}" x2="${chartW}" y2="${getY(p)}" stroke="#1e293b" stroke-width="1"/><text x="${chartW + 8}" y="${getY(p) + 4}" class="price-text">${p.toFixed(2)}</text>`;
+                }
+                document.getElementById('grid-layer').innerHTML = gridHtml;
+
+                let candleHtml = '', volHtml = '', timeHtml = '', signalHtml = '';
+                const maxV = Math.max(...displayData.map(d => d.volume || 0)) || 1;
+                const timeStep = Math.ceil(visibleCount / 8);
+
+                displayData.forEach((d, i) => {
+                    const x = i * chartState.candleW, midX = x + (chartState.candleW / 2);
+                    const color = d.close >= d.open ? "#26a69a" : "#ef5350";
+                    const vH = (d.volume / maxV) * 60;
+                    volHtml += `<rect x="${x + 2}" y="${h - chartState.padB - vH}" width="${chartState.candleW - 4}" height="${vH}" fill="${color}" />`;
+
+                    const bodyT = getY(Math.max(d.open, d.close)), bodyB = getY(Math.min(d.open, d.close));
+                    candleHtml += `<line x1="${midX}" y1="${getY(d.high)}" x2="${midX}" y2="${getY(d.low)}" stroke="${color}" stroke-width="1.5" />`;
+                    candleHtml += `<rect x="${x + (chartState.candleW * 0.15)}" y="${bodyT}" width="${chartState.candleW * 0.7}" height="${Math.max(Math.abs(bodyT - bodyB), 1.5)}" fill="${color}" />`;
+
+                    if (i % timeStep === 0) timeHtml += `<text x="${midX}" y="${h - 15}" class="time-text">${d.date}</text>`;
+
+                    if (showCandleSignals && d.candle_signal && d.candle_signal.signal !== 'neutral') {
+                        const isBull = d.candle_signal.signal === 'bullish';
+                        const sigY = isBull ? getY(d.low) + 15 : getY(d.high) - 5;
+                        const sigColor = isBull ? '#4ade80' : '#ef5350';
+                        signalHtml += `<text x="${midX}" y="${sigY}" fill="${sigColor}" font-size="12" font-weight="bold" text-anchor="middle">${isBull ? '▲' : '▼'}</text>`;
+                        signalHtml += `<text x="${midX}" y="${isBull ? sigY + 12 : sigY - 12}" fill="${sigColor}" font-size="9" font-family="monospace" text-anchor="middle">${d.candle_signal.name}</text>`;
+                    }
+                });
+
+                document.getElementById('candle-layer').innerHTML = candleHtml;
+                document.getElementById('volume-layer').innerHTML = volHtml;
+                document.getElementById('time-layer').innerHTML = timeHtml;
+                document.getElementById('signal-layer').innerHTML = signalHtml;
+
+                let overlayHtml = '';
+                const drawPath = (dataKey, strokeColor, width, dash = "") => {
+                    let pathD = "", isFirst = true;
+                    const keys = dataKey.split('.');
+                    displayData.forEach((d, i) => {
+                        let val = d;
+                        keys.forEach(k => { if (val) val = val[k]; });
+                        if (val != null) {
+                            const pt = `${i * chartState.candleW + (chartState.candleW / 2)},${getY(val)}`; pathD += isFirst ? `M ${pt} ` : `L ${pt} `; isFirst = false;
+                        }
+                    });
+                    if (pathD) overlayHtml += `<path d="${pathD}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-dasharray="${dash}" stroke-linejoin="round" />`;
+                };
+
+                if (showSMA20) drawPath('sma20', '#38bdf8', 2);
+                if (showSMA50) drawPath('sma50', '#f59e0b', 2);
+                if (showEMA9) drawPath('ema9', '#22d3ee', 1.5);
+                if (showEMA21) drawPath('ema21', '#818cf8', 1.5);
+                if (showVWAP) drawPath('vwap', '#fbbf24', 2, "4,4");
+                
+                if (showIchimoku) {
+                    drawPath('ichimoku.tenkan', '#38bdf8', 1);
+                    drawPath('ichimoku.kijun', '#f59e0b', 1);
+                    drawPath('ichimoku.senkou_a', '#4ade80', 1);
+                    drawPath('ichimoku.senkou_b', '#ef5350', 1);
+                    
+                    let cloudA = [], cloudB = [];
+                    displayData.forEach((d, i) => {
+                        if (d.ichimoku && d.ichimoku.senkou_a != null && d.ichimoku.senkou_b != null) {
+                            const x = i * chartState.candleW + (chartState.candleW / 2);
+                            cloudA.push(`${x},${getY(d.ichimoku.senkou_a)}`);
+                            cloudB.push(`${x},${getY(d.ichimoku.senkou_b)}`);
+                        }
+                    });
+                    if (cloudA.length > 0) {
+                        const rB = [...cloudB].reverse();
+                        overlayHtml += `<path d="M ${cloudA[0]} L ${cloudA.join(' L ')} L ${rB[0]} L ${rB.join(' L ')} Z" fill="rgba(74, 222, 128, 0.12)" stroke="none" />`;
+                    }
+                }
+                
+                if (showSuperTrend) {
+                    let pathD = "", isFirst = true, currColor = null;
+                    displayData.forEach((d, i) => {
+                        if (d.supertrend && d.supertrend.val != null) {
+                            const pt = `${i * chartState.candleW + (chartState.candleW / 2)},${getY(d.supertrend.val)}`;
+                            const ptColor = d.supertrend.dir === 1 ? '#4ade80' : '#ef5350';
+                            if (currColor !== ptColor) {
+                                if (!isFirst) overlayHtml += `<path d="${pathD}" fill="none" stroke="${currColor}" stroke-width="2.5" stroke-linejoin="round" />`;
+                                pathD = `M ${pt} `;
+                                currColor = ptColor;
+                                isFirst = false;
+                            } else {
+                                pathD += `L ${pt} `;
+                            }
+                        }
+                    });
+                    if (pathD) overlayHtml += `<path d="${pathD}" fill="none" stroke="${currColor}" stroke-width="2.5" stroke-linejoin="round" />`;
+                }
+
+                if (showFVG) {
+                    displayData.forEach((d, i) => {
+                        if (d.fvg) {
+                            const x = (i - 2) * chartState.candleW; 
+                            const yTop = getY(d.fvg.top);
+                            const yBot = getY(d.fvg.bottom);
+                            const height = Math.abs(yBot - yTop);
+                            const color = d.fvg.type === 'bullish' ? 'rgba(74, 222, 128, 0.15)' : 'rgba(239, 83, 80, 0.15)';
+                            const strokeColor = d.fvg.type === 'bullish' ? 'rgba(74, 222, 128, 0.4)' : 'rgba(239, 83, 80, 0.4)';
+                            if (height > 0) {
+                                overlayHtml += `<rect x="${x}" y="${Math.min(yTop, yBot)}" width="${chartState.candleW * 3}" height="${height}" fill="${color}" stroke="${strokeColor}" stroke-dasharray="2,2" stroke-width="1" />`;
+                                overlayHtml += `<text x="${x + chartState.candleW * 1.5}" y="${Math.min(yTop, yBot) + height/2 + 4}" fill="${strokeColor}" font-size="10" font-weight="bold" text-anchor="middle">FVG</text>`;
+                            }
+                        }
+                    });
+                }
+                if (showBB) {
+                    let uP = [], lP = [];
+                    displayData.forEach((d, i) => {
+                        if (d.bbUpper != null && d.bbLower != null) {
+                            const x = i * chartState.candleW + (chartState.candleW / 2); uP.push(`${x},${getY(d.bbUpper)}`); lP.push(`${x},${getY(d.bbLower)}`);
+                        }
+                    });
+                    if (uP.length > 0) {
+                        overlayHtml += `<path d="M ${uP.join(' L ')}" fill="none" stroke="#00E5FF" stroke-width="1" opacity="0.5" stroke-dasharray="3"/>`;
+                        overlayHtml += `<path d="M ${lP.join(' L ')}" fill="none" stroke="#00E5FF" stroke-width="1" opacity="0.5" stroke-dasharray="3"/>`;
+                        const rL = [...lP].reverse();
+                        overlayHtml += `<path d="M ${uP[0]} L ${uP.join(' L ')} L ${rL[0]} L ${rL.join(' L ')} Z" fill="rgba(0, 229, 255, 0.08)" stroke="none" />`;
+                    }
+                }
+                if (showPSAR) {
+                    displayData.forEach((d, i) => {
+                        if (d.psar != null) {
+                            const x = i * chartState.candleW + (chartState.candleW / 2); const isBull = d.psar < d.close; const dotColor = isBull ? "#26a69a" : "#ef5350";
+                            overlayHtml += `<circle cx="${x}" cy="${getY(d.psar)}" r="2.5" fill="${dotColor}" />`;
+                        }
+                    });
+                }
+
+                if (showVPVR && chartState.range > 0) {
+                    const binCount = 24; let bins = new Array(binCount).fill(0); let binSize = chartState.range / binCount;
+                    displayData.forEach(d => {
+                        let startBin = Math.floor((d.low - chartState.minP) / binSize), endBin = Math.floor((d.high - chartState.minP) / binSize);
+                        startBin = Math.max(0, Math.min(binCount - 1, startBin)); endBin = Math.max(0, Math.min(binCount - 1, endBin));
+                        let volPerBin = (d.volume || 1) / ((endBin - startBin) + 1);
+                        for (let b = startBin; b <= endBin; b++) bins[b] += volPerBin;
+                    });
+                    let maxBinVol = Math.max(...bins) || 1, pocBin = bins.indexOf(maxBinVol);
+                    bins.forEach((vol, b) => {
+                        if (vol === 0) return;
+                        let barW = (vol / maxBinVol) * (chartW * 0.3), yTop = getY(chartState.minP + ((b + 1) * binSize)), barH = getY(chartState.minP + (b * binSize)) - yTop;
+                        let color = (b === pocBin) ? 'rgba(239, 83, 80, 0.4)' : 'rgba(56, 189, 248, 0.15)', stroke = (b === pocBin) ? 'rgba(239, 83, 80, 0.8)' : 'rgba(56, 189, 248, 0.4)';
+                        overlayHtml += `<rect x="${chartW - barW}" y="${yTop}" width="${barW}" height="${barH}" fill="${color}" stroke="${stroke}" stroke-width="1" />`;
+                        if (b === pocBin) {
+                            let pocY = yTop + (barH / 2);
+                            overlayHtml += `<line x1="0" y1="${pocY}" x2="${chartW}" y2="${pocY}" stroke="#ef5350" stroke-width="1.5" stroke-dasharray="4" /><text x="5" y="${pocY - 5}" fill="#ef5350" font-size="10" font-family="monospace" font-weight="bold">POC</text>`;
+                        }
+                    });
+                }
+
+                document.getElementById('overlay-layer').innerHTML = overlayHtml;
+
+                let drawHtml = '';
+                const renderDrawing = (l) => {
+                    if (l.type === 'horizontal') {
+                        const y = getY(l.price);
+                        drawHtml += `<line x1="0" y1="${y}" x2="${chartW}" y2="${y}" stroke="#a855f7" stroke-width="2" stroke-dasharray="4"/><rect x="${chartW}" y="${y - 10}" width="80" height="20" fill="#a855f7" /><text x="${chartW + 5}" y="${y + 4}" fill="#000" font-size="11" font-weight="bold">${l.price.toFixed(2)}</text>`;
+                    } else if (l.type === 'trend') {
+                        drawHtml += `<line x1="${(l.startIdx - offset) * chartState.candleW + chartState.candleW / 2}" y1="${getY(l.startPrice)}" x2="${(l.endIdx - offset) * chartState.candleW + chartState.candleW / 2}" y2="${getY(l.endPrice)}" stroke="#a855f7" stroke-width="2" />`;
+                    } else if (l.type === 'fib') {
+                        const startX = (l.startIdx - offset) * chartState.candleW + chartState.candleW / 2, diff = l.endPrice - l.startPrice;
+                        const levels = [{ ratio: 0, color: '#787b86' }, { ratio: 0.236, color: '#f44336' }, { ratio: 0.382, color: '#81c784' }, { ratio: 0.5, color: '#4caf50' }, { ratio: 0.618, color: '#009688' }, { ratio: 0.786, color: '#64b5f6' }, { ratio: 1, color: '#787b86' }];
+                        drawHtml += `<line x1="${startX}" y1="${getY(l.startPrice)}" x2="${(l.endIdx - offset) * chartState.candleW + chartState.candleW / 2}" y2="${getY(l.endPrice)}" stroke="#ffffff" stroke-width="1" stroke-dasharray="2" opacity="0.3" />`;
+                        levels.forEach(level => {
+                            const price = l.startPrice + (diff * level.ratio), y = getY(price);
+                            drawHtml += `<line x1="${startX}" y1="${y}" x2="${chartW}" y2="${y}" stroke="${level.color}" stroke-width="1.5" /><text x="${startX + 5}" y="${y - 4}" fill="${level.color}" font-size="10" font-family="monospace" font-weight="bold">${(level.ratio * 100).toFixed(1)}% (${price.toFixed(2)})</text>`;
+                        });
+                    }
+                };
+
+                drawnLines.forEach(renderDrawing);
+                if (tempTrendline && activeDragContainer === svgContainer) renderDrawing(tempTrendline);
+                if (tempFib && activeDragContainer === svgContainer) renderDrawing(tempFib);
+                document.getElementById('drawing-layer').innerHTML = drawHtml;
+
+                if (activeSubChart === 'RSI') renderRSI();
+                if (activeSubChart === 'MACD') renderMACD();
+                if (activeSubChart === 'STOCH') renderStoch();
+                if (activeSubChart === 'ATR') renderATR();
+                if (activeSubChart === 'AO') renderAO();
+            }
+
+            function renderRSI() {
+                if (!ohlcData.length) return;
+                const w = document.getElementById('rsi-container').clientWidth, h = document.getElementById('rsi-container').clientHeight, chartW = w - 80, chartH = h - 40;
+                const displayData = ohlcData.slice(offset, offset + visibleCount);
+                if (displayData.length === 0) return;
+
+                const candleW = chartW / displayData.length; const getY = (val) => (h - 20) - (val / 100) * chartH;
+                document.getElementById('rsi-grid-layer').innerHTML = `
+        <line x1="0" y1="${getY(70)}" x2="${chartW}" y2="${getY(70)}" stroke="#ef5350" stroke-width="1" stroke-dasharray="4"/><text x="${chartW + 8}" y="${getY(70) + 4}" fill="#ef5350" font-size="10" font-family="monospace">70</text>
+        <line x1="0" y1="${getY(50)}" x2="${chartW}" y2="${getY(50)}" stroke="#64748b" stroke-width="1" stroke-dasharray="2"/>
+        <line x1="0" y1="${getY(30)}" x2="${chartW}" y2="${getY(30)}" stroke="#26a69a" stroke-width="1" stroke-dasharray="4"/><text x="${chartW + 8}" y="${getY(30) + 4}" fill="#26a69a" font-size="10" font-family="monospace">30</text>
+        <rect x="0" y="${getY(70)}" width="${chartW}" height="${getY(30) - getY(70)}" fill="rgba(168, 85, 247, 0.05)" />`;
+
+                let pathD = "", isFirst = true;
+                displayData.forEach((d, i) => { if (d.rsi != null) { const pt = `${i * candleW + (candleW / 2)},${getY(d.rsi)}`; pathD += isFirst ? `M ${pt} ` : `L ${pt} `; isFirst = false; } });
+                document.getElementById('rsi-line-layer').innerHTML = pathD ? `<path d="${pathD}" fill="none" stroke="#a855f7" stroke-width="2" stroke-linejoin="round" />` : "";
+            }
+
+            function renderMACD() {
+                if (!ohlcData.length) return;
+                const w = document.getElementById('macd-container').clientWidth, h = document.getElementById('macd-container').clientHeight, chartW = w - 80, chartH = h - 40;
+                const displayData = ohlcData.slice(offset, offset + visibleCount);
+                if (displayData.length === 0) return;
+
+                let maxAbs = 0; displayData.forEach(d => { if (d.macd != null) maxAbs = Math.max(maxAbs, Math.abs(d.macd), Math.abs(d.signal), Math.abs(d.hist)); }); maxAbs = maxAbs || 1;
+
+                const candleW = chartW / displayData.length; const getY = (val) => (h / 2) - (val / maxAbs) * (chartH / 2);
+                document.getElementById('macd-grid-layer').innerHTML = `<line x1="0" y1="${h / 2}" x2="${chartW}" y2="${h / 2}" stroke="#64748b" stroke-width="1" stroke-dasharray="2"/><text x="${chartW + 8}" y="${(h / 2) + 4}" fill="#64748b" font-size="10" font-family="monospace">0.0</text>`;
+
+                let histHtml = '';
+                displayData.forEach((d, i) => {
+                    if (d.hist != null) {
+                        const color = d.hist >= 0 ? "rgba(38, 166, 154, 0.6)" : "rgba(239, 83, 80, 0.6)", yStart = d.hist >= 0 ? getY(d.hist) : h / 2, barH = Math.abs(getY(d.hist) - (h / 2));
+                        histHtml += `<rect x="${i * candleW + 2}" y="${yStart}" width="${candleW - 4}" height="${barH}" fill="${color}" />`;
+                    }
+                });
+                document.getElementById('macd-hist-layer').innerHTML = histHtml;
+
+                let macdPath = "", signalPath = "", isFirstM = true, isFirstS = true;
+                displayData.forEach((d, i) => {
+                    const x = i * candleW + (candleW / 2);
+                    if (d.macd != null) { const pt = `${x},${getY(d.macd)}`; macdPath += isFirstM ? `M ${pt} ` : `L ${pt} `; isFirstM = false; }
+                    if (d.signal != null) { const pt = `${x},${getY(d.signal)}`; signalPath += isFirstS ? `M ${pt} ` : `L ${pt} `; isFirstS = false; }
+                });
+                let lineHtml = "";
+                if (macdPath) lineHtml += `<path d="${macdPath}" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round" />`;
+                if (signalPath) lineHtml += `<path d="${signalPath}" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linejoin="round" />`;
+                document.getElementById('macd-line-layer').innerHTML = lineHtml;
+            }
+
+            function renderStoch() {
+                if (!ohlcData.length) return;
+                const w = document.getElementById('stoch-container').clientWidth, h = document.getElementById('stoch-container').clientHeight, chartW = w - 80, chartH = h - 40;
+                const displayData = ohlcData.slice(offset, offset + visibleCount);
+                if (displayData.length === 0) return;
+
+                const candleW = chartW / displayData.length; const getY = (val) => (h - 20) - (val / 100) * chartH;
+                document.getElementById('stoch-grid-layer').innerHTML = `
+        <line x1="0" y1="${getY(80)}" x2="${chartW}" y2="${getY(80)}" stroke="#ef5350" stroke-width="1" stroke-dasharray="4"/><text x="${chartW + 8}" y="${getY(80) + 4}" fill="#ef5350" font-size="10" font-family="monospace">80</text>
+        <line x1="0" y1="${getY(50)}" x2="${chartW}" y2="${getY(50)}" stroke="#64748b" stroke-width="1" stroke-dasharray="2"/>
+        <line x1="0" y1="${getY(20)}" x2="${chartW}" y2="${getY(20)}" stroke="#26a69a" stroke-width="1" stroke-dasharray="4"/><text x="${chartW + 8}" y="${getY(20) + 4}" fill="#26a69a" font-size="10" font-family="monospace">20</text>
+        <rect x="0" y="${getY(80)}" width="${chartW}" height="${getY(20) - getY(80)}" fill="rgba(251, 191, 36, 0.05)" />`;
+
+                let kPath = "", dPath = "", isFirstK = true, isFirstD = true;
+                displayData.forEach((d, i) => {
+                    const x = i * candleW + (candleW / 2);
+                    if (d.stoch && d.stoch.k != null) { const pt = `${x},${getY(d.stoch.k)}`; kPath += isFirstK ? `M ${pt} ` : `L ${pt} `; isFirstK = false; }
+                    if (d.stoch && d.stoch.d != null) { const pt = `${x},${getY(d.stoch.d)}`; dPath += isFirstD ? `M ${pt} ` : `L ${pt} `; isFirstD = false; }
+                });
+                let lineHtml = "";
+                if (kPath) lineHtml += `<path d="${kPath}" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round" />`;
+                if (dPath) lineHtml += `<path d="${dPath}" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="2" />`;
+                document.getElementById('stoch-line-layer').innerHTML = lineHtml;
+            }
+
+            function renderATR() {
+                if (!ohlcData.length) return;
+                const w = document.getElementById('atr-container').clientWidth, h = document.getElementById('atr-container').clientHeight, chartW = w - 80, chartH = h - 40;
+                const displayData = ohlcData.slice(offset, offset + visibleCount);
+                if (displayData.length === 0) return;
+
+                let minATR = Infinity, maxATR = -Infinity;
+                displayData.forEach(d => { if (d.atr != null) { minATR = Math.min(minATR, d.atr); maxATR = Math.max(maxATR, d.atr); }});
+                if (minATR === Infinity) { minATR = 0; maxATR = 1; }
+                const range = maxATR - minATR || 1;
+
+                const candleW = chartW / displayData.length; const getY = (val) => (h - 20) - ((val - minATR) / range) * chartH;
+                
+                document.getElementById('atr-grid-layer').innerHTML = `
+        <line x1="0" y1="${getY(maxATR)}" x2="${chartW}" y2="${getY(maxATR)}" stroke="#64748b" stroke-width="1" stroke-dasharray="2"/><text x="${chartW + 8}" y="${getY(maxATR) + 4}" fill="#64748b" font-size="10" font-family="monospace">${maxATR.toFixed(2)}</text>
+        <line x1="0" y1="${getY(minATR)}" x2="${chartW}" y2="${getY(minATR)}" stroke="#64748b" stroke-width="1" stroke-dasharray="2"/><text x="${chartW + 8}" y="${getY(minATR) + 4}" fill="#64748b" font-size="10" font-family="monospace">${minATR.toFixed(2)}</text>`;
+
+                let pathD = "", isFirst = true;
+                displayData.forEach((d, i) => { if (d.atr != null) { const pt = `${i * candleW + (candleW / 2)},${getY(d.atr)}`; pathD += isFirst ? `M ${pt} ` : `L ${pt} `; isFirst = false; } });
+                document.getElementById('atr-line-layer').innerHTML = pathD ? `<path d="${pathD}" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round" />` : "";
+            }
+
+            function renderAO() {
+                if (!ohlcData.length) return;
+                const w = document.getElementById('ao-container').clientWidth, h = document.getElementById('ao-container').clientHeight, chartW = w - 80, chartH = h - 40;
+                const displayData = ohlcData.slice(offset, offset + visibleCount);
+                if (displayData.length === 0) return;
+
+                let maxAbs = 0; displayData.forEach(d => { if (d.ao != null) maxAbs = Math.max(maxAbs, Math.abs(d.ao)); }); maxAbs = maxAbs || 1;
+
+                const candleW = chartW / displayData.length; const getY = (val) => (h / 2) - (val / maxAbs) * (chartH / 2);
+                document.getElementById('ao-grid-layer').innerHTML = `<line x1="0" y1="${h / 2}" x2="${chartW}" y2="${h / 2}" stroke="#64748b" stroke-width="1" stroke-dasharray="2"/><text x="${chartW + 8}" y="${(h / 2) + 4}" fill="#64748b" font-size="10" font-family="monospace">0.0</text>`;
+
+                let histHtml = '';
+                for (let i = 0; i < displayData.length; i++) {
+                    const d = displayData[i];
+                    if (d.ao != null) {
+                        const prevAo = i > 0 && displayData[i-1].ao != null ? displayData[i-1].ao : 0;
+                        const isGrowing = Math.abs(d.ao) > Math.abs(prevAo);
+                        const isPositive = d.ao >= 0;
+                        
+                        let color = '';
+                        if (isPositive && isGrowing) color = '#4ade80'; // Green growing
+                        else if (isPositive && !isGrowing) color = '#22c55e'; // Green shrinking
+                        else if (!isPositive && isGrowing) color = '#ef4444'; // Red growing
+                        else color = '#f87171'; // Red shrinking
+                        
+                        const yStart = d.ao >= 0 ? getY(d.ao) : h / 2, barH = Math.abs(getY(d.ao) - (h / 2));
+                        histHtml += `<rect x="${i * candleW + 2}" y="${yStart}" width="${candleW - 4}" height="${barH}" fill="${color}" />`;
+                    }
+                }
+                document.getElementById('ao-hist-layer').innerHTML = histHtml;
+            }
+
+            function renderPatternChart() {
+                if (!ohlcData.length) return;
+                const w = patternContainer.clientWidth, h = patternContainer.clientHeight;
+                patternState.padR = 55; patternState.padB = 40; patternState.padT = 20;
+                const chartW = w - patternState.padR; patternState.chartH = h - patternState.padB - patternState.padT;
+
+                const displayData = ohlcData.slice(patternOffset, patternOffset + patternVisibleCount);
+                if (displayData.length === 0) return;
+
+                const highs = displayData.map(d => d.high), lows = displayData.map(d => d.low);
+                patternState.maxP = Math.max(...highs); patternState.minP = Math.min(...lows); patternState.range = patternState.maxP - patternState.minP || 1;
+                patternState.candleW = chartW / displayData.length;
+                const getY = (p) => (h - patternState.padB) - ((p - patternState.minP) / patternState.range) * patternState.chartH;
+
+                let gridHtml = '';
+                for (let i = 0; i <= 5; i++) {
+                    const p = patternState.minP + (patternState.range * (i / 5));
+                    gridHtml += `<line x1="0" y1="${getY(p)}" x2="${chartW}" y2="${getY(p)}" stroke="#1e293b" stroke-width="1" stroke-dasharray="2"/><text x="${chartW + 8}" y="${getY(p) + 4}" class="price-text" fill="#fbbf24">${p.toFixed(2)}</text>`;
+                }
+                document.getElementById('pattern-grid-layer').innerHTML = gridHtml;
+
+                let candleHtml = '', timeHtml = '', signalHtml = '';
+                const timeStep = Math.ceil(patternVisibleCount / 8);
+
+                displayData.forEach((d, i) => {
+                    const x = i * patternState.candleW, midX = x + (patternState.candleW / 2);
+                    const color = d.close >= d.open ? "#26a69a" : "#ef5350";
+                    const bodyT = getY(Math.max(d.open, d.close)), bodyB = getY(Math.min(d.open, d.close));
+
+                    candleHtml += `<line x1="${midX}" y1="${getY(d.high)}" x2="${midX}" y2="${getY(d.low)}" stroke="${color}" stroke-width="1.5" />`;
+                    candleHtml += `<rect x="${x + (patternState.candleW * 0.15)}" y="${bodyT}" width="${patternState.candleW * 0.7}" height="${Math.max(Math.abs(bodyT - bodyB), 1.5)}" fill="${color}" />`;
+                    if (i % timeStep === 0) timeHtml += `<text x="${midX}" y="${h - 15}" class="time-text">${d.date}</text>`;
+
+                    if (showCandleSignals && d.candle_signal && d.candle_signal.signal !== 'neutral') {
+                        const isBull = d.candle_signal.signal === 'bullish';
+                        const sigY = isBull ? getY(d.low) + 15 : getY(d.high) - 5;
+                        const sigColor = isBull ? '#4ade80' : '#ef5350';
+                        signalHtml += `<text x="${midX}" y="${sigY}" fill="${sigColor}" font-size="12" font-weight="bold" text-anchor="middle">${isBull ? '▲' : '▼'}</text>`;
+                    }
+                });
+
+                document.getElementById('pattern-candle-layer').innerHTML = candleHtml;
+                document.getElementById('pattern-time-layer').innerHTML = timeHtml;
+                document.getElementById('pattern-signal-layer').innerHTML = signalHtml;
+
+                let patternDrawHtml = '';
+                const lastCandle = ohlcData[ohlcData.length - 1];
+
+                // Auto Trendline (NEW TOGGLE)
+                if (showAutoTrendline && lastCandle && lastCandle.trendline) {
+                    const t = lastCandle.trendline;
+                    const startX = (t.x1 - patternOffset) * patternState.candleW + patternState.candleW / 2;
+                    const endX = (t.x2 - patternOffset) * patternState.candleW + patternState.candleW / 2;
+                    const color = t.type === 'uptrend' ? '#4ade80' : (t.type === 'downtrend' ? '#ef5350' : '#fbbf24');
+
+                    patternDrawHtml += `<line x1="${startX}" y1="${getY(t.y1)}" x2="${endX}" y2="${getY(t.y2)}" stroke="${color}" stroke-width="3" stroke-dasharray="8,4" opacity="0.6" />`;
+                    patternDrawHtml += `<text x="${endX}" y="${getY(t.y2) - 10}" fill="${color}" font-weight="bold" font-size="12">${t.type.toUpperCase()}</text>`;
+                }
+
+                // Market Phase Badge
+                if (lastCandle && lastCandle.phase) {
+                    const phaseColor = lastCandle.phase === 'Uptrend' ? '#26a69a' : (lastCandle.phase === 'Downtrend' ? '#ef5350' : '#8E9BAE');
+                    patternDrawHtml += `<g transform="translate(20, 20)"><rect width="130" height="26" rx="4" fill="#0f172a" stroke="${phaseColor}" stroke-width="1"/><text x="65" y="18" fill="${phaseColor}" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">PHASE: ${lastCandle.phase.toUpperCase()}</text></g>`;
+                }
+
+                // Auto S/R Lines
+                if (showPatternSR && lastCandle && lastCandle.sr_levels) {
+                    lastCandle.sr_levels.resistance.forEach(res => {
+                        const y = getY(res);
+                        if (y >= 0 && y <= patternState.chartH) {
+                            patternDrawHtml += `<line x1="0" y1="${y}" x2="${chartW}" y2="${y}" stroke="#ef5350" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.8"/><rect x="${chartW - 75}" y="${y - 10}" width="75" height="20" fill="#0f172a" stroke="#ef5350" stroke-width="1"/><text x="${chartW - 37}" y="${y + 4}" fill="#ef5350" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">RES: ${res.toFixed(1)}</text>`;
+                        }
+                    });
+                    lastCandle.sr_levels.support.forEach(sup => {
+                        const y = getY(sup);
+                        if (y >= 0 && y <= patternState.chartH) {
+                            patternDrawHtml += `<line x1="0" y1="${y}" x2="${chartW}" y2="${y}" stroke="#26a69a" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.8"/><rect x="${chartW - 75}" y="${y - 10}" width="75" height="20" fill="#0f172a" stroke="#26a69a" stroke-width="1"/><text x="${chartW - 37}" y="${y + 4}" fill="#26a69a" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">SUP: ${sup.toFixed(1)}</text>`;
+                        }
+                    });
+                }
+
+                // Auto Fib (NEW)
+                if (showAutoFib && highs.length > 0) {
+                    const diff = patternState.maxP - patternState.minP;
+                    const levels = [
+                        { ratio: 0, color: '#787b86' }, { ratio: 0.236, color: '#f44336' }, { ratio: 0.382, color: '#81c784' }, 
+                        { ratio: 0.5, color: '#4caf50' }, { ratio: 0.618, color: '#009688' }, { ratio: 0.786, color: '#64b5f6' }, { ratio: 1, color: '#787b86' }
+                    ];
+                    
+                    const highIdx = displayData.findIndex(d => d.high === patternState.maxP);
+                    const lowIdx = displayData.findIndex(d => d.low === patternState.minP);
+                    const highX = highIdx * patternState.candleW + patternState.candleW / 2;
+                    const lowX = lowIdx * patternState.candleW + patternState.candleW / 2;
+                    
+                    patternDrawHtml += `<line x1="${highX}" y1="${getY(patternState.maxP)}" x2="${lowX}" y2="${getY(patternState.minP)}" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="2,4" opacity="0.3" />`;
+                    
+                    levels.forEach(level => { 
+                        const price = patternState.minP + (diff * level.ratio);
+                        const y = getY(price); 
+                        patternDrawHtml += `<line x1="0" y1="${y}" x2="${chartW}" y2="${y}" stroke="${level.color}" stroke-width="1" stroke-dasharray="4,4" opacity="0.7" />`;
+                        patternDrawHtml += `<text x="5" y="${y - 4}" fill="${level.color}" font-size="10" font-family="monospace" font-weight="bold">${(level.ratio * 100).toFixed(1)}% (${price.toFixed(2)})</text>`;
+                    });
+                }
+
+                // Pivot Points (NEW)
+                if (showPivotPoints && lastCandle && lastCandle.pivot_points) {
+                    const pp = lastCandle.pivot_points;
+                    const levels = [
+                        { name: 'R2', price: pp.R2, color: '#ef5350' },
+                        { name: 'R1', price: pp.R1, color: '#ef5350' },
+                        { name: 'P', price: pp.P, color: '#60a5fa' },
+                        { name: 'S1', price: pp.S1, color: '#26a69a' },
+                        { name: 'S2', price: pp.S2, color: '#26a69a' }
+                    ];
+                    levels.forEach(lvl => {
+                        const y = getY(lvl.price);
+                        if (y >= 0 && y <= patternState.chartH) {
+                            patternDrawHtml += `<line x1="0" y1="${y}" x2="${chartW}" y2="${y}" stroke="${lvl.color}" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.9"/>`;
+                            patternDrawHtml += `<rect x="${chartW - 65}" y="${y - 10}" width="65" height="20" fill="#0f172a" stroke="${lvl.color}" stroke-width="1"/>`;
+                            patternDrawHtml += `<text x="${chartW - 32}" y="${y + 4}" fill="${lvl.color}" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">${lvl.name}: ${lvl.price.toFixed(1)}</text>`;
+                        }
+                    });
+                }
+
+                // Manual Drawings
+                const renderPatternManualDrawing = (l) => {
+                    if (l.type === 'horizontal') {
+                        const y = getY(l.price); patternDrawHtml += `<line x1="0" y1="${y}" x2="${chartW}" y2="${y}" stroke="#a855f7" stroke-width="2" stroke-dasharray="4"/>`;
+                    } else if (l.type === 'trend') {
+                        const startX = (l.startIdx - patternOffset) * patternState.candleW + patternState.candleW / 2, endX = (l.endIdx - patternOffset) * patternState.candleW + patternState.candleW / 2;
+                        patternDrawHtml += `<line x1="${startX}" y1="${getY(l.startPrice)}" x2="${endX}" y2="${getY(l.endPrice)}" stroke="#a855f7" stroke-width="2" />`;
+                    } else if (l.type === 'fib') {
+                        const startX = (l.startIdx - patternOffset) * patternState.candleW + patternState.candleW / 2, endX = (l.endIdx - patternOffset) * patternState.candleW + patternState.candleW / 2;
+                        const diff = l.endPrice - l.startPrice; const levels = [{ ratio: 0, color: '#787b86' }, { ratio: 0.236, color: '#f44336' }, { ratio: 0.382, color: '#81c784' }, { ratio: 0.5, color: '#4caf50' }, { ratio: 0.618, color: '#009688' }, { ratio: 0.786, color: '#64b5f6' }, { ratio: 1, color: '#787b86' }];
+                        patternDrawHtml += `<line x1="${startX}" y1="${getY(l.startPrice)}" x2="${endX}" y2="${getY(l.endPrice)}" stroke="#ffffff" stroke-width="1" stroke-dasharray="2" opacity="0.3" />`;
+                        levels.forEach(level => { const price = l.startPrice + (diff * level.ratio), y = getY(price); patternDrawHtml += `<line x1="${startX}" y1="${y}" x2="${chartW}" y2="${y}" stroke="${level.color}" stroke-width="1.5" />`; });
+                    }
+                };
+                drawnLines.forEach(renderPatternManualDrawing);
+                if (tempTrendline && activeDragContainer === patternContainer) renderPatternManualDrawing(tempTrendline);
+                if (tempFib && activeDragContainer === patternContainer) renderPatternManualDrawing(tempFib);
+
+                // Geometric Patterns & Channels (NEW TOGGLE)
+                if (showAutoPatterns && lastCandle && lastCandle.patterns) {
+                    lastCandle.patterns.forEach((p, index) => {
+                        const getX = (idx) => (idx - patternOffset) * patternState.candleW + (patternState.candleW / 2);
+                        const ux1 = getX(p.upper.x1), uy1 = getY(p.upper.y1), ux2 = getX(p.upper.x2), uy2 = getY(p.upper.y2);
+                        const lx1 = getX(p.lower.x1), ly1 = getY(p.lower.y1), lx2 = getX(p.lower.x2), ly2 = getY(p.lower.y2);
+
+                        const isBullish = p.name.includes('Bullish'), isBearish = p.name.includes('Bearish');
+                        const pColor = isBullish ? '#4ade80' : (isBearish ? '#ef5350' : '#fbbf24');
+                        const predictionText = isBullish ? 'PREDICTION: BULLISH ↗' : (isBearish ? 'PREDICTION: BEARISH ↘' : 'PREDICTION: CONSOLIDATION →');
+
+                        patternDrawHtml += `<line x1="${ux1}" y1="${uy1}" x2="${ux2}" y2="${uy2}" stroke="${pColor}" stroke-width="2" stroke-dasharray="6,4" opacity="0.9" />`;
+                        patternDrawHtml += `<line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="${pColor}" stroke-width="2" stroke-dasharray="6,4" opacity="0.9" />`;
+
+                        const labelY = 30 + (index * 45);
+                        patternDrawHtml += `<g transform="translate(${chartW - 220}, ${labelY - 15})"><rect width="210" height="40" rx="6" fill="#0f172a" stroke="${pColor}" stroke-width="1" opacity="0.85"/><text x="105" y="15" fill="#fff" font-size="12" font-family="Inter, sans-serif" font-weight="bold" text-anchor="middle">${p.name}</text><text x="105" y="30" fill="${pColor}" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">${predictionText}</text></g>`;
+                    });
+                }
+                document.getElementById('pattern-drawing-layer').innerHTML = patternDrawHtml;
+            }
+
+            // Fullscreen Logic
+            function toggleFullScreen(element) {
+                const isMobile = window.innerWidth <= 768;
+                
+                if (isMobile) {
+                    if (element.classList.contains('rotate-mobile')) {
+                        element.classList.remove('rotate-mobile');
+                        document.body.style.overflow = '';
+                    } else {
+                        element.classList.add('rotate-mobile');
+                        document.body.style.overflow = 'hidden';
+                    }
+                    setTimeout(renderAll, 100);
+                    return;
+                }
+
+                // Desktop Logic
+                const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+                if (!isFullscreen) {
+                    const req = element.requestFullscreen || element.webkitRequestFullscreen || element.mozRequestFullScreen || element.msRequestFullscreen;
+                    if (req) { try { req.call(element); } catch(e) { console.log(e); } }
+                } else {
+                    const ext = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+                    if (ext) { try { ext.call(document); } catch(e) { console.log(e); } }
+                }
+                setTimeout(renderAll, 100);
+            }
+
+            function exitFullScreen(btn) {
+                const element = btn.closest('.chart-card');
+                const isMobile = window.innerWidth <= 768;
+                
+                if (isMobile && element.classList.contains('rotate-mobile')) {
+                    element.classList.remove('rotate-mobile');
+                    document.body.style.overflow = '';
+                    setTimeout(renderAll, 100);
+                    return;
+                }
+
+                const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+                if (isFullscreen) {
+                    const ext = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+                    if (ext) { try { ext.call(document); } catch(e) { console.log(e); } }
+                }
+                setTimeout(renderAll, 100);
+            }
+
+            document.getElementById('btn-fullscreen-main').onclick = () => toggleFullScreen(document.querySelectorAll('.chart-card')[0]);
+            document.getElementById('btn-fullscreen-pattern').onclick = () => toggleFullScreen(document.querySelectorAll('.chart-card')[1]);
+
+            window.addEventListener('resize', renderAll);
+            fetchOHLCData();
+        </script>
+</body>
+
+</html>

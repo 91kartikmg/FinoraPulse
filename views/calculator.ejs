@@ -103,14 +103,22 @@
             .slider-wrapper { flex-wrap: wrap; gap: 10px; }
             .input-group input[type="number"] { width: 100%; text-align: left; }
 
-            /* Hamburger Mobile Sidebar Setup */
-            .ticker-sidebar { display: none; }
-            .ticker-sidebar.open {
-                display: block; position: fixed; top: 0; left: 0;
-                width: 80%; max-width: 300px; height: 100vh; z-index: 2000;
-                background: #0f172a; border-right: 1px solid var(--accent);
-                box-shadow: 10px 0 50px rgba(0, 0, 0, 0.9); overflow-y: auto;
+            /* Horizontal Scroll Toolkit on Mobile */
+            .ticker-sidebar { 
+                display: block !important; 
+                padding: 10px 15px !important; 
+                border-bottom: 1px solid var(--border);
+                background: var(--bg-dark);
             }
+            .tool-nav {
+                flex-direction: row;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 5px;
+                white-space: nowrap;
+            }
+            .tool-nav::-webkit-scrollbar { display: none; }
+            .tool-nav li { padding: 8px 14px; font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -325,24 +333,7 @@
     </div>
 
     <script>
-        // --- 0. HAMBURGER MENU LOGIC ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuBtn = document.querySelector('.hamburger-btn') || document.getElementById('mobile-menu-btn');
-            const sidebar = document.querySelector('.ticker-sidebar');
-            
-            if(menuBtn && sidebar) {
-                menuBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); 
-                    sidebar.classList.toggle('open');
-                });
-
-                document.addEventListener('click', (e) => {
-                    if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuBtn) {
-                        sidebar.classList.remove('open');
-                    }
-                });
-            }
-        });
+        // Hamburger logic removed since sidebar is now horizontal on mobile.
 
         // --- 1. UI NAVIGATION LOGIC ---
         function switchTool(toolId, listElement) {

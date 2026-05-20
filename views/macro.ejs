@@ -473,24 +473,7 @@
             }).catch(err => { /* Quiet failure to keep console clean */ });
         }
         
-        // --- HAMBURGER MENU LOGIC ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuBtn = document.getElementById('mobile-menu-btn');
-            const sidebar = document.querySelector('.ticker-sidebar');
-            
-            if(menuBtn && sidebar) {
-                menuBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); 
-                    sidebar.classList.toggle('open');
-                });
-
-                document.addEventListener('click', (e) => {
-                    if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuBtn) {
-                        sidebar.classList.remove('open');
-                    }
-                });
-            }
-        });
+        // Global hamburger menu logic is now handled in header.ejs
     </script>
 
     <script>

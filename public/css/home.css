@@ -193,6 +193,27 @@ body, html {
     }
     
     .ticker-sidebar { display: none; }
+    
+    .ticker-sidebar.open {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 85%;
+        max-width: 320px;
+        height: 100vh;
+        z-index: 9999;
+        background: var(--bg-dark);
+        border-right: 1px solid var(--neon-cyan);
+        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.9);
+        overflow-y: auto;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(0); }
+    }
 
     .content-panel { 
         padding: 15px; 

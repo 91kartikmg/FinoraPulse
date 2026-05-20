@@ -174,24 +174,3 @@
     // FIRE ON LOAD
     document.addEventListener('DOMContentLoaded', renderSidebarData);
 </script>
-<script>
-    // Hamburger Menu Toggle Logic
-    document.addEventListener('DOMContentLoaded', () => {
-        const menuBtn = document.getElementById('mobile-menu-btn');
-        const sidebar = document.querySelector('.ticker-sidebar');
-        
-        if(menuBtn && sidebar) {
-            menuBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent click from triggering the logo link
-                sidebar.classList.toggle('open');
-            });
-
-            // Optional: Close the sidebar if the user clicks anywhere else on the screen
-            document.addEventListener('click', (e) => {
-                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuBtn) {
-                    sidebar.classList.remove('open');
-                }
-            });
-        }
-    });
-</script>

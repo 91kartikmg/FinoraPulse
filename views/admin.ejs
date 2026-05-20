@@ -123,6 +123,24 @@
                 <canvas id="activityChart"></canvas>
             </div>
         </div>
+
+        <div class="dashboard-panel" style="margin-top: 10px;">
+            <h3 style="margin: 0 0 20px 0; color: #f8fafc; font-size: 1.4rem;">User Suggestions & Reviews</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; color: #cbd5e1; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #334155;">
+                            <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">Date</th>
+                            <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">User</th>
+                            <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">Suggestion</th>
+                        </tr>
+                    </thead>
+                    <tbody id="suggestionsTableBody">
+                        <tr><td colspan="3" style="padding: 12px; text-align: center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -196,7 +214,29 @@
             });
         }
         
+        async function loadSuggestions() {
+            try {
+                const response = await fetch('/api/admin/suggestions');
+                const data = await response.json();
+                const tbody = document.getElementById('suggestionsTableBody');
+                if (data.success && data.suggestions.length > 0) {
+                    tbody.innerHTML = data.suggestions.map(s => `
+                        <tr style="border-bottom: 1px solid rgba(51, 65, 85, 0.5);">
+                            <td style="padding: 12px; white-space: nowrap;">${new Date(s.createdAt).toLocaleDateString()}</td>
+                            <td style="padding: 12px; white-space: nowrap; color: #38bdf8;">${s.username || 'Anonymous'}</td>
+                            <td style="padding: 12px;">${s.text}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="3" style="padding: 12px; text-align: center;">No suggestions yet.</td></tr>';
+                }
+            } catch (err) {
+                console.error("Failed to load suggestions", err);
+            }
+        }
+        
         loadAdminAnalytics();
+        loadSuggestions();
     </script>
 
     
