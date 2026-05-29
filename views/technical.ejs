@@ -835,37 +835,28 @@
                     const isMain = container === svgContainer;
                     
                     if (e.touches.length === 1 && activeTool === 'pan') {
-                        e.preventDefault();
                         const coords = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
                         const dx = coords.x - tStartX;
                         const dy = coords.y - tStartY;
                         
-                        tStartX = coords.x;
-                        tStartY = coords.y;
+                        if (Math.abs(dx) > Math.abs(dy)) {
+                            e.preventDefault();
+                            tStartX = coords.x;
+                            tStartY = coords.y;
 
-                        let cVis = isMain ? visibleCount : patternVisibleCount;
-                        let cOff = isMain ? offset : patternOffset;
-                        let cDrag = isMain ? dragAccumulator : patternDragAccumulator;
-                        
-                        cDrag += dx;
-                        const cW = (container.clientWidth - 55) / cVis;
-                        const moves = Math.trunc(cDrag / cW);
-                        if (moves !== 0) {
-                            cOff = Math.min(Math.max(cOff - moves, 0), ohlcData.length - cVis);
-                            cDrag -= (moves * cW);
-                            if (isMain) { offset = cOff; dragAccumulator = cDrag; }
-                            else { patternOffset = cOff; patternDragAccumulator = cDrag; }
-                        }
-
-                        // 4-way vertical panning
-                        const state = isMain ? chartState : patternState;
-                        const priceDelta = (dy / state.chartH) * state.range;
-                        if (isMain) {
-                            verticalScrollShift += priceDelta;
-                            renderSVG();
-                        } else {
-                            patternVerticalScrollShift += priceDelta;
-                            renderPatternChart();
+                            let cVis = isMain ? visibleCount : patternVisibleCount;
+                            let cOff = isMain ? offset : patternOffset;
+                            let cDrag = isMain ? dragAccumulator : patternDragAccumulator;
+                            
+                            cDrag += dx;
+                            const cW = (container.clientWidth - 55) / cVis;
+                            const moves = Math.trunc(cDrag / cW);
+                            if (moves !== 0) {
+                                cOff = Math.min(Math.max(cOff - moves, 0), ohlcData.length - cVis);
+                                cDrag -= (moves * cW);
+                                if (isMain) { offset = cOff; dragAccumulator = cDrag; renderSVG(); }
+                                else { patternOffset = cOff; patternDragAccumulator = cDrag; renderPatternChart(); }
+                            }
                         }
                     } else if (e.touches.length === 2 && initialTouchDist > 0) {
                         e.preventDefault();
@@ -935,7 +926,6 @@
                             let cDrag = isMain ? dragAccumulator : patternDragAccumulator;
                             
                             const dx = coords.x - lastMouseX; 
-                            const dy = coords.y - lastMouseY;
                             lastMouseX = coords.x;
                             lastMouseY = coords.y;
                             
@@ -944,18 +934,7 @@
                             const moves = Math.trunc(cDrag / cW);
                             if (moves !== 0) {
                                 cOff = Math.min(Math.max(cOff - moves, 0), ohlcData.length - cVis); cDrag -= (moves * cW);
-                                if (isMain) { offset = cOff; dragAccumulator = cDrag; } else { patternOffset = cOff; patternDragAccumulator = cDrag; }
-                            }
-                            
-                            // 4-way vertical panning
-                            const state = isMain ? chartState : patternState;
-                            const priceDelta = (dy / state.chartH) * state.range;
-                            if (isMain) {
-                                verticalScrollShift += priceDelta;
-                                renderSVG();
-                            } else {
-                                patternVerticalScrollShift += priceDelta;
-                                renderPatternChart();
+                                if (isMain) { offset = cOff; dragAccumulator = cDrag; renderSVG(); } else { patternOffset = cOff; patternDragAccumulator = cDrag; renderPatternChart(); }
                             }
                         } else {
                             if (activeTool === 'trend' && tempTrendline) { tempTrendline.endIdx = getIndexFromX(mx, container); tempTrendline.endPrice = getPriceFromY(my, container); renderAll(); }
