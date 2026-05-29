@@ -269,6 +269,8 @@
             left: 50% !important;
             width: 100vh !important;
             height: 100vw !important;
+            width: 100dvh !important;
+            height: 100dvw !important;
             transform: translate(-50%, -50%) rotate(90deg) !important;
             z-index: 99999 !important;
             padding: 12px !important;
@@ -283,9 +285,15 @@
             box-sizing: border-box !important;
         }
 
+        /* Shift button positions in mobile rotated orientation to clear status bars, safe areas, notches, and browser URL bar overlaps */
+        .rotate-mobile .menu-toggle-btn {
+            top: 26px !important;
+            left: 26px !important;
+        }
+
         .rotate-mobile .close-fullscreen-btn {
-            right: 15px !important;
-            top: 12px !important;
+            top: 26px !important;
+            right: 26px !important;
             left: auto !important;
             bottom: auto !important;
             z-index: 100000 !important;
@@ -296,9 +304,10 @@
         .chart-card:-webkit-full-screen h3 {
             display: block !important;
             margin: 0 !important;
-            padding-left: 50px !important; /* Make room for menu button */
+            padding-left: 70px !important; /* Make room for menu button */
             font-size: 1.1rem !important;
             white-space: nowrap !important;
+            line-height: 36px !important;
         }
 
         .rotate-mobile h3 span,
@@ -307,31 +316,35 @@
             display: none !important;
         }
 
-        /* Sidebar styling for fullscreen / rotated modes */
+        /* Sidebar styling for fullscreen / rotated modes: Grid Layout */
         .chart-card:fullscreen .toolbar,
         .chart-card:-webkit-full-screen .toolbar,
         .rotate-mobile .toolbar {
             position: absolute !important;
-            top: 60px !important;
+            top: 70px !important;
             left: 15px !important;
-            width: 260px !important;
-            max-height: calc(100vh - 80px) !important;
+            width: 320px !important;
+            max-height: calc(100vh - 90px) !important;
             background: rgba(13, 17, 23, 0.95) !important;
             backdrop-filter: blur(10px) !important;
             border: 1px solid var(--border) !important;
             border-radius: 12px !important;
-            padding: 15px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            justify-content: flex-start !important;
-            gap: 10px !important;
+            padding: 12px !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            align-items: center !important;
+            gap: 8px !important;
             z-index: 99999 !important;
             overflow-y: auto !important;
-            transform: translateX(-290px) !important; /* Collapsed by default */
+            overflow-x: hidden !important;
+            transform: translateX(-350px) !important; /* Collapsed by default */
             transition: transform 0.3s ease !important;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
-            flex-wrap: nowrap !important;
+        }
+
+        /* Make sure max-height in rotated mobile matches screen width */
+        .rotate-mobile .toolbar {
+            max-height: calc(100vw - 90px) !important;
         }
 
         /* Slide in sidebar when expanded */
@@ -362,16 +375,32 @@
             margin-left: 0 !important;
         }
 
-        /* Turn vertical divider into horizontal one */
+        /* Span elements across columns in grid */
+        .chart-card:fullscreen .toolbar #btn-fullscreen-main,
+        .chart-card:-webkit-full-screen .toolbar #btn-fullscreen-main,
+        .rotate-mobile .toolbar #btn-fullscreen-main {
+            grid-column: span 2 !important;
+        }
+
+        .chart-card:fullscreen .toolbar span,
+        .chart-card:-webkit-full-screen .toolbar span,
+        .rotate-mobile .toolbar span {
+            grid-column: span 2 !important;
+            margin-top: 4px !important;
+            margin-bottom: 2px !important;
+        }
+
+        /* Turn vertical divider into horizontal spanning divider in grid */
         .chart-card:fullscreen .toolbar div[style*="width: 1px"],
         .chart-card:-webkit-full-screen .toolbar div[style*="width: 1px"],
         .rotate-mobile .toolbar div[style*="width: 1px"],
         .chart-card:fullscreen .toolbar div[style*="width:1px"],
         .chart-card:-webkit-full-screen .toolbar div[style*="width:1px"],
         .rotate-mobile .toolbar div[style*="width:1px"] {
+            grid-column: span 2 !important;
             width: 100% !important;
             height: 1px !important;
-            margin: 8px 0 !important;
+            margin: 6px 0 !important;
             background: #30363d !important;
             flex-shrink: 0 !important;
         }
@@ -419,6 +448,16 @@
             overflow: visible !important;
             backdrop-filter: none !important;
             filter: none !important;
+        }
+
+        /* Ensure viewport scrolling is entirely locked when mobile full screen / rotated canvas is open */
+        body.fullscreen-active {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
         }
     </style>
 </head>
