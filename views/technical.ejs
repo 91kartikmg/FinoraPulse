@@ -256,6 +256,7 @@
         }
 
         @media screen and (max-width: 768px) {
+
             .chart-card:fullscreen .sub-chart,
             .chart-card:-webkit-full-screen .sub-chart,
             .fake-fullscreen .sub-chart {
@@ -304,7 +305,8 @@
         .chart-card:-webkit-full-screen h3 {
             display: block !important;
             margin: 0 !important;
-            padding-left: 70px !important; /* Make room for menu button */
+            padding-left: 70px !important;
+            /* Make room for menu button */
             font-size: 1.1rem !important;
             white-space: nowrap !important;
             line-height: 36px !important;
@@ -316,10 +318,9 @@
             display: none !important;
         }
 
-        /* Sidebar styling for fullscreen / rotated modes: Grid Layout */
+        /* Sidebar styling for fullscreen: Grid Layout (Desktop) */
         .chart-card:fullscreen .toolbar,
-        .chart-card:-webkit-full-screen .toolbar,
-        .rotate-mobile .toolbar {
+        .chart-card:-webkit-full-screen .toolbar {
             position: absolute !important;
             top: 70px !important;
             left: 15px !important;
@@ -342,22 +343,15 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
         }
 
-        /* Make sure max-height in rotated mobile matches screen width */
-        .rotate-mobile .toolbar {
-            max-height: calc(100vw - 90px) !important;
-        }
-
-        /* Slide in sidebar when expanded */
+        /* Slide in sidebar when expanded on desktop fullscreen */
         .chart-card:fullscreen .toolbar.open,
-        .chart-card:-webkit-full-screen .toolbar.open,
-        .rotate-mobile .toolbar.open {
+        .chart-card:-webkit-full-screen .toolbar.open {
             transform: translateX(0) !important;
         }
 
-        /* Tool elements inside sidebar */
+        /* Desktop specific sidebar element controls */
         .chart-card:fullscreen .toolbar .tool-btn,
-        .chart-card:-webkit-full-screen .toolbar .tool-btn,
-        .rotate-mobile .toolbar .tool-btn {
+        .chart-card:-webkit-full-screen .toolbar .tool-btn {
             width: 100% !important;
             text-align: left !important;
             padding: 8px 12px !important;
@@ -366,8 +360,7 @@
         }
 
         .chart-card:fullscreen .toolbar .tool-checkbox,
-        .chart-card:-webkit-full-screen .toolbar .tool-checkbox,
-        .rotate-mobile .toolbar .tool-checkbox {
+        .chart-card:-webkit-full-screen .toolbar .tool-checkbox {
             width: 100% !important;
             box-sizing: border-box !important;
             padding: 6px 8px !important;
@@ -375,32 +368,98 @@
             margin-left: 0 !important;
         }
 
-        /* Span elements across columns in grid */
         .chart-card:fullscreen .toolbar #btn-fullscreen-main,
-        .chart-card:-webkit-full-screen .toolbar #btn-fullscreen-main,
-        .rotate-mobile .toolbar #btn-fullscreen-main {
+        .chart-card:-webkit-full-screen .toolbar #btn-fullscreen-main {
             grid-column: span 2 !important;
         }
 
         .chart-card:fullscreen .toolbar span,
-        .chart-card:-webkit-full-screen .toolbar span,
-        .rotate-mobile .toolbar span {
+        .chart-card:-webkit-full-screen .toolbar span {
             grid-column: span 2 !important;
             margin-top: 4px !important;
             margin-bottom: 2px !important;
         }
 
-        /* Turn vertical divider into horizontal spanning divider in grid */
         .chart-card:fullscreen .toolbar div[style*="width: 1px"],
         .chart-card:-webkit-full-screen .toolbar div[style*="width: 1px"],
-        .rotate-mobile .toolbar div[style*="width: 1px"],
         .chart-card:fullscreen .toolbar div[style*="width:1px"],
-        .chart-card:-webkit-full-screen .toolbar div[style*="width:1px"],
-        .rotate-mobile .toolbar div[style*="width:1px"] {
+        .chart-card:-webkit-full-screen .toolbar div[style*="width:1px"] {
             grid-column: span 2 !important;
             width: 100% !important;
             height: 1px !important;
             margin: 6px 0 !important;
+            background: #30363d !important;
+            flex-shrink: 0 !important;
+        }
+
+        /* ========================================================================= */
+        /* ROTATED MOBILE SIDEBAR TOOLBAR: Fixed columns fitting screen height/width */
+        /* ========================================================================= */
+        .rotate-mobile .toolbar {
+            position: absolute !important;
+            top: 70px !important;
+            left: 15px !important;
+            width: calc(100dvh - 100px) !important; /* Card's width runs physically vertically */
+            height: 290px !important; /* Card's height runs physically horizontally (fits within physical width) */
+            max-height: none !important;
+            background: rgba(13, 17, 23, 0.96) !important;
+            backdrop-filter: blur(15px) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+            padding: 10px !important;
+            display: flex !important;
+            flex-direction: row !important; /* Stack along card's X-axis -> physical vertical columns */
+            flex-wrap: wrap !important; /* Wrap along card's Y-axis -> physical horizontal rows */
+            align-content: flex-start !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            gap: 6px 8px !important;
+            z-index: 99999 !important;
+            overflow-x: hidden !important;
+            overflow-y: hidden !important; /* Entirely fits on screen, no scrolling needed! */
+            transform: translateY(-400px) !important; /* Slides completely off-screen along card's Y-axis (physically to the right) */
+            transition: transform 0.3s ease !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        /* Slide in sidebar when expanded in rotated mobile view */
+        .rotate-mobile .toolbar.open {
+            transform: translateY(0) !important;
+        }
+
+        /* Rotate items physically vertically using card coordinate alignment */
+        .rotate-mobile .toolbar .tool-btn,
+        .rotate-mobile .toolbar .tool-checkbox {
+            width: 120px !important; /* Card's X-axis dimension -> physical height of item */
+            height: 34px !important; /* Card's Y-axis dimension -> physical width of item */
+            text-align: left !important;
+            padding: 4px 8px !important;
+            border-radius: 6px !important;
+            flex-shrink: 0 !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            font-size: 0.72rem !important;
+        }
+
+        .rotate-mobile .toolbar span {
+            width: 100% !important; /* Spans full height of column, forcing a column break to start new section */
+            margin: 6px 0 !important;
+            color: #8E9BAE !important;
+            font-size: 0.7rem !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        /* Vertical spacer separating columns physically */
+        .rotate-mobile .toolbar div[style*="width: 1px"],
+        .rotate-mobile .toolbar div[style*="width:1px"] {
+            width: 100% !important; /* Spans full height of column, forcing a column break to start new section */
+            height: 1px !important;
+            margin: 4px 0 !important;
             background: #30363d !important;
             flex-shrink: 0 !important;
         }
@@ -606,9 +665,10 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                             <h3 style="margin: 0; color: #e2e8f0;">Pattern Recognition Canvas <span
-                                     style="font-size: 0.75rem; color: #64748b; font-weight: normal; margin-left: 10px;">(Hold
-                                     Ctrl to Zoom)</span></h3>
-                            <div class="toolbar" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    style="font-size: 0.75rem; color: #64748b; font-weight: normal; margin-left: 10px;">(Hold
+                                    Ctrl to Zoom)</span></h3>
+                            <div class="toolbar"
+                                style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                 <button class="tool-btn" id="btn-fullscreen-pattern"
                                     style="color: #fff; background: rgba(255,255,255,0.1); border: 1px solid transparent; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">⛶
                                     Full View</button>
@@ -859,7 +919,7 @@
                 container.addEventListener('touchstart', (e) => {
                     if (e.touches.length === 1) {
                         const coords = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
-                        tStartX = coords.x; 
+                        tStartX = coords.x;
                         tStartY = coords.y;
                         if (container === svgContainer) dragAccumulator = 0; else patternDragAccumulator = 0;
                     } else if (e.touches.length === 2) {
@@ -872,12 +932,12 @@
 
                 container.addEventListener('touchmove', (e) => {
                     const isMain = container === svgContainer;
-                    
+
                     if (e.touches.length === 1 && activeTool === 'pan') {
                         const coords = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
                         const dx = coords.x - tStartX;
                         const dy = coords.y - tStartY;
-                        
+
                         if (Math.abs(dx) > Math.abs(dy)) {
                             e.preventDefault();
                             tStartX = coords.x;
@@ -886,7 +946,7 @@
                             let cVis = isMain ? visibleCount : patternVisibleCount;
                             let cOff = isMain ? offset : patternOffset;
                             let cDrag = isMain ? dragAccumulator : patternDragAccumulator;
-                            
+
                             cDrag += dx;
                             const cW = (container.clientWidth - 55) / cVis;
                             const moves = Math.trunc(cDrag / cW);
@@ -902,13 +962,13 @@
                         const t1 = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
                         const t2 = getLocalCoords(e.touches[1].clientX, e.touches[1].clientY, container);
                         const dist = Math.hypot(t1.x - t2.x, t1.y - t2.y);
-                        
+
                         if (dist > 10) {
                             const scale = dist / initialTouchDist;
                             const oldVis = isMain ? visibleCount : patternVisibleCount;
                             let newVis = Math.round(initialVisCount / scale);
                             newVis = Math.min(Math.max(newVis, 10), ohlcData.length);
-                            
+
                             if (newVis !== oldVis) {
                                 if (isMain) {
                                     offset = Math.min(Math.max(offset + Math.floor((oldVis - newVis) / 2), 0), ohlcData.length - newVis);
@@ -939,7 +999,7 @@
                     const coords = getLocalCoords(e.clientX, e.clientY, container);
                     const mx = coords.x, my = coords.y;
                     if (activeTool === 'pan') {
-                        isDragging = true; 
+                        isDragging = true;
                         lastMouseX = coords.x;
                         lastMouseY = coords.y;
                         if (container === svgContainer) dragAccumulator = 0; else patternDragAccumulator = 0;
@@ -963,13 +1023,13 @@
                             let cVis = isMain ? visibleCount : patternVisibleCount;
                             let cOff = isMain ? offset : patternOffset;
                             let cDrag = isMain ? dragAccumulator : patternDragAccumulator;
-                            
-                            const dx = coords.x - lastMouseX; 
+
+                            const dx = coords.x - lastMouseX;
                             lastMouseX = coords.x;
                             lastMouseY = coords.y;
-                            
-                            cDrag += dx; 
-                            const cW = (container.clientWidth - 55) / cVis; 
+
+                            cDrag += dx;
+                            const cW = (container.clientWidth - 55) / cVis;
                             const moves = Math.trunc(cDrag / cW);
                             if (moves !== 0) {
                                 cOff = Math.min(Math.max(cOff - moves, 0), ohlcData.length - cVis); cDrag -= (moves * cW);
@@ -1005,7 +1065,7 @@
                 let highs = displayData.map(d => d.high), lows = displayData.map(d => d.low);
                 if (showBB) { displayData.forEach(d => { if (d.bbUpper) highs.push(d.bbUpper); if (d.bbLower) lows.push(d.bbLower); }); }
 
-                chartState.maxP = Math.max(...highs) + verticalScrollShift; 
+                chartState.maxP = Math.max(...highs) + verticalScrollShift;
                 chartState.minP = Math.min(...lows) + verticalScrollShift;
                 chartState.range = chartState.maxP - chartState.minP || 1;
                 chartState.candleW = chartW / displayData.length;
@@ -1338,8 +1398,8 @@
                 if (displayData.length === 0) return;
 
                 let highs = displayData.map(d => d.high), lows = displayData.map(d => d.low);
-                patternState.maxP = Math.max(...highs) + patternVerticalScrollShift; 
-                patternState.minP = Math.min(...lows) + patternVerticalScrollShift; 
+                patternState.maxP = Math.max(...highs) + patternVerticalScrollShift;
+                patternState.minP = Math.min(...lows) + patternVerticalScrollShift;
                 patternState.range = patternState.maxP - patternState.minP || 1;
                 patternState.candleW = chartW / displayData.length;
                 const getY = (p) => (h - patternState.padB) - ((p - patternState.minP) / patternState.range) * patternState.chartH;
