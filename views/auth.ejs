@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockPulse AI | Access Terminal</title>
+    <title>Terminal Portal Sign In | FinoraPulse AI</title>
+    <meta name="robots" content="noindex, nofollow">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -14,7 +15,7 @@
         }
         body { margin: 0; background-color: var(--bg-dark); color: var(--text-main); font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
         
-        .auth-container { background: var(--card-bg); width: 400px; padding: 2rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .auth-container { background: var(--card-bg); width: 100%; max-width: 400px; padding: 2rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); box-sizing: border-box; margin: 20px; }
         .logo { text-align: center; margin-bottom: 2rem; font-size: 1.5rem; font-weight: 700; }
         .accent { color: var(--accent); }
         
@@ -30,7 +31,8 @@
         .btn { width: 100%; background: var(--accent); color: var(--bg-dark); padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: opacity 0.2s; }
         .btn:hover { opacity: 0.9; }
         
-        .error-msg { background: rgba(239, 68, 68, 0.1); color: var(--error); padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 15px; display: none; text-align: center;}
+        .error-msg { background: rgba(239, 68, 68, 0.1); color: var(--error); padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 15px; display: none; text-align: center; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .success-msg { background: rgba(56, 189, 248, 0.1); color: var(--accent); padding: 10px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 15px; display: none; text-align: center; border: 1px solid rgba(56, 189, 248, 0.2); }
         
         #register-form { display: none; }
     </style>
@@ -39,6 +41,9 @@
 
 <div class="auth-container">
     <div class="logo">StockPulse <span class="accent">AI</span></div>
+
+    <div class="error-msg" id="ajax-error"></div>
+    <div class="success-msg" id="ajax-success"></div>
 
     <% if (typeof error !== 'undefined' && error) { %>
         <div class="error-msg" style="display: block;"><%= error %></div>
@@ -57,6 +62,9 @@
         <div class="form-group">
             <label>Password</label>
             <input type="password" name="password" required placeholder="••••••••">
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: -5px; margin-bottom: 15px;">
+            <a href="#" onclick="showForgotPassword(event)" style="color: var(--accent); text-decoration: none; font-size: 0.8rem; opacity: 0.8; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">Forgot Password?</a>
         </div>
         <button type="submit" class="btn">Access Terminal</button>
     </form>
@@ -80,6 +88,28 @@
         </div>
         <button type="submit" class="btn">Create Account</button>
     </form>
+
+    <form id="forgot-form" style="display: none;">
+        <!-- Verify OTP & Reset Password -->
+        <div class="form-group">
+            <label>Verification OTP (6-digits)</label>
+            <input type="text" id="forgot-otp" placeholder="••••••" pattern="\d{6}" maxlength="6" style="text-align: center; letter-spacing: 0.5rem; font-size: 1.25rem; font-weight: 600;">
+        </div>
+        <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="forgot-new-password" placeholder="Enter new password">
+        </div>
+        <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="forgot-confirm-password" placeholder="Repeat new password">
+        </div>
+        <button type="button" onclick="handleResetPassword()" class="btn" id="reset-pass-btn">Reset Password</button>
+        
+        <div style="text-align: center; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+            <a href="#" onclick="resendOTP(event)" id="resend-otp-link" style="color: var(--accent); text-decoration: none; opacity: 0.8;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">Resend OTP</a>
+            <a href="#" onclick="cancelForgotPassword(event)" style="color: var(--text-muted); text-decoration: none;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'">Back to Login</a>
+        </div>
+    </form>
 </div>
 
 <script>
@@ -93,6 +123,179 @@
             document.querySelectorAll('.tab')[1].classList.add('active');
             document.getElementById('login-form').style.display = 'none';
             document.getElementById('register-form').style.display = 'block';
+        }
+    }
+
+    async function showForgotPassword(e) {
+        if (e) e.preventDefault();
+        
+        clearAlerts();
+
+        const loginInputVal = document.querySelector('input[name="loginInput"]').value.trim();
+        if (!loginInputVal) {
+            showAlert('error', 'Please enter your User ID or Gmail address in the login field first.');
+            return;
+        }
+
+        // Hide existing forms and tab selectors
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('register-form').style.display = 'none';
+        document.querySelector('.tabs').style.display = 'none';
+        
+        // Show forgot form
+        document.getElementById('forgot-form').style.display = 'block';
+
+        // Trigger OTP immediately
+        await triggerOTPSending(loginInputVal);
+    }
+
+    async function triggerOTPSending(loginInput) {
+        const resetBtn = document.getElementById('reset-pass-btn');
+        resetBtn.disabled = true;
+        
+        showAlert('success', 'Sending verification OTP to your registered email...');
+
+        try {
+            const response = await fetch('/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ loginInput })
+            });
+            
+            const data = await response.json();
+            if (response.ok && data.success) {
+                showAlert('success', data.message);
+                // Focus OTP field
+                setTimeout(() => document.getElementById('forgot-otp').focus(), 100);
+            } else {
+                showAlert('error', data.error || 'Failed to send OTP. Please return to login and try again.');
+            }
+        } catch (err) {
+            showAlert('error', 'Network error. Please try again.');
+        } finally {
+            resetBtn.disabled = false;
+        }
+    }
+
+    async function resendOTP(e) {
+        if (e) e.preventDefault();
+        const loginInputVal = document.querySelector('input[name="loginInput"]').value.trim();
+        if (!loginInputVal) return;
+        
+        const resendLink = document.getElementById('resend-otp-link');
+        const originalText = resendLink.textContent;
+        resendLink.textContent = 'Resending...';
+        resendLink.style.pointerEvents = 'none';
+        resendLink.style.opacity = '0.5';
+
+        try {
+            const response = await fetch('/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ loginInput: loginInputVal })
+            });
+            
+            const data = await response.json();
+            if (response.ok && data.success) {
+                showAlert('success', data.message);
+            } else {
+                showAlert('error', data.error || 'Failed to resend OTP. Please try again.');
+            }
+        } catch (err) {
+            showAlert('error', 'Network error. Please try again.');
+        } finally {
+            resendLink.textContent = originalText;
+            resendLink.style.pointerEvents = 'auto';
+            resendLink.style.opacity = '0.8';
+        }
+    }
+    
+    function cancelForgotPassword(e) {
+        if (e) e.preventDefault();
+        
+        // Hide forgot password form
+        document.getElementById('forgot-form').style.display = 'none';
+        
+        // Show login form and tab selectors
+        document.querySelector('.tabs').style.display = 'flex';
+        switchTab('login');
+        
+        // Clear message alerts
+        clearAlerts();
+    }
+    
+    function clearAlerts() {
+        const ajaxErr = document.getElementById('ajax-error');
+        const ajaxSucc = document.getElementById('ajax-success');
+        if (ajaxErr) { ajaxErr.style.display = 'none'; ajaxErr.textContent = ''; }
+        if (ajaxSucc) { ajaxSucc.style.display = 'none'; ajaxSucc.textContent = ''; }
+        
+        // Also clear any server-side ejs error block if exists
+        const serverErr = document.querySelector('.auth-container > .error-msg:not(#ajax-error)');
+        if (serverErr) serverErr.style.display = 'none';
+    }
+    
+    function showAlert(type, message) {
+        clearAlerts();
+        if (type === 'error') {
+            const errDiv = document.getElementById('ajax-error');
+            errDiv.textContent = message;
+            errDiv.style.display = 'block';
+        } else if (type === 'success') {
+            const succDiv = document.getElementById('ajax-success');
+            succDiv.textContent = message;
+            succDiv.style.display = 'block';
+        }
+    }
+    
+    async function handleResetPassword() {
+        const loginInputVal = document.querySelector('input[name="loginInput"]').value.trim();
+        const otp = document.getElementById('forgot-otp').value.trim();
+        const password = document.getElementById('forgot-new-password').value;
+        const confirmPassword = document.getElementById('forgot-confirm-password').value;
+        
+        if (!otp || !password || !confirmPassword) {
+            showAlert('error', 'All fields are required.');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            showAlert('error', 'Passwords do not match.');
+            return;
+        }
+        
+        const btn = document.getElementById('reset-pass-btn');
+        const originalText = btn.textContent;
+        btn.textContent = 'Resetting...';
+        btn.disabled = true;
+        
+        try {
+            const response = await fetch('/auth/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ loginInput: loginInputVal, otp, password, confirmPassword })
+            });
+            
+            const data = await response.json();
+            if (response.ok && data.success) {
+                showAlert('success', data.message);
+                // Clear fields
+                document.getElementById('forgot-otp').value = '';
+                document.getElementById('forgot-new-password').value = '';
+                document.getElementById('forgot-confirm-password').value = '';
+                
+                // Keep showing success but return to login after 3 seconds
+                setTimeout(() => {
+                    cancelForgotPassword();
+                }, 3000);
+            } else {
+                showAlert('error', data.error || 'Failed to reset password. Please try again.');
+            }
+        } catch (err) {
+            showAlert('error', 'Network error. Please try again.');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
         }
     }
 </script>

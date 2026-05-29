@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin System | FinoraPulse</title>
+    <title>Command Center Administration console | FinoraPulse</title>
+    <meta name="robots" content="noindex, nofollow">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
@@ -71,6 +72,36 @@
         .btn-return:hover { background: #334155; }
         .btn-logout { background: rgba(244, 63, 94, 0.1); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); }
         .btn-logout:hover { background: rgba(244, 63, 94, 0.2); }
+
+        @media screen and (max-width: 768px) {
+            .admin-container {
+                margin: 20px auto;
+                gap: 20px;
+            }
+            .admin-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding-bottom: 15px;
+            }
+            .admin-header > div {
+                width: 100%;
+            }
+            .admin-header div:last-child {
+                display: flex;
+                gap: 10px;
+                width: 100%;
+            }
+            .admin-header div:last-child a {
+                flex: 1;
+                text-align: center;
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+            .dashboard-panel {
+                padding: 20px 15px;
+            }
+        }
     </style>
 </head>
 <body style="margin: 0; background-color: var(--bg-dark, #041027);">

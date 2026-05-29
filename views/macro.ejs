@@ -3,13 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Country Macro Explorer | FinoraPulse</title>
+    
+    <title>Macro Economic Explorer: <%= country %> Economic Indicators | FinoraPulse</title>
+    <meta name="title" content="Macro Economic Explorer: <%= country %> Economic Indicators | FinoraPulse">
+    <meta name="description" content="Explore institutional liquidity flows, GDP growth trends, inflation index, unemployment rates, government bond yields, and net capital flows for <%= country %> on the FinoraPulse economic terminal.">
+    <meta name="keywords" content="<%= country %> macro economics, <%= country %> GDP, <%= country %> inflation, economic indicator tracker, liquidity matrix, bond yield, FinoraPulse, institutional flow">
+    <meta name="author" content="Kartik M G (FinoraPulse.com)">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    
+    <link rel="canonical" href="https://finorapulse.com/macro?country=<%= country %>">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://finorapulse.com/macro?country=<%= country %>">
+    <meta property="og:title" content="Macro Economic Explorer: <%= country %> Economic Indicators">
+    <meta property="og:description" content="Analyze GDP growth, inflation, unemployment, Gov bond yields, liquidity matrix, and export leaders for <%= country %> in real-time.">
+    <meta property="og:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
+    <meta property="og:site_name" content="FinoraPulse">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://finorapulse.com/macro?country=<%= country %>">
+    <meta property="twitter:title" content="Macro Economic Explorer: <%= country %> | FinoraPulse">
+    <meta property="twitter:description" content="Analyze GDP growth, inflation, unemployment, Gov bond yields, liquidity matrix, and export leaders for <%= country %> in real-time.">
+    <meta property="twitter:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <meta name="google-adsense-account" content="ca-pub-9322873035906803">
     <link rel="icon" type="image/x-icon" href="/favicon.png">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "FinoraPulse Country Macro Explorer - <%= country %>",
+      "url": "https://finorapulse.com/macro?country=<%= country %>",
+      "description": "Macroeconomic indicator tracking dashboard, live institutional capital liquidity matrix, and leading export company stock scanner for <%= country %>.",
+      "applicationCategory": "FinancialApplication",
+      "operatingSystem": "Web Browser",
+      "author": {
+        "@type": "Person",
+        "name": "Kartik M G"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FinoraPulse",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://finorapulse.com/images/finorapulse-log.png"
+        }
+      }
+    }
+    </script>
     <style>
         .macro-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; transition: opacity 0.3s; }

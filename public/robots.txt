@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api/admin/*
 
-Sitemap: https://finorapulse.com/sitemap.xml 
+Sitemap: https://finorapulse.com/sitemap.xml

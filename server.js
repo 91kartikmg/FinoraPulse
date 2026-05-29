@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -9,6 +10,8 @@ const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 const Admin = require('./models/Admin'); // <-- Isolated Admin Model
 const Suggestion = require('./models/Suggestion');
+const crypto = require('crypto');
+const { sendOTPEmail } = require('./utils/mailer');
 const axios = require('axios');
 const cron = require('node-cron');
 const { Mutex } = require('async-mutex');
@@ -212,6 +215,94 @@ app.get('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/'));
 });
 
+app.post('/auth/forgot-password', async (req, res) => {
+    const { loginInput } = req.body;
+    if (!loginInput) {
+        return res.status(400).json({ success: false, error: "User ID or Gmail is required." });
+    }
+
+    try {
+        // Query by either username or email
+        const user = await User.findOne({ 
+            $or: [
+                { email: loginInput.toLowerCase() }, 
+                { username: loginInput }
+            ] 
+        });
+
+        if (!user) {
+            return res.status(404).json({ success: false, error: "No account found with this User ID or Gmail." });
+        }
+
+        // Generate 6-digit numeric OTP
+        const otp = crypto.randomInt(100000, 999999).toString();
+        
+        // Save to DB with 10-minute expiry
+        user.resetPasswordOTP = otp;
+        user.resetPasswordOTPExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        await user.save();
+
+        // Send email
+        await sendOTPEmail(user.email, user.username, otp);
+
+        // Mask the email for privacy (e.g. k***a94@gmail.com)
+        const emailParts = user.email.split('@');
+        const mainPart = emailParts[0];
+        const domainPart = emailParts[1];
+        const maskedMain = mainPart.length > 3 
+            ? mainPart.substring(0, 2) + '*'.repeat(mainPart.length - 3) + mainPart.slice(-1)
+            : mainPart.substring(0, 1) + '*'.repeat(mainPart.length - 1);
+        const maskedEmail = `${maskedMain}@${domainPart}`;
+
+        res.json({ 
+            success: true, 
+            message: `Verification OTP has been sent to your registered email: ${maskedEmail}` 
+        });
+    } catch (err) {
+        console.error("Forgot password route error:", err);
+        res.status(500).json({ success: false, error: "Internal server error. Please try again." });
+    }
+});
+
+app.post('/auth/reset-password', async (req, res) => {
+    const { loginInput, otp, password, confirmPassword } = req.body;
+
+    if (!loginInput || !otp || !password || !confirmPassword) {
+        return res.status(400).json({ success: false, error: "All fields are required." });
+    }
+
+    if (password !== confirmPassword) {
+        return res.status(400).json({ success: false, error: "Passwords do not match." });
+    }
+
+    try {
+        const user = await User.findOne({ 
+            $or: [
+                { email: loginInput.toLowerCase() },
+                { username: loginInput }
+            ],
+            resetPasswordOTP: otp,
+            resetPasswordOTPExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, error: "Invalid or expired OTP." });
+        }
+
+        // Update password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
+        user.resetPasswordOTP = null;
+        user.resetPasswordOTPExpires = null;
+        await user.save();
+
+        res.json({ success: true, message: "Your password has been successfully reset! You can now log in." });
+    } catch (err) {
+        console.error("Reset password route error:", err);
+        res.status(500).json({ success: false, error: "Internal server error. Please try again." });
+    }
+});
+
 // ==========================================
 // ADMIN ROUTES (Combined View)
 // ==========================================
@@ -391,7 +482,12 @@ function fetchPythonData(folder, scriptName, argsArray = []) {
 
         console.log(`🚀 Executing: ${PYTHON_PATH} ${args.join(' ')}`);
 
-        const pythonProcess = spawn(PYTHON_PATH, args);
+        const pythonProcess = spawn(PYTHON_PATH, args, {
+            env: {
+                ...process.env,
+                PYTHONDONTWRITEBYTECODE: '1'
+            }
+        });
         let dataString = '';
         let errorString = '';
 
@@ -625,11 +721,54 @@ app.get('/sitemap.xml', async (req, res) => {
     try {
         const links = [
             { url: '/', changefreq: 'daily', priority: 1.0 },
+            { url: '/calculator', changefreq: 'weekly', priority: 0.9 },
             { url: '/auth', changefreq: 'monthly', priority: 0.5 },
-            { url: '/predict', changefreq: 'daily', priority: 0.8 },
-            { url: '/macro', changefreq: 'weekly', priority: 0.7 },
-            { url: '/heatmap', changefreq: 'weekly', priority: 0.7 },
         ];
+
+        // 1. Dynamically generate links for each supported country
+        SUPPORTED_COUNTRIES.forEach(country => {
+            links.push({ url: `/macro?country=${country}`, changefreq: 'weekly', priority: 0.7 });
+            links.push({ url: `/heatmap?country=${country}`, changefreq: 'weekly', priority: 0.7 });
+        });
+
+        // 2. Dynamically scan datasets directory to extract active tickers
+        try {
+            const files = await fs.readdir(DATASET_PATH);
+            const tickers = new Set();
+            for (const file of files) {
+                if (file.startsWith('data_') && file.endsWith('.csv')) {
+                    const parts = file.split('_');
+                    if (parts.length >= 2) {
+                        tickers.add(parts[1].toUpperCase());
+                    }
+                }
+            }
+
+            // Always guarantee default active ticker fallbacks
+            if (tickers.size === 0) {
+                tickers.add('RELIANCE.NS');
+                tickers.add('AAPL');
+            }
+
+            // Add dynamic routes for each found ticker
+            tickers.forEach(ticker => {
+                links.push({ url: `/predict?ticker=${ticker}`, changefreq: 'daily', priority: 0.8 });
+                links.push({ url: `/technical?ticker=${ticker}`, changefreq: 'daily', priority: 0.8 });
+                links.push({ url: `/chart-view?ticker=${ticker}`, changefreq: 'weekly', priority: 0.6 });
+                links.push({ url: `/pattern-test?ticker=${ticker}`, changefreq: 'monthly', priority: 0.4 });
+            });
+        } catch (err) {
+            console.error("Sitemap ticker scanning error:", err);
+            // Stable hardcoded fallback in case of folder read error
+            const fallbackTickers = ['RELIANCE.NS', 'AAPL', 'MSFT', 'NVDA', 'TCS.NS', 'SBIN.NS', 'HDFCBANK.NS'];
+            fallbackTickers.forEach(ticker => {
+                links.push({ url: `/predict?ticker=${ticker}`, changefreq: 'daily', priority: 0.8 });
+                links.push({ url: `/technical?ticker=${ticker}`, changefreq: 'daily', priority: 0.8 });
+                links.push({ url: `/chart-view?ticker=${ticker}`, changefreq: 'weekly', priority: 0.6 });
+                links.push({ url: `/pattern-test?ticker=${ticker}`, changefreq: 'monthly', priority: 0.4 });
+            });
+        }
+
         const stream = new SitemapStream({ hostname: 'https://finorapulse.com' });
         const xmlString = await streamToPromise(Readable.from(links).pipe(stream)).then(data => data.toString());
         res.header('Content-Type', 'application/xml');

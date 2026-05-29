@@ -4,10 +4,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Predicting <%= ticker %> | FinoraPulse AI</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;800&display=swap"
-        rel="stylesheet">
+    
+    <title>AI Stock Price Prediction & Sentiment Forecast: <%= ticker %> | FinoraPulse</title>
+    <meta name="title" content="AI Stock Price Prediction & Sentiment Forecast: <%= ticker %> | FinoraPulse">
+    <meta name="description" content="Access real-time AI stock prediction, deep algorithmic forecasting, and comprehensive market sentiment analysis for <%= ticker %> on the FinoraPulse AI Terminal.">
+    <meta name="keywords" content="<%= ticker %> price prediction, <%= ticker %> AI forecast, <%= ticker %> stock analysis, <%= ticker %> sentiment, FinoraPulse, stock prediction, algorithmic trading">
+    <meta name="author" content="Kartik M G (FinoraPulse.com)">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    
+    <link rel="canonical" href="https://finorapulse.com/predict?ticker=<%= ticker %>">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://finorapulse.com/predict?ticker=<%= ticker %>">
+    <meta property="og:title" content="AI Stock Price Prediction & Sentiment Forecast: <%= ticker %>">
+    <meta property="og:description" content="Access real-time AI stock prediction, deep algorithmic forecasting, and comprehensive market sentiment analysis for <%= ticker %>.">
+    <meta property="og:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
+    <meta property="og:site_name" content="FinoraPulse">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://finorapulse.com/predict?ticker=<%= ticker %>">
+    <meta property="twitter:title" content="AI Stock Forecast: <%= ticker %> | FinoraPulse">
+    <meta property="twitter:description" content="Access real-time AI stock prediction, deep algorithmic forecasting, and comprehensive market sentiment analysis for <%= ticker %>.">
+    <meta property="twitter:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -16,6 +40,26 @@
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
     <link rel="icon" type="image/x-icon" href="/favicon.png">
     <meta name="google-adsense-account" content="ca-pub-9322873035906803">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FinancialProduct",
+      "name": "FinoraPulse AI Stock Predictor - <%= ticker %>",
+      "url": "https://finorapulse.com/predict?ticker=<%= ticker %>",
+      "description": "Dynamic machine learning and algorithmic forecasting terminal for <%= ticker %>. Features catalyst analysis, smart money flow, and NLP sentiment signals.",
+      "tickerSymbol": "<%= ticker %>",
+      "brand": {
+        "@type": "Brand",
+        "name": "FinoraPulse"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
 
     <style>
         /* TECHNICAL ANALYSIS STYLES */
