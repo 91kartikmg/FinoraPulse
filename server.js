@@ -242,8 +242,14 @@ app.post('/auth/forgot-password', async (req, res) => {
         user.resetPasswordOTPExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
         await user.save();
 
-        // Send email
-        await sendOTPEmail(user.email, user.username, otp);
+        // Send email in the background to prevent blocking and ensure instant response times
+        sendOTPEmail(user.email, user.username, otp).then(emailSent => {
+            if (!emailSent) {
+                console.error(`❌ [MAILER FAILURE] Background OTP email failed to send to ${user.email}. Check SMTP credentials.`);
+            }
+        }).catch(err => {
+            console.error(`❌ [MAILER ERROR] Error sending background OTP email to ${user.email}:`, err.message);
+        });
 
         // Mask the email for privacy (e.g. k***a94@gmail.com)
         const emailParts = user.email.split('@');
@@ -278,7 +284,7 @@ app.post('/auth/verify-otp', async (req, res) => {
                 { username: loginInput }
             ],
             resetPasswordOTP: otp,
-            resetPasswordOTPExpires: { $gt: Date.now() }
+            resetPasswordOTPExpires: { $gt: new Date() }
         });
 
         if (!user) {
@@ -310,7 +316,7 @@ app.post('/auth/reset-password', async (req, res) => {
                 { username: loginInput }
             ],
             resetPasswordOTP: otp,
-            resetPasswordOTPExpires: { $gt: Date.now() }
+            resetPasswordOTPExpires: { $gt: new Date() }
         });
 
         if (!user) {

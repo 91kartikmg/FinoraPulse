@@ -113,7 +113,7 @@ async function sendOTPEmail(email, username, otp) {
         console.log(`👤 Username:     ${username}`);
         console.log(`🚨 OTP:          ${otp}`);
         console.log(`============================================================\n`);
-        return true; // We return true to allow local testing to continue
+        return false; // Return false to indicate the email failed to send
     }
 }
 
