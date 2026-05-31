@@ -264,6 +264,34 @@ app.post('/auth/forgot-password', async (req, res) => {
     }
 });
 
+app.post('/auth/verify-otp', async (req, res) => {
+    const { loginInput, otp } = req.body;
+
+    if (!loginInput || !otp) {
+        return res.status(400).json({ success: false, error: "All fields are required." });
+    }
+
+    try {
+        const user = await User.findOne({ 
+            $or: [
+                { email: loginInput.toLowerCase() },
+                { username: loginInput }
+            ],
+            resetPasswordOTP: otp,
+            resetPasswordOTPExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, error: "Invalid or expired OTP." });
+        }
+
+        res.json({ success: true, message: "OTP verified successfully. Please set your new password." });
+    } catch (err) {
+        console.error("Verify OTP route error:", err);
+        res.status(500).json({ success: false, error: "Internal server error. Please try again." });
+    }
+});
+
 app.post('/auth/reset-password', async (req, res) => {
     const { loginInput, otp, password, confirmPassword } = req.body;
 

@@ -90,20 +90,27 @@
     </form>
 
     <form id="forgot-form" style="display: none;">
-        <!-- Verify OTP & Reset Password -->
-        <div class="form-group">
-            <label>Verification OTP (6-digits)</label>
-            <input type="text" id="forgot-otp" placeholder="••••••" pattern="\d{6}" maxlength="6" style="text-align: center; letter-spacing: 0.5rem; font-size: 1.25rem; font-weight: 600;">
+        <!-- Step 1: Verify OTP -->
+        <div id="forgot-step-otp">
+            <div class="form-group">
+                <label>Verification OTP (6-digits)</label>
+                <input type="text" id="forgot-otp" placeholder="••••••" pattern="\d{6}" maxlength="6" style="text-align: center; letter-spacing: 0.5rem; font-size: 1.25rem; font-weight: 600;">
+            </div>
+            <button type="button" onclick="handleVerifyOTP()" class="btn" id="verify-otp-btn">Verify OTP</button>
         </div>
-        <div class="form-group">
-            <label>New Password</label>
-            <input type="password" id="forgot-new-password" placeholder="Enter new password">
+
+        <!-- Step 2: Reset Password (Hidden by default) -->
+        <div id="forgot-step-reset" style="display: none;">
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="forgot-new-password" placeholder="Enter new password">
+            </div>
+            <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" id="forgot-confirm-password" placeholder="Repeat new password">
+            </div>
+            <button type="button" onclick="handleResetPassword()" class="btn" id="reset-pass-btn">Reset Password</button>
         </div>
-        <div class="form-group">
-            <label>Confirm New Password</label>
-            <input type="password" id="forgot-confirm-password" placeholder="Repeat new password">
-        </div>
-        <button type="button" onclick="handleResetPassword()" class="btn" id="reset-pass-btn">Reset Password</button>
         
         <div style="text-align: center; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
             <a href="#" onclick="resendOTP(event)" id="resend-otp-link" style="color: var(--accent); text-decoration: none; opacity: 0.8;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">Resend OTP</a>
@@ -144,14 +151,16 @@
         
         // Show forgot form
         document.getElementById('forgot-form').style.display = 'block';
+        document.getElementById('forgot-step-otp').style.display = 'block';
+        document.getElementById('forgot-step-reset').style.display = 'none';
 
         // Trigger OTP immediately
         await triggerOTPSending(loginInputVal);
     }
 
     async function triggerOTPSending(loginInput) {
-        const resetBtn = document.getElementById('reset-pass-btn');
-        resetBtn.disabled = true;
+        const verifyBtn = document.getElementById('verify-otp-btn');
+        verifyBtn.disabled = true;
         
         showAlert('success', 'Sending verification OTP to your registered email...');
 
@@ -173,7 +182,7 @@
         } catch (err) {
             showAlert('error', 'Network error. Please try again.');
         } finally {
-            resetBtn.disabled = false;
+            verifyBtn.disabled = false;
         }
     }
 
@@ -209,12 +218,59 @@
             resendLink.style.opacity = '0.8';
         }
     }
+
+    async function handleVerifyOTP() {
+        const loginInputVal = document.querySelector('input[name="loginInput"]').value.trim();
+        const otp = document.getElementById('forgot-otp').value.trim();
+        
+        if (!otp) {
+            showAlert('error', 'Please enter the 6-digit OTP.');
+            return;
+        }
+        
+        const btn = document.getElementById('verify-otp-btn');
+        const originalText = btn.textContent;
+        btn.textContent = 'Verifying...';
+        btn.disabled = true;
+        
+        try {
+            const response = await fetch('/auth/verify-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ loginInput: loginInputVal, otp })
+            });
+            
+            const data = await response.json();
+            if (response.ok && data.success) {
+                showAlert('success', data.message);
+                document.getElementById('forgot-step-otp').style.display = 'none';
+                document.getElementById('forgot-step-reset').style.display = 'block';
+                setTimeout(() => document.getElementById('forgot-new-password').focus(), 100);
+            } else {
+                showAlert('error', data.error || 'Invalid or expired OTP. Please try again.');
+            }
+        } catch (err) {
+            showAlert('error', 'Network error. Please try again.');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
     
     function cancelForgotPassword(e) {
         if (e) e.preventDefault();
         
         // Hide forgot password form
         document.getElementById('forgot-form').style.display = 'none';
+        
+        // Reset steps
+        document.getElementById('forgot-step-otp').style.display = 'block';
+        document.getElementById('forgot-step-reset').style.display = 'none';
+        
+        // Clear fields
+        document.getElementById('forgot-otp').value = '';
+        document.getElementById('forgot-new-password').value = '';
+        document.getElementById('forgot-confirm-password').value = '';
         
         // Show login form and tab selectors
         document.querySelector('.tabs').style.display = 'flex';

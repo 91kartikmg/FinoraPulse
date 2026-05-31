@@ -55,7 +55,7 @@ async function sendOTPEmail(email, username, otp) {
     </head>
     <body>
         <div class="container">
-            <div class="logo">StockPulse <span>AI</span></div>
+            <div class="logo">FinoraPulse <span>AI</span></div>
             <div class="title">Verification OTP</div>
             <p class="greeting">Hello <strong>${username}</strong>,</p>
             <p class="greeting">We received a request to reset the password for your FinoraPulse AI account. Please use the following 6-digit One-Time Password (OTP) to complete your password reset. This code is valid for 10 minutes.</p>
