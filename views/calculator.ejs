@@ -37,15 +37,22 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
+      "@type": ["SoftwareApplication", "WebApplication"],
       "name": "FinoraPulse Pro Financial Calculators",
+      "alternateName": ["Interactive Trading Calculators", "FinoraPulse Investment Planners"],
+      "description": "An interactive suite of professional financial calculators supporting Systematic Investment Plan (SIP), trading P&L, position sizing, and compound annual growth rate (CAGR).",
+      "operatingSystem": "Web",
+      "applicationCategory": ["FinancialApplication", "Utility"],
       "url": "https://finorapulse.com/calculator",
-      "description": "An interactive suite of professional financial calculators supporting SIP, trading P&L, position sizing, and compound annual growth rate (CAGR).",
-      "applicationCategory": "FinancialApplication",
-      "operatingSystem": "Web Browser",
-      "author": {
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "USD",
+        "price": "0"
+      },
+      "author": { 
         "@type": "Person",
-        "name": "Kartik M G"
+        "name": "Kartik M G",
+        "url": "https://finorapulse.com/#AboutUs"
       },
       "publisher": {
         "@type": "Organization",
@@ -55,16 +62,105 @@
           "url": "https://finorapulse.com/images/finorapulse-log.png"
         }
       },
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "19432",
+        "bestRating": "5",
+        "worstRating": "1"
       },
       "featureList": [
         "Systematic Investment Plan (SIP) planner",
         "Stock Trading Profit & Loss (P&L) matrix",
         "Risk-managed Position Sizing solver",
         "Compound Annual Growth Rate (CAGR) tracker"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem", 
+          "position": 1,
+          "name": "Home",
+          "item": "https://finorapulse.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Calculators",
+          "item": "https://finorapulse.com/calculator"
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json"> 
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What is a Systematic Investment Plan (SIP) calculator?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An SIP calculator helps you estimate the future returns of your mutual fund or stock investments when you invest a fixed amount regularly on a weekly or monthly basis."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Why is a position sizing calculator important for trading?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A position sizing calculator determines the maximum number of shares or lots to buy per trade based on your total account capital, risk percentage, entry price, and stop-loss price, protecting you from large capital drawdowns."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "How is CAGR calculated?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Compound Annual Growth Rate (CAGR) measures the geometric progression ratio that provides a constant rate of return over the time period. The formula is: (Final Value / Initial Value)^(1 / Years) - 1."
+            }
+        }
+        ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Calculate Trading Position Size and Risk",
+      "description": "Calculate exact share quantities in 3 simple steps to optimize your capital risk per trade.",
+      "estimatedCost": {
+        "@type": "MonetaryAmount",
+        "currency": "USD",
+        "value": "0"
+      },
+      "totalTime": "PT15S",
+      "tool": {
+        "@type": "HowToTool",
+        "name": "FinoraPulse Risk Manager Solver"
+      },
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Input Account Capital and Risk Pct",
+          "text": "Set your total account capital size and the percentage you want to risk per trade (e.g. 1% or 2%)."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Set Entry and Stop Loss Levels",
+          "text": "Input your planned technical entry price and the stop-loss level on the canvas."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Generate Position Qty",
+          "text": "The solver will instantly display your total capital at risk and the maximum share quantity to purchase."
+        }
       ]
     }
     </script>

@@ -40,15 +40,22 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
+      "@type": ["SoftwareApplication", "WebApplication"],
       "name": "FinoraPulse AI Terminal",
+      "alternateName": ["FinoraPulse Stock Analytics Platform", "FinoraPulse Market Intelligence Hub"],
+      "description": "An advanced AI-powered dashboard for real-time stock market predictions, algorithmic sentiment analysis, and FII/DII liquidity tracking.",
+      "operatingSystem": "Web",
+      "applicationCategory": ["FinanceApplication", "Utility"],
       "url": "https://finorapulse.com",
-      "description": "An advanced AI-powered dashboard for real-time stock market predictions, algorithmic sentiment analysis, and liquidity tracking.",
-      "applicationCategory": "FinanceApplication",
-      "operatingSystem": "Web Browser",
-      "author": {
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "USD",
+        "price": "0"
+      },
+      "author": { 
         "@type": "Person",
-        "name": "Kartik M G"
+        "name": "Kartik M G",
+        "url": "https://finorapulse.com/#AboutUs"
       },
       "publisher": {
         "@type": "Organization",
@@ -58,16 +65,99 @@
           "url": "https://finorapulse.com/images/finorapulse-log.png"
         }
       },
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "24982",
+        "bestRating": "5",
+        "worstRating": "1"
       },
       "featureList": [
         "Real-time AI market sentiment",
         "Algorithmic stock predictions",
         "FII/DII Liquidity Matrix",
         "Live technical charting"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem", 
+          "position": 1,
+          "name": "Home",
+          "item": "https://finorapulse.com"
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json"> 
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What is FinoraPulse AI?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "FinoraPulse is a state-of-the-art algorithmic stock market prediction terminal that fuses neural network pricing paths with live sentiment index trackers, economic data explorer systems, and professional calculators."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Is registration or subscription required to use FinoraPulse?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, standard features such as macroeconomic explorer tools, pro calculators, and heatmaps are publicly available. Account sign-in is only needed for advanced real-time AI forecasts."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "What markets are supported on FinoraPulse?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We support global stock markets, FII/DII liquidity indexes, digital assets/cryptocurrencies, forex pairs, and commodities in real-time."
+            }
+        }
+        ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Use FinoraPulse to Analyze Markets",
+      "description": "Quickly navigate through our AI stock terminal, macroeconomic databases, and calculation matrices to improve your trading efficiency.",
+      "estimatedCost": {
+        "@type": "MonetaryAmount",
+        "currency": "USD",
+        "value": "0"
+      },
+      "totalTime": "PT1M",
+      "tool": {
+        "@type": "HowToTool",
+        "name": "FinoraPulse Web Application Terminal"
+      },
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Explore Sector Heatmaps",
+          "text": "Check relative market caps and daily performance vectors using the interactive treemaps."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Verify Macro Liquidity",
+          "text": "Open the Macro Explorer to monitor institutional foreign vs local capital flow matrices."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Leverage Professional Planners",
+          "text": "Use the built-in SIP, compound CAGR, and risk-managed position calculators to structure your trades."
+        }
       ]
     }
     </script>

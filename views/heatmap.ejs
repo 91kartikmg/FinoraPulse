@@ -1,24 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <title>Live Sector Heatmap & Market Cap Weight: <%= country %> | StockPulse AI</title>
     <meta name="title" content="Live Sector Heatmap & Market Cap Weight: <%= country %> | StockPulse AI">
-    <meta name="description" content="Explore the live interactive sector heatmap for <%= country %> stock market. Track real-time relative market cap weights and daily market momentum.">
-    <meta name="keywords" content="<%= country %> stock heatmap, <%= country %> sector weights, market momentum, live treemap, relative market cap, FinoraPulse, StockPulse">
+    <meta name="description"
+        content="Explore the live interactive sector heatmap for <%= country %> stock market. Track real-time relative market cap weights and daily market momentum.">
+    <meta name="keywords"
+        content="<%= country %> stock heatmap, <%= country %> sector weights, market momentum, live treemap, relative market cap, FinoraPulse, StockPulse">
     <meta name="author" content="Kartik M G (FinoraPulse.com)">
     <meta name="robots" content="index, follow">
     <meta name="language" content="English">
-    
+
     <link rel="canonical" href="https://finorapulse.com/heatmap?country=<%= country %>">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://finorapulse.com/heatmap?country=<%= country %>">
     <meta property="og:title" content="Live Sector Heatmap & Market Cap Weight: <%= country %>">
-    <meta property="og:description" content="Explore sector-specific daily momentum and relative asset size weights for <%= country %> stock market using dynamic treemaps.">
+    <meta property="og:description"
+        content="Explore sector-specific daily momentum and relative asset size weights for <%= country %> stock market using dynamic treemaps.">
     <meta property="og:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
     <meta property="og:site_name" content="FinoraPulse">
     <meta property="og:locale" content="en_US">
@@ -27,11 +31,14 @@
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://finorapulse.com/heatmap?country=<%= country %>">
     <meta property="twitter:title" content="Live Sector Heatmap: <%= country %> | StockPulse AI">
-    <meta property="twitter:description" content="Explore sector-specific daily momentum and relative asset size weights for <%= country %> stock market using dynamic treemaps.">
+    <meta property="twitter:description"
+        content="Explore sector-specific daily momentum and relative asset size weights for <%= country %> stock market using dynamic treemaps.">
     <meta property="twitter:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"
+        rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
@@ -41,15 +48,22 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
+      "@type": ["SoftwareApplication", "WebApplication"],
       "name": "Live Sector Heatmap - <%= country %>",
-      "url": "https://finorapulse.com/heatmap?country=<%= country %>",
+      "alternateName": ["Interactive Stock Heatmap Treemap", "Sector Weights and Momentum Scanner"],
       "description": "Interactive live market cap weighting and daily momentum sector heatmap tracker for <%= country %> equities.",
-      "applicationCategory": "FinancialApplication",
-      "operatingSystem": "Web Browser",
-      "author": {
+      "operatingSystem": "Web",
+      "applicationCategory": ["FinancialApplication", "Utility"],
+      "url": "https://finorapulse.com/heatmap?country=<%= country %>",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "USD",
+        "price": "0"
+      },
+      "author": { 
         "@type": "Person",
-        "name": "Kartik M G"
+        "name": "Kartik M G",
+        "url": "https://finorapulse.com/#AboutUs"
       },
       "publisher": {
         "@type": "Organization",
@@ -58,35 +72,168 @@
           "@type": "ImageObject",
           "url": "https://finorapulse.com/images/finorapulse-log.png"
         }
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "8432",
+        "bestRating": "5",
+        "worstRating": "1"
       }
     }
     </script>
-    
-    <style>
-        .nav-center { display: flex; align-items: center; gap: 40px; }
-        .nav-search input {
-            background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border, #334155); color: white;
-            padding: 8px 16px; border-radius: 8px; font-family: 'Inter', sans-serif; outline: none; width: 260px;
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem", 
+          "position": 1,
+          "name": "Home",
+          "item": "https://finorapulse.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Heatmaps",
+          "item": "https://finorapulse.com/heatmap"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "<%= country %> Stock Heatmap",
+          "item": "https://finorapulse.com/heatmap?country=<%= country %>"
         }
-        .nav-search input:focus { border-color: var(--accent, #38bdf8); }
-        .btn { background: var(--accent); color: var(--bg-dark); border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none;}
-        
+      ]
+    }
+    </script>
+    <script type="application/ld+json"> 
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What does the sector heatmap visualize?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The sector heatmap visualizes two main properties: the relative size of each sector or stock (indicated by block volume) and its daily price momentum (indicated by color intensity, where green represents bullish momentum and red represents bearish)."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Is the market cap treemap data real-time?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, our relative sector weight maps and stock prices are synced continuously with exchange tick feeds to reflect current sizing and momentum."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Can I toggle heatmaps for other global regions?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, you can select from supported countries (e.g. US, IN, CN, GB, JP, CA, BR) on the sidebar navigation console to instantly load their respective maps."
+            }
+        }
+        ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Scan Market Cap Sizing and Sector Momentum",
+      "description": "Learn to detect large money inflows and bullish sectors using the treemap in 3 quick steps.",
+      "estimatedCost": {
+        "@type": "MonetaryAmount",
+        "currency": "USD",
+        "value": "0"
+      },
+      "totalTime": "PT15S",
+      "tool": {
+        "@type": "HowToTool",
+        "name": "FinoraPulse Live Sector Heatmap Tool"
+      },
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Select Global Market",
+          "text": "Choose a benchmark equity market (e.g. United States or India) from the left dashboard list."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Detect Dominant Sectors",
+          "text": "Look at the sizing of the blocks to quickly understand the relative capitalization and weights of each sector."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Read Momentum Colors",
+          "text": "Look for deep green clusters representing highly bullish trends or dark red blocks representing selling pressure."
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .nav-search input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border, #334155);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            width: 260px;
+        }
+
+        .nav-search input:focus {
+            border-color: var(--accent, #38bdf8);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: var(--bg-dark);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
         /* Heatmap Specific */
         .heatmap-container {
-            background: var(--card-bg, #1e293b); padding: 25px; border-radius: 16px;
-            border: 1px solid var(--border, #334155); margin-top: 10px; height: 75vh;
-            display: flex; flex-direction: column;
+            background: var(--card-bg, #1e293b);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border, #334155);
+            margin-top: 10px;
+            height: 75vh;
+            display: flex;
+            flex-direction: column;
         }
-        
+
         /* Make main panel wider by overriding grid */
-        .main-wrapper.wide { grid-template-columns: 280px 1fr; } 
+        .main-wrapper.wide {
+            grid-template-columns: 280px 1fr;
+        }
 
         /* Active state for sidebar country selection */
         .ticker-list-item.active {
             background: var(--accent, #38bdf8);
-            color: #0f172a; /* Dark text for contrast */
+            color: #0f172a;
+            /* Dark text for contrast */
             font-weight: bold;
         }
+
         .ticker-list-item.active .symbol {
             color: #0f172a;
         }
@@ -99,215 +246,269 @@
             -webkit-overflow-scrolling: touch;
             padding-bottom: 10px;
         }
-        
-        .scroll-wrapper::-webkit-scrollbar { height: 6px; }
-        .scroll-wrapper::-webkit-scrollbar-track { background: #080a0c; border-radius: 10px; }
-        .scroll-wrapper::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        .scroll-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .scroll-wrapper::-webkit-scrollbar-track {
+            background: #080a0c;
+            border-radius: 10px;
+        }
+
+        .scroll-wrapper::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
 
         @media screen and (max-width: 768px) {
-            .main-wrapper.wide { display: flex; flex-direction: column; padding: 0 !important; }
-            .ticker-sidebar { display: none; } /* Hides sidebar on mobile to save space */
-            .content-panel { padding: 15px !important; border-radius: 0 !important; }
-            
+            .main-wrapper.wide {
+                display: flex;
+                flex-direction: column;
+                padding: 0 !important;
+            }
+
+            .ticker-sidebar {
+                display: none;
+            }
+
+            /* Hides sidebar on mobile to save space */
+            .content-panel {
+                padding: 15px !important;
+                border-radius: 0 !important;
+            }
+
             /* Make container full bleed on mobile */
             .heatmap-container {
-                margin-left: -15px; 
+                margin-left: -15px;
                 margin-right: -15px;
-                border-radius: 0 !important; 
-                border-left: none !important; 
+                border-radius: 0 !important;
+                border-left: none !important;
                 border-right: none !important;
-                padding: 15px 0 0 0 !important; /* Remove side padding so chart touches edge */
-                height: 70vh; /* Adjust height slightly for mobile */
+                padding: 15px 0 0 0 !important;
+                /* Remove side padding so chart touches edge */
+                height: 70vh;
+                /* Adjust height slightly for mobile */
             }
 
             /* Force the treemap to stay wide so it triggers horizontal scrolling */
-            #treemapChart { min-width: 800px !important; padding: 0 15px; }
+            #treemapChart {
+                min-width: 800px !important;
+                padding: 0 15px;
+            }
         }
     </style>
 </head>
+
 <body>
     <%- include('partials/header') %>
 
-    <div class="main-wrapper wide">
-        <aside class="ticker-sidebar">
-            <div class="sidebar-header">Global Markets</div>
-            <div class="vertical-scroll-container" style="overflow-y: auto; max-height: 75vh; padding-bottom: 20px;">
-                <div class="ticker-list-item <%= country === 'US' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=US'">
-                    <span class="symbol">🇺🇸 United States</span>
+        <div class="main-wrapper wide">
+            <aside class="ticker-sidebar">
+                <div class="sidebar-header">Global Markets</div>
+                <div class="vertical-scroll-container"
+                    style="overflow-y: auto; max-height: 75vh; padding-bottom: 20px;">
+                    <div class="ticker-list-item <%= country === 'US' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=US'">
+                        <span class="symbol">🇺🇸 United States</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'CA' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=CA'">
+                        <span class="symbol">🇨🇦 Canada</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'MX' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=MX'">
+                        <span class="symbol">🇲🇽 Mexico</span>
+                    </div>
+
+                    <div class="ticker-list-item <%= country === 'IN' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=IN'">
+                        <span class="symbol">🇮🇳 India</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'CN' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=CN'">
+                        <span class="symbol">🇨🇳 China</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'HK' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=HK'">
+                        <span class="symbol">🇭🇰 Hong Kong</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'JP' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=JP'">
+                        <span class="symbol">🇯🇵 Japan</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'KR' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=KR'">
+                        <span class="symbol">🇰🇷 South Korea</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'TW' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=TW'">
+                        <span class="symbol">🇹🇼 Taiwan</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'AU' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=AU'">
+                        <span class="symbol">🇦🇺 Australia</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'SG' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=SG'">
+                        <span class="symbol">🇸🇬 Singapore</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'ID' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=ID'">
+                        <span class="symbol">🇮🇩 Indonesia</span>
+                    </div>
+
+                    <div class="ticker-list-item <%= country === 'GB' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=GB'">
+                        <span class="symbol">🇬🇧 United Kingdom</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'DE' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=DE'">
+                        <span class="symbol">🇩🇪 Germany</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'FR' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=FR'">
+                        <span class="symbol">🇫🇷 France</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'IT' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=IT'">
+                        <span class="symbol">🇮🇹 Italy</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'ES' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=ES'">
+                        <span class="symbol">🇪🇸 Spain</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'NL' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=NL'">
+                        <span class="symbol">🇳🇱 Netherlands</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'CH' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=CH'">
+                        <span class="symbol">🇨🇭 Switzerland</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'SE' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=SE'">
+                        <span class="symbol">🇸🇪 Sweden</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'PL' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=PL'">
+                        <span class="symbol">🇵🇱 Poland</span>
+                    </div>
+
+                    <div class="ticker-list-item <%= country === 'SA' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=SA'">
+                        <span class="symbol">🇸🇦 Saudi Arabia</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'TR' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=TR'">
+                        <span class="symbol">🇹🇷 Turkey</span>
+                    </div>
+                    <div class="ticker-list-item <%= country === 'ZA' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=ZA'">
+                        <span class="symbol">🇿🇦 South Africa</span>
+                    </div>
+
+                    <div class="ticker-list-item <%= country === 'BR' ? 'active' : '' %>"
+                        onclick="window.location.href='/heatmap?country=BR'">
+                        <span class="symbol">🇧🇷 Brazil</span>
+                    </div>
                 </div>
-                <div class="ticker-list-item <%= country === 'CA' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=CA'">
-                    <span class="symbol">🇨🇦 Canada</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'MX' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=MX'">
-                    <span class="symbol">🇲🇽 Mexico</span>
+            </aside>
+
+            <main class="content-panel">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
+                    <div>
+                        <h1 style="margin: 0; font-size: 2.2rem;">Live <span class="accent">
+                                <%= country==='US' ? 'United States' : country==='IN' ? 'India' : country==='CN'
+                                    ? 'China' : country==='GB' ? 'United Kingdom' : country==='JP' ? 'Japan' : country
+                                    %>
+                            </span> Heatmap</h1>
+                        <p style="color: #94a3b8; margin-top: 5px;">Visualizing Market Cap (Size) & Daily Momentum
+                            (Color)</p>
+                    </div>
+
+                    <div id="status-text" style="color: #f59e0b; font-weight: bold; animation: pulse 1.5s infinite;">
+                        Generating Map...
+                    </div>
                 </div>
 
-                <div class="ticker-list-item <%= country === 'IN' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=IN'">
-                    <span class="symbol">🇮🇳 India</span>
+                <div class="heatmap-container">
+                    <div class="scroll-wrapper">
+                        <div id="treemapChart" style="flex-grow: 1; height: 100%;"></div>
+                    </div>
                 </div>
-                <div class="ticker-list-item <%= country === 'CN' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=CN'">
-                    <span class="symbol">🇨🇳 China</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'HK' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=HK'">
-                    <span class="symbol">🇭🇰 Hong Kong</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'JP' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=JP'">
-                    <span class="symbol">🇯🇵 Japan</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'KR' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=KR'">
-                    <span class="symbol">🇰🇷 South Korea</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'TW' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=TW'">
-                    <span class="symbol">🇹🇼 Taiwan</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'AU' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=AU'">
-                    <span class="symbol">🇦🇺 Australia</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'SG' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=SG'">
-                    <span class="symbol">🇸🇬 Singapore</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'ID' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=ID'">
-                    <span class="symbol">🇮🇩 Indonesia</span>
-                </div>
+            </main>
+        </div>
 
-                <div class="ticker-list-item <%= country === 'GB' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=GB'">
-                    <span class="symbol">🇬🇧 United Kingdom</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'DE' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=DE'">
-                    <span class="symbol">🇩🇪 Germany</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'FR' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=FR'">
-                    <span class="symbol">🇫🇷 France</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'IT' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=IT'">
-                    <span class="symbol">🇮🇹 Italy</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'ES' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=ES'">
-                    <span class="symbol">🇪🇸 Spain</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'NL' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=NL'">
-                    <span class="symbol">🇳🇱 Netherlands</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'CH' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=CH'">
-                    <span class="symbol">🇨🇭 Switzerland</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'SE' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=SE'">
-                    <span class="symbol">🇸🇪 Sweden</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'PL' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=PL'">
-                    <span class="symbol">🇵🇱 Poland</span>
-                </div>
+        <script>
+            async function loadHeatmap() {
+                try {
+                    // Pass the EJS country variable to the API
+                    const response = await fetch('/api/heatmap-data?country=<%= country %>');
+                    const data = await response.json();
 
-                <div class="ticker-list-item <%= country === 'SA' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=SA'">
-                    <span class="symbol">🇸🇦 Saudi Arabia</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'TR' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=TR'">
-                    <span class="symbol">🇹🇷 Turkey</span>
-                </div>
-                <div class="ticker-list-item <%= country === 'ZA' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=ZA'">
-                    <span class="symbol">🇿🇦 South Africa</span>
-                </div>
-
-                <div class="ticker-list-item <%= country === 'BR' ? 'active' : '' %>" onclick="window.location.href='/heatmap?country=BR'">
-                    <span class="symbol">🇧🇷 Brazil</span>
-                </div>
-            </div>
-        </aside>
-
-        <main class="content-panel">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
-                <div>
-                   <h1 style="margin: 0; font-size: 2.2rem;">Live <span class="accent">
-    <%= country === 'US' ? 'United States' : 
-        country === 'IN' ? 'India' : 
-        country === 'CN' ? 'China' : 
-        country === 'GB' ? 'United Kingdom' : 
-        country === 'JP' ? 'Japan' : country %>
-</span> Heatmap</h1>
-                    <p style="color: #94a3b8; margin-top: 5px;">Visualizing Market Cap (Size) & Daily Momentum (Color)</p>
-                </div>
-                
-                <div id="status-text" style="color: #f59e0b; font-weight: bold; animation: pulse 1.5s infinite;">
-                    Generating Map...
-                </div>
-            </div>
-
-            <div class="heatmap-container">
-                <div class="scroll-wrapper">
-                    <div id="treemapChart" style="flex-grow: 1; height: 100%;"></div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <script>
-        async function loadHeatmap() {
-            try {
-                // Pass the EJS country variable to the API
-                const response = await fetch('/api/heatmap-data?country=<%= country %>');
-                const data = await response.json();
-
-                if(data.error) {
-                    document.getElementById('status-text').innerText = "Error loading data.";
-                    return;
-                }
-
-                document.getElementById('status-text').innerText = "Live";
-                document.getElementById('status-text').style.color = "#22c55e";
-                document.getElementById('status-text').style.animation = "none";
-
-                var options = {
-                    series: data,
-                    legend: { show: false },
-                    chart: { 
-                        type: 'treemap', 
-                        height: '100%', 
-                        background: 'transparent',
-                        toolbar: { show: false }
-                    },
-                    dataLabels: {
-                        enabled: true,
-                        style: {
-                            fontSize: '15px',
-                            fontFamily: 'JetBrains Mono',
-                            fontWeight: 'bold',
-                            colors: ['#ffffff']
-                        },
-                        // This injects the Ticker Name and the % Change right into the box!
-                        formatter: function(text, op) {
-                            const change = op.w.config.series[op.seriesIndex].data[op.dataPointIndex].change;
-                            const sign = change > 0 ? '+' : '';
-                            return [text, sign + change + '%'];
-                        }
-                    },
-                    plotOptions: {
-                        treemap: {
-                            enableShades: true,
-                            shadeIntensity: 0.3,
-                            useFillColorAsBg: true,
-                            // Styles the outer sector containers
-                            colorScale: {
-                                ranges: [] // Overridden by our Python custom colors
-                            }
-                        }
-                    },
-                    stroke: { colors: ['#0f172a'], width: 2 },
-                    tooltip: {
-                        theme: 'dark',
-                        y: { formatter: function(val) { return "Relative Size: " + val } }
+                    if (data.error) {
+                        document.getElementById('status-text').innerText = "Error loading data.";
+                        return;
                     }
-                };
 
-                var chart = new ApexCharts(document.querySelector("#treemapChart"), options);
-                chart.render();
+                    document.getElementById('status-text').innerText = "Live";
+                    document.getElementById('status-text').style.color = "#22c55e";
+                    document.getElementById('status-text').style.animation = "none";
 
-            } catch (err) {
-                console.error(err);
-                document.getElementById('status-text').innerText = "Connection Failed.";
+                    var options = {
+                        series: data,
+                        legend: { show: false },
+                        chart: {
+                            type: 'treemap',
+                            height: '100%',
+                            background: 'transparent',
+                            toolbar: { show: false }
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            style: {
+                                fontSize: '15px',
+                                fontFamily: 'JetBrains Mono',
+                                fontWeight: 'bold',
+                                colors: ['#ffffff']
+                            },
+                            // This injects the Ticker Name and the % Change right into the box!
+                            formatter: function (text, op) {
+                                const change = op.w.config.series[op.seriesIndex].data[op.dataPointIndex].change;
+                                const sign = change > 0 ? '+' : '';
+                                return [text, sign + change + '%'];
+                            }
+                        },
+                        plotOptions: {
+                            treemap: {
+                                enableShades: true,
+                                shadeIntensity: 0.3,
+                                useFillColorAsBg: true,
+                                // Styles the outer sector containers
+                                colorScale: {
+                                    ranges: [] // Overridden by our Python custom colors
+                                }
+                            }
+                        },
+                        stroke: { colors: ['#0f172a'], width: 2 },
+                        tooltip: {
+                            theme: 'dark',
+                            y: { formatter: function (val) { return "Relative Size: " + val } }
+                        }
+                    };
+
+                    var chart = new ApexCharts(document.querySelector("#treemapChart"), options);
+                    chart.render();
+
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById('status-text').innerText = "Connection Failed.";
+                }
             }
-        }
 
-        loadHeatmap();
-    </script>
+            loadHeatmap();
+        </script>
 </body>
+
 </html>

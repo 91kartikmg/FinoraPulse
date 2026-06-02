@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Command Center Administration console | FinoraPulse</title>
     <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://finorapulse.com/admin">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
@@ -132,9 +133,9 @@
                 <span class="metric-value" id="val-views">--</span>
             </div>
             <div class="metric-card" style="border-left-color: #f59e0b;">
-    <span class="metric-label">Total API Requests</span>
-    <span class="metric-value" id="val-api">--</span>
-</div>
+                <span class="metric-label">Total API Requests</span>
+                <span class="metric-value" id="val-api">--</span>
+            </div>
             <div class="metric-card" style="border-left-color: #00FF9D;">
                 <span class="metric-label">Server Uptime</span>
                 <div style="display: flex; align-items: baseline; gap: 8px;">
@@ -146,6 +147,14 @@
                 <span class="metric-label">Active ML Models</span>
                 <span class="metric-value" id="val-models">--</span>
             </div>
+            <div class="metric-card" style="border-left-color: #38bdf8;">
+                <span class="metric-label">Node Process RAM</span>
+                <span class="metric-value" id="val-ram" style="font-size: 2.2rem;">--</span>
+            </div>
+            <div class="metric-card" style="border-left-color: #a855f7;">
+                <span class="metric-label">Cached Files</span>
+                <span class="metric-value" id="val-cache-files" style="font-size: 2.2rem;">--</span>
+            </div>
         </div>
 
         <div class="dashboard-panel">
@@ -153,6 +162,15 @@
             <div style="position: relative; height: 400px; width: 100%;">
                 <canvas id="activityChart"></canvas>
             </div>
+        </div>
+
+        <div class="dashboard-panel" style="margin-top: 10px;">
+            <h3 style="margin: 0 0 20px 0; color: #f8fafc; font-size: 1.4rem;">System Operations Console</h3>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <button onclick="clearCache()" class="nav-btn btn-logout" style="cursor: pointer; padding: 12px 24px; font-size: 0.95rem; border-radius: 8px;">🗑️ Clear Server Cache</button>
+                <button onclick="prewarmModels()" class="nav-btn btn-return" style="cursor: pointer; padding: 12px 24px; font-size: 0.95rem; border-radius: 8px; border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.15);">⚡ Force Pre-Warm Models</button>
+            </div>
+            <p id="ops-message" style="margin: 15px 0 0 0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #00FF9D; display: none;"></p>
         </div>
 
         <div class="dashboard-panel" style="margin-top: 10px;">
@@ -164,10 +182,11 @@
                             <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">Date</th>
                             <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">User</th>
                             <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">Suggestion</th>
+                            <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; text-align: right;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="suggestionsTableBody">
-                        <tr><td colspan="3" style="padding: 12px; text-align: center;">Loading...</td></tr>
+                        <tr><td colspan="4" style="padding: 12px; text-align: center;">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -175,30 +194,32 @@
     </div>
 
     <script>
-        async function loadAdminAnalytics() {
-    try {
-        const response = await fetch('/api/admin/analytics');
-        const data = await response.json();
-        if (data.success) {
-            document.getElementById('val-users').innerText = data.totalSignups;
-            
-            // ❌ REMOVED: document.getElementById('val-cache').innerText = data.cachedItems; 
-            // This was causing a fatal TypeError because 'val-cache' doesn't exist in the HTML.
-            
-            document.getElementById('val-uptime').innerText = data.serverUptime.split(' ')[0];
-            
-            if(document.getElementById('val-views')) document.getElementById('val-views').innerText = data.totalPageViews;
-            if(document.getElementById('val-api')) document.getElementById('val-api').innerText = data.totalApiRequests;
-            
-            // ✅ ADDED: Update the Active Models card (Placeholder value, update as needed)
-            if(document.getElementById('val-models')) document.getElementById('val-models').innerText = "4"; 
+        let activityChartInstance = null;
 
-            initChart(data.chartData.labels, data.chartData.data);
+        async function loadAdminAnalytics() {
+            try {
+                const response = await fetch('/api/admin/analytics');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('val-users').innerText = data.totalSignups;
+                    document.getElementById('val-uptime').innerText = data.serverUptime.split(' ')[0];
+                    
+                    if(document.getElementById('val-views')) document.getElementById('val-views').innerText = data.totalPageViews;
+                    if(document.getElementById('val-api')) document.getElementById('val-api').innerText = data.totalApiRequests;
+                    
+                    // Update active models
+                    if(document.getElementById('val-models')) document.getElementById('val-models').innerText = "4"; 
+                    
+                    // Update server statistics
+                    if(document.getElementById('val-ram')) document.getElementById('val-ram').innerText = data.memoryUsage;
+                    if(document.getElementById('val-cache-files')) document.getElementById('val-cache-files').innerText = data.cacheCount;
+
+                    initChart(data.chartData.labels, data.chartData.data);
+                }
+            } catch (err) {
+                console.error("Dashboard error:", err);
+            }
         }
-    } catch (err) {
-        console.error("Dashboard error:", err);
-    }
-}
 
         function initChart(labels, data) {
             const ctx = document.getElementById('activityChart').getContext('2d');
@@ -256,13 +277,69 @@
                             <td style="padding: 12px; white-space: nowrap;">${new Date(s.createdAt).toLocaleDateString()}</td>
                             <td style="padding: 12px; white-space: nowrap; color: #38bdf8;">${s.username || 'Anonymous'}</td>
                             <td style="padding: 12px;">${s.text}</td>
+                            <td style="padding: 12px; text-align: right;">
+                                <button onclick="deleteSuggestion('${s._id}')" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; transition: all 0.2s;">🗑️ Delete</button>
+                            </td>
                         </tr>
                     `).join('');
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="3" style="padding: 12px; text-align: center;">No suggestions yet.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" style="padding: 12px; text-align: center;">No suggestions yet.</td></tr>';
                 }
             } catch (err) {
                 console.error("Failed to load suggestions", err);
+            }
+        }
+
+        async function deleteSuggestion(id) {
+            if(!confirm("Are you sure you want to delete this suggestion?")) return;
+            try {
+                const res = await fetch(`/api/admin/suggestions/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if(data.success) {
+                    loadSuggestions();
+                } else {
+                    alert("Failed to delete suggestion.");
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function showMessage(msg, isError = false) {
+            const el = document.getElementById('ops-message');
+            el.innerText = msg;
+            el.style.color = isError ? '#f43f5e' : '#00FF9D';
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 5000);
+        }
+
+        async function clearCache() {
+            if(!confirm("Are you sure you want to purge all server cache files?")) return;
+            try {
+                const res = await fetch('/api/admin/clear-cache', { method: 'POST' });
+                const data = await res.json();
+                if(data.success) {
+                    showMessage(data.message);
+                    loadAdminAnalytics();
+                } else {
+                    showMessage("Error purging server cache", true);
+                }
+            } catch(e) {
+                showMessage("Connection failure", true);
+            }
+        }
+
+        async function prewarmModels() {
+            try {
+                const res = await fetch('/api/admin/prewarm', { method: 'POST' });
+                const data = await res.json();
+                if(data.success) {
+                    showMessage(data.message);
+                } else {
+                    showMessage("Error pre-warming models", true);
+                }
+            } catch(e) {
+                showMessage("Connection failure", true);
             }
         }
         

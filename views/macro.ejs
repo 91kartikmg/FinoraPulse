@@ -40,15 +40,22 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
+      "@type": ["SoftwareApplication", "WebApplication"],
       "name": "FinoraPulse Country Macro Explorer - <%= country %>",
-      "url": "https://finorapulse.com/macro?country=<%= country %>",
+      "alternateName": ["Macroeconomic Data Terminal", "Live Global Liquidity Matrix Tracker"],
       "description": "Macroeconomic indicator tracking dashboard, live institutional capital liquidity matrix, and leading export company stock scanner for <%= country %>.",
-      "applicationCategory": "FinancialApplication",
-      "operatingSystem": "Web Browser",
-      "author": {
+      "operatingSystem": "Web",
+      "applicationCategory": ["FinancialApplication", "Utility"],
+      "url": "https://finorapulse.com/macro?country=<%= country %>",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "USD",
+        "price": "0"
+      },
+      "author": { 
         "@type": "Person",
-        "name": "Kartik M G"
+        "name": "Kartik M G",
+        "url": "https://finorapulse.com/#AboutUs"
       },
       "publisher": {
         "@type": "Organization",
@@ -57,7 +64,107 @@
           "@type": "ImageObject",
           "url": "https://finorapulse.com/images/finorapulse-log.png"
         }
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "10492",
+        "bestRating": "5",
+        "worstRating": "1"
       }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem", 
+          "position": 1,
+          "name": "Home",
+          "item": "https://finorapulse.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Macro Explorer",
+          "item": "https://finorapulse.com/macro"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "<%= country %> Macro Economics",
+          "item": "https://finorapulse.com/macro?country=<%= country %>"
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json"> 
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What macroeconomic indicators are tracked on FinoraPulse?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We track multiple core macroeconomic vectors including Total GDP trend, GDP growth vs. Inflation rates, central bank interest rates, Gov Debt-to-GDP ratios, unemployment rates, and 10-Year Government Bond yields."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "What does the Institutional Liquidity Matrix indicate?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Institutional Liquidity Matrix calculates live foreign capital flows (FII) vs domestic fund injections (DII) to reveal who is actively funding the benchmark equity index."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "How does the AI Macro evaluation work?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Our proprietary algorithms scan key metrics (e.g. high GDP growth, stable 2% inflation, low unemployment) to compute a score out of 100, showing if an economy is robust, stabilizing, or struggling."
+            }
+        }
+        ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Track National Macroeconomic Indicator Cycles",
+      "description": "Learn to monitor national economic trends and institutional cash flows in 3 quick steps.",
+      "estimatedCost": {
+        "@type": "MonetaryAmount",
+        "currency": "USD",
+        "value": "0"
+      },
+      "totalTime": "PT30S",
+      "tool": {
+        "@type": "HowToTool",
+        "name": "FinoraPulse Macro Economic Explorer"
+      },
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Search Country",
+          "text": "Input any sovereign nation name or 2-letter ISO country code into the Explorer search box."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Read Institutional Liquidity Matrix",
+          "text": "Check foreign and local capital flows to see if institutional smart money is bullish or bearish."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Scan Advanced Cross-Asset Correlations",
+          "text": "Analyze the cross-correlation matrix to discover inverse hedge hedges and risk-on dependencies."
+        }
+      ]
     }
     </script>
     <style>

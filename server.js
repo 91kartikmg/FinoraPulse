@@ -390,7 +390,7 @@ app.get('/api/admin/analytics', async (req, res) => {
         const viewsDoc = await mongoose.connection.db.collection('site_analytics').findOne({ metric: 'total_views' });
         const totalViews = viewsDoc ? viewsDoc.count : 0;
 
-        // 👇 NEW: Fetch API Requests 👇
+        // Fetch API Requests
         const apiDoc = await mongoose.connection.db.collection('site_analytics').findOne({ metric: 'total_api_requests' });
         const totalApiRequests = apiDoc ? apiDoc.count : 0;
 
@@ -412,16 +412,65 @@ app.get('/api/admin/analytics', async (req, res) => {
 
         const chartLabels = past7Days.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' }));
 
+        // Node process statistics
+        const memoryUsage = (process.memoryUsage().rss / 1024 / 1024).toFixed(1) + " MB";
+
+        // Count cached items in server_cache directory
+        let cacheCount = 0;
+        try {
+            const files = await fs.readdir(CACHE_DIR);
+            cacheCount = files.filter(f => f.endsWith('.json')).length;
+        } catch (err) {}
+
         res.json({
             success: true,
             totalSignups: totalUsers,
             totalPageViews: totalViews,
-            totalApiRequests: totalApiRequests, // <-- Added here
+            totalApiRequests: totalApiRequests,
             serverUptime: Math.floor(process.uptime() / 3600) + " Hours",
+            memoryUsage: memoryUsage,
+            cacheCount: cacheCount + " Files",
             chartData: { labels: chartLabels, data: chartData }
         });
     } catch (error) {
         res.status(500).json({ success: false, error: "Analytics fetch failed" });
+    }
+});
+
+// Admin Cache Management API
+app.post('/api/admin/clear-cache', async (req, res) => {
+    if (!req.session.adminId) return res.status(403).json({ error: "Unauthorized" });
+    try {
+        const files = await fs.readdir(CACHE_DIR);
+        let cleared = 0;
+        for (const file of files) {
+            if (file.endsWith('.json')) {
+                await fs.unlink(path.join(CACHE_DIR, file));
+                cleared++;
+            }
+        }
+        memoryCache.clear();
+        res.json({ success: true, message: `Successfully cleared ${cleared} cache files and flushed RAM buffer.` });
+    } catch (err) {
+        res.status(500).json({ success: false, error: "Failed to clear server cache" });
+    }
+});
+
+// Admin Pre-Warm API
+app.post('/api/admin/prewarm', async (req, res) => {
+    if (!req.session.adminId) return res.status(403).json({ error: "Unauthorized" });
+    runMacroBatchUpdate().catch(err => console.error("Batch update error:", err));
+    res.json({ success: true, message: "Macro pre-warming background task successfully triggered." });
+});
+
+// Admin Suggestions Deletion API
+app.delete('/api/admin/suggestions/:id', async (req, res) => {
+    if (!req.session.adminId) return res.status(403).json({ error: "Unauthorized" });
+    try {
+        await Suggestion.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, error: "Failed to delete suggestion" });
     }
 });
 

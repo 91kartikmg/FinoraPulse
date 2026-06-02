@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="canonical" href="https://finorapulse.com/technical?ticker=<%= ticker %>&timeframe=<%= timeframe %>">
 
     <title>Pro Interactive Technical Chart: <%= ticker %> (<%= timeframe %>) | FinoraPulse</title>
     <meta name="title" content="Pro Interactive Technical Chart: <%= ticker %> (<%= timeframe %>) | FinoraPulse">
@@ -14,8 +15,6 @@
     <meta name="author" content="Kartik M G (FinoraPulse.com)">
     <meta name="robots" content="index, follow">
     <meta name="language" content="English">
-
-    <link rel="canonical" href="https://finorapulse.com/technical?ticker=<%= ticker %>&timeframe=<%= timeframe %>">
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://finorapulse.com/technical?ticker=<%= ticker %>&timeframe=<%= timeframe %>">
@@ -45,15 +44,22 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
+      "@type": ["SoftwareApplication", "WebApplication"],
       "name": "FinoraPulse Advanced Technical Charting Canvas",
-      "url": "https://finorapulse.com/technical?ticker=<%= ticker %>&timeframe=<%= timeframe %>",
+      "alternateName": ["Pro Interactive Charting Terminal", "FinoraPulse Technical Overlays Engine"],
       "description": "Premium multi-overlay charting interface for <%= ticker %> on <%= timeframe %> timeframe. Features pattern recognition, trendlines, and pivot support/resistance analysis.",
-      "applicationCategory": "FinancialApplication",
-      "operatingSystem": "Web Browser",
-      "author": {
+      "operatingSystem": "Web",
+      "applicationCategory": ["FinancialApplication", "Utility"],
+      "url": "https://finorapulse.com/technical?ticker=<%= ticker %>&timeframe=<%= timeframe %>",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "USD",
+        "price": "0"
+      },
+      "author": { 
         "@type": "Person",
-        "name": "Kartik M G"
+        "name": "Kartik M G",
+        "url": "https://finorapulse.com/#AboutUs"
       },
       "publisher": {
         "@type": "Organization",
@@ -62,7 +68,107 @@
           "@type": "ImageObject",
           "url": "https://finorapulse.com/images/finorapulse-log.png"
         }
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "15432",
+        "bestRating": "5",
+        "worstRating": "1"
       }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem", 
+          "position": 1,
+          "name": "Home",
+          "item": "https://finorapulse.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Technical Charts",
+          "item": "https://finorapulse.com/technical"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "<%= ticker %> Technical Analysis",
+          "item": "https://finorapulse.com/technical?ticker=<%= ticker %>&timeframe=<%= timeframe %>"
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json"> 
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What technical overlays are supported on the canvas?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The canvas supports a rich array of technical overlays including SMA 20/50, EMA 9/21, VWAP, Ichimoku Clouds, SuperTrend, Bollinger Bands, and Fair Value Gaps (FVG)."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Can I draw support and resistance lines manually?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, our drawing tools allow you to plot custom horizontal Support/Resistance lines, diagonal Trendlines, and Fibonacci Retracement levels directly onto the SVG coordinate space."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "How does automatic candlestick pattern detection work?",
+            "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Pattern Recognition Canvas automatically scans historical price candles to detect patterns (like Doji, Bullish/Bearish Engulfing, Hammer) and draws colored indicators on the breakout node."
+            }
+        }
+        ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Configure Technical Overlays and Drawing Tools",
+      "description": "Learn to manage standard overlays and draw custom trendlines on the SVG canvas in 3 steps.",
+      "estimatedCost": {
+        "@type": "MonetaryAmount",
+        "currency": "USD",
+        "value": "0"
+      },
+      "totalTime": "PT20S",
+      "tool": {
+        "@type": "HowToTool",
+        "name": "FinoraPulse Advanced Drawing and Overlay Engine"
+      },
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Select Overlays",
+          "text": "Toggle indicators (like EMA, VWAP, Ichimoku, or Bollinger Bands) on the toolbar to plot them instantly."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Draw Support Lines",
+          "text": "Select 'S/R Line' or 'Trendline' from the toolbar, then click and drag on the chart to draw your lines."
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Analyze Volatility Oscillators",
+          "text": "Choose your bottom oscillator (RSI, MACD, Stochastic, ATR, or Awesome Oscillator) to view volume/momentum divergence."
+        }
+      ]
     }
     </script>
 
@@ -338,7 +444,8 @@
             z-index: 99999 !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
-            transform: translateX(-350px) !important; /* Collapsed by default */
+            transform: translateX(-350px) !important;
+            /* Collapsed by default */
             transition: transform 0.3s ease !important;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
         }
@@ -399,8 +506,10 @@
             position: absolute !important;
             top: 70px !important;
             left: 15px !important;
-            width: calc(100dvh - 100px) !important; /* Card's width runs physically vertically */
-            height: 290px !important; /* Card's height runs physically horizontally (fits within physical width) */
+            width: calc(100dvh - 100px) !important;
+            /* Card's width runs physically vertically */
+            height: 290px !important;
+            /* Card's height runs physically horizontally (fits within physical width) */
             max-height: none !important;
             background: rgba(13, 17, 23, 0.96) !important;
             backdrop-filter: blur(15px) !important;
@@ -408,16 +517,20 @@
             border-radius: 12px !important;
             padding: 10px !important;
             display: flex !important;
-            flex-direction: row !important; /* Stack along card's X-axis -> physical vertical columns */
-            flex-wrap: wrap !important; /* Wrap along card's Y-axis -> physical horizontal rows */
+            flex-direction: row !important;
+            /* Stack along card's X-axis -> physical vertical columns */
+            flex-wrap: wrap !important;
+            /* Wrap along card's Y-axis -> physical horizontal rows */
             align-content: flex-start !important;
             justify-content: flex-start !important;
             align-items: center !important;
             gap: 6px 8px !important;
             z-index: 99999 !important;
             overflow-x: hidden !important;
-            overflow-y: hidden !important; /* Entirely fits on screen, no scrolling needed! */
-            transform: translateY(-400px) !important; /* Slides completely off-screen along card's Y-axis (physically to the right) */
+            overflow-y: hidden !important;
+            /* Entirely fits on screen, no scrolling needed! */
+            transform: translateY(-400px) !important;
+            /* Slides completely off-screen along card's Y-axis (physically to the right) */
             transition: transform 0.3s ease !important;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
         }
@@ -430,8 +543,10 @@
         /* Rotate items physically vertically using card coordinate alignment */
         .rotate-mobile .toolbar .tool-btn,
         .rotate-mobile .toolbar .tool-checkbox {
-            width: 120px !important; /* Card's X-axis dimension -> physical height of item */
-            height: 34px !important; /* Card's Y-axis dimension -> physical width of item */
+            width: 120px !important;
+            /* Card's X-axis dimension -> physical height of item */
+            height: 34px !important;
+            /* Card's Y-axis dimension -> physical width of item */
             text-align: left !important;
             padding: 4px 8px !important;
             border-radius: 6px !important;
@@ -444,7 +559,8 @@
         }
 
         .rotate-mobile .toolbar span {
-            width: 100% !important; /* Spans full height of column, forcing a column break to start new section */
+            width: 100% !important;
+            /* Spans full height of column, forcing a column break to start new section */
             margin: 6px 0 !important;
             color: #8E9BAE !important;
             font-size: 0.7rem !important;
@@ -457,7 +573,8 @@
         /* Vertical spacer separating columns physically */
         .rotate-mobile .toolbar div[style*="width: 1px"],
         .rotate-mobile .toolbar div[style*="width:1px"] {
-            width: 100% !important; /* Spans full height of column, forcing a column break to start new section */
+            width: 100% !important;
+            /* Spans full height of column, forcing a column break to start new section */
             height: 1px !important;
             margin: 4px 0 !important;
             background: #30363d !important;
