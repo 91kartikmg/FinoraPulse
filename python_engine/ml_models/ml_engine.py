@@ -21,15 +21,17 @@ warnings.filterwarnings('ignore')
 # ==========================================
 TF_MAP = {
     "1d": {"interval": "1d", "period": "max", "steps": 5},
-    "1wk": {"interval": "1wk", "period": "max", "steps": 4}
+    "1wk": {"interval": "1wk", "period": "max", "steps": 4},
+    "5m": {"interval": "5m", "period": "60d", "steps": 5}
 }
 
 def run_predict(ticker, timeframe, save_dir):
     CONFIG = TF_MAP.get(timeframe, TF_MAP["1d"])
+    INTERVAL = CONFIG["interval"]
     PERIOD = CONFIG["period"]
     STEPS = CONFIG["steps"]
     
-    CSV_FILE = os.path.join(save_dir, f"data_{ticker}_1d.csv")
+    CSV_FILE = os.path.join(save_dir, f"data_{ticker}_{timeframe}.csv")
     is_crypto_or_forex = "-" in ticker or "=X" in ticker
 
     def get_market_data():
@@ -39,7 +41,7 @@ def run_predict(ticker, timeframe, save_dir):
             try:
                 old_df = pd.read_csv(CSV_FILE, index_col=0)
                 old_df.index = pd.to_datetime(old_df.index, utc=True)
-                new_df = stock.history(period="5d", interval="1d")
+                new_df = stock.history(period="5d", interval=INTERVAL)
                 if not new_df.empty:
                     new_df.index = pd.to_datetime(new_df.index, utc=True)
                     combined_df = pd.concat([old_df, new_df])
@@ -50,7 +52,7 @@ def run_predict(ticker, timeframe, save_dir):
                 df = None 
                 
         if df is None or len(df) < 200:
-            df = stock.history(period=PERIOD, interval="1d")
+            df = stock.history(period=PERIOD, interval=INTERVAL)
             if not df.empty:
                 df.index = pd.to_datetime(df.index, utc=True)
 
@@ -155,8 +157,8 @@ def run_predict(ticker, timeframe, save_dir):
     direction_accuracy = float(round((dir_matches.sum() / len(dir_matches)) * 100, 2)) if len(dir_matches) > 0 else 0.0
 
     errors = abs(eval_df['Past_AI_Price'] - eval_df['Close'])
-    threshold = eval_df['Close'] * 0.005 
-    price_accuracy = float(round(((errors <= threshold).sum() / len(errors)) * 100, 2)) if len(errors) > 0 else 0.0
+    mape = (errors / eval_df['Close']).mean() * 100
+    price_accuracy = float(round(100 - mape, 2)) if len(errors) > 0 else 0.0
 
     eval_df['Actual_Pct_Change'] = eval_df['Close'].pct_change()
     eval_df['AI_Signal'] = pred_dir.shift(1) 
@@ -214,7 +216,9 @@ def run_predict(ticker, timeframe, save_dir):
     ])
     market_bday = CustomBusinessDay(holidays=known_holidays)
 
-    if timeframe == '1wk':
+    if timeframe == '5m':
+        future_dates = [eval_df.index[-1] + datetime.timedelta(minutes=5*(i+1)) for i in range(STEPS)]
+    elif timeframe == '1wk':
         future_dates = [base_date + datetime.timedelta(days=7*(i+1)) for i in range(STEPS)]
     else:
         if is_crypto_or_forex:
@@ -222,7 +226,10 @@ def run_predict(ticker, timeframe, save_dir):
         else:
             future_dates = [(base_date + (i * market_bday)) for i in range(1, STEPS + 1)]
 
-    future_times = [d.strftime('%b %d') for d in future_dates]
+    if timeframe == '5m':
+        future_times = [d.strftime('%H:%M') for d in future_dates]
+    else:
+        future_times = [d.strftime('%b %d') for d in future_dates]
 
     eval_df['Past_AI_Price'] = eval_df['Past_AI_Price'].fillna(eval_df['Close'])
     history = eval_df.tail(60)
@@ -230,7 +237,12 @@ def run_predict(ticker, timeframe, save_dir):
     history_prices = [float(round(x, 2)) for x in history['Close']]
     history_ai_prices = [float(round(x, 2)) for x in history['Past_AI_Price']]
     
-    history_times = [t.strftime('%b %d, %Y') if timeframe == '1wk' else t.strftime('%b %d') for t in history.index]
+    if timeframe == '5m':
+        history_times = [t.strftime('%H:%M') for t in history.index]
+    elif timeframe == '1wk':
+        history_times = [t.strftime('%b %d, %Y') for t in history.index]
+    else:
+        history_times = [t.strftime('%b %d') for t in history.index]
 
     smas = {
         "SMA_5": float(df['SMA_5'].iloc[-1]), "SMA_10": float(df['SMA_10'].iloc[-1]),
@@ -286,46 +298,7 @@ def run_predict(ticker, timeframe, save_dir):
         "future_times": future_times
     }
 
-# ==========================================
-# 2. EARNINGS NLP ENGINE
-# ==========================================
-def run_earnings_nlp(ticker):
-    try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        sector = info.get('sector', 'General')
-        seed = sum(ord(c) for c in ticker)
-        vocab = {
-            "Technology": [("AI / Machine Learning", 12, 28, "bull"), ("Cloud Infrastructure", 8, 18, "bull"), ("Margin Compression", 3, 9, "bear"), ("Layoffs / Restructuring", 2, 7, "bear")],
-            "Consumer Cyclical": [("Supply Chain", 5, 15, "bear"), ("Inflationary Pressures", 6, 14, "bear"), ("Foot Traffic", 4, 10, "bull"), ("Inventory Glut", 3, 8, "bear")],
-            "General": [("Macro Headwinds", 5, 12, "bear"), ("Operational Efficiency", 6, 15, "bull"), ("Guidance Cut", 1, 4, "bear"), ("Free Cash Flow", 4, 11, "bull")]
-        }
-        pool = vocab.get(sector, vocab["General"])
-        keywords = []
-        bull_score = bear_score = 0
 
-        for i, (word, min_c, max_c, sentiment) in enumerate(pool):
-            count = min_c + ((seed + i) % (max_c - min_c))
-            keywords.append({"word": word, "count": count, "sentiment": sentiment})
-            if sentiment == "bull": bull_score += count
-            elif sentiment == "bear": bear_score += count
-
-        keywords = sorted(keywords, key=lambda x: x["count"], reverse=True)
-        bullets = []
-
-        if bull_score > bear_score * 1.5:
-            tone, color = "Highly Optimistic", "#00FF9D"
-            bullets.append(f"Executives emphasized '{keywords[0]['word']}' exactly {keywords[0]['count']} times.")
-        elif bear_score > bull_score:
-            tone, color = "Cautious & Defensive", "#FF007F"
-            bullets.append("Management heavily focused on defensive positioning.")
-        else:
-            tone, color = "Cautiously Optimistic", "#00E5FF"
-            bullets.append(f"Balanced call: Focus on '{keywords[0]['word']}' was offset by other concerns.")
-
-        return {"sector": sector, "tone": tone, "color": color, "keywords": keywords, "bullets": bullets}
-    except Exception as e:
-        return {"error": f"Transcript NLP unavailable: {str(e)}"}
 
 # ==========================================
 # 3. PEER HISTORY ENGINE
@@ -404,30 +377,7 @@ def run_peer_history(target_ticker):
     except Exception as e:
         return {"error": str(e)}
 
-# ==========================================
-# 4. SENTIMENT ENGINE
-# ==========================================
-def run_sentiment(ticker_symbol):
-    try:
-        stock = yf.Ticker(ticker_symbol)
-        news = stock.news
-        if not news: return {"error": "No recent news found."}
-        
-        analyzer = SentimentIntensityAnalyzer()
-        articles = []
-        total_compound = 0
-        
-        for item in news[:10]:
-            title = item.get('title', '')
-            score = analyzer.polarity_scores(title)['compound']
-            total_compound += score
-            tag = "Bullish" if score >= 0.05 else "Bearish" if score <= -0.05 else "Neutral"
-            articles.append({"title": title, "publisher": item.get('publisher', 'News'), "sentiment": round(score, 2), "tag": tag})
-            
-        fear_greed_score = int((((total_compound / len(articles)) + 1) / 2) * 100)
-        return {"score": fear_greed_score, "articles": articles}
-    except Exception as e:
-        return {"error": str(e)}
+
 
 # ==========================================
 # 5. THE ROUTER (Master Entry Point)
@@ -444,9 +394,7 @@ if __name__ == "__main__":
         arg4 = sys.argv[4] if len(sys.argv) > 4 else None
 
         if action == "predict": result = run_predict(ticker, arg3 if arg3 else "1d", arg4 if arg4 else ".")
-        elif action == "earnings": result = run_earnings_nlp(ticker)
         elif action == "peers": result = run_peer_history(ticker)
-        elif action == "sentiment": result = run_sentiment(ticker)
         else: result = {"error": f"Unknown action: {action}"}
 
         print(json.dumps(result))

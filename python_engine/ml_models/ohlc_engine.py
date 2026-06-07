@@ -26,10 +26,85 @@ def get_live_data(ticker, dataset_path, timeframe="1d"):
         # 2. FALLBACK
         if df is None or df.empty:
             stock = yf.Ticker(ticker)
-            period = "2y" if timeframe == "1wk" else "1y"
+            if timeframe == "1wk":
+                period = "2y"
+            elif timeframe in ["5m", "15m", "30m", "1h", "90m"]:
+                period = "60d"
+            else:
+                period = "1y"
             df = stock.history(period=period, interval=timeframe)
             if df is None or df.empty:
                 return {"error": f"No data found for {ticker}."}
+
+        # --- 3. Future Trend Prediction ---
+        if len(df) >= 20:
+            try:
+                from xgboost import XGBRegressor
+                import numpy as np
+
+                prices_list = df['Close'].dropna().tolist()
+                
+                # Train a simple lag model
+                lags = 5
+                X_train, y_train = [], []
+                for j in range(lags, len(prices_list)):
+                    X_train.append(prices_list[j-lags:j])
+                    y_train.append(prices_list[j])
+                    
+                model = XGBRegressor(n_estimators=50, max_depth=3, learning_rate=0.1, random_state=42)
+                model.fit(np.array(X_train), np.array(y_train))
+                
+                last_lags = list(prices_list[-lags:])
+                future_closes = []
+                for _ in range(10):
+                    pred = model.predict(np.array([last_lags]))[0]
+                    future_closes.append(float(pred))
+                    last_lags.pop(0)
+                    last_lags.append(pred)
+                    
+                # Generate future timestamps
+                last_date = df.index[-1]
+                future_dates = []
+                current_time = last_date
+                avg_volume = df['Volume'].tail(10).mean()
+                if pd.isna(avg_volume) or avg_volume == 0:
+                    avg_volume = 10000.0
+                else:
+                    avg_volume = float(avg_volume)
+                    
+                future_rows = []
+                for i in range(10):
+                    if timeframe == '1wk':
+                        current_time += pd.Timedelta(weeks=1)
+                    elif timeframe == '1d':
+                        current_time += pd.Timedelta(days=1)
+                        while current_time.weekday() > 4:
+                            current_time += pd.Timedelta(days=1)
+                    elif timeframe == '90m':
+                        current_time += pd.Timedelta(minutes=90)
+                    elif timeframe == '1h':
+                        current_time += pd.Timedelta(hours=1)
+                    else:
+                        current_time += pd.Timedelta(minutes=5)
+                    future_dates.append(current_time)
+                    
+                    prev_c = df['Close'].iloc[-1] if i == 0 else future_closes[i-1]
+                    future_rows.append({
+                        'Open': prev_c,
+                        'High': future_closes[i],
+                        'Low': future_closes[i],
+                        'Close': future_closes[i],
+                        'Volume': avg_volume,
+                        'is_future': True
+                    })
+                    
+                future_df = pd.DataFrame(future_rows, index=future_dates)
+                df['is_future'] = False
+                df = pd.concat([df, future_df])
+            except Exception as e:
+                df['is_future'] = False
+        else:
+            df['is_future'] = False
 
         # --- Base Indicators ---
         df['SMA_20'] = df['Close'].rolling(window=20).mean()
@@ -156,25 +231,29 @@ def get_live_data(ticker, dataset_path, timeframe="1d"):
         df.loc[(df['Close'] < df['SMA_20']) & (df['SMA_20'] < df['SMA_50']), 'Phase'] = 'Downtrend'
 
         # --- Pivot Logic for Patterns & Trendlines ---
+        df_hist = df[~df['is_future']]
         order = 5 
-        highs, lows = df['High'].tolist(), df['Low'].tolist()
-        pivot_highs = [(i, highs[i]) for i in range(order, len(df) - order) if highs[i] == max(highs[i-order:i+order+1])]
-        pivot_lows = [(i, lows[i]) for i in range(order, len(df) - order) if lows[i] == min(lows[i-order:i+order+1])]
+        highs, lows = df_hist['High'].tolist(), df_hist['Low'].tolist()
+        pivot_highs = [(i, highs[i]) for i in range(order, len(df_hist) - order) if highs[i] == max(highs[i-order:i+order+1])]
+        pivot_lows = [(i, lows[i]) for i in range(order, len(df_hist) - order) if lows[i] == min(lows[i-order:i+order+1])]
         
-        # Auto Trendline (Now includes explicit Sideways detection)
+        # Auto Trendline (Connects recent pivot points and classifies type by slope direction)
         trendline = None
-        if df['Phase'].iloc[-1] == 'Uptrend' and len(pivot_lows) >= 2:
+        if df_hist['Phase'].iloc[-1] == 'Uptrend' and len(pivot_lows) >= 2:
             idx1, idx2 = pivot_lows[-2][0], pivot_lows[-1][0]
             slope = (lows[idx2] - lows[idx1]) / (idx2 - idx1)
-            trendline = {"type": "uptrend", "x1": idx1, "y1": lows[idx1], "x2": len(df)-1, "y2": lows[idx2] + slope * (len(df)-1-idx2)}
-        elif df['Phase'].iloc[-1] == 'Downtrend' and len(pivot_highs) >= 2:
+            t_type = "uptrend" if slope > 0.0001 else ("downtrend" if slope < -0.0001 else "sideways")
+            trendline = {"type": t_type, "x1": idx1, "y1": lows[idx1], "x2": len(df_hist)-1, "y2": lows[idx2] + slope * (len(df_hist)-1-idx2)}
+        elif df_hist['Phase'].iloc[-1] == 'Downtrend' and len(pivot_highs) >= 2:
             idx1, idx2 = pivot_highs[-2][0], pivot_highs[-1][0]
             slope = (highs[idx2] - highs[idx1]) / (idx2 - idx1)
-            trendline = {"type": "downtrend", "x1": idx1, "y1": highs[idx1], "x2": len(df)-1, "y2": highs[idx2] + slope * (len(df)-1-idx2)}
-        elif df['Phase'].iloc[-1] == 'Sideways' and len(pivot_lows) >= 2:
+            t_type = "uptrend" if slope > 0.0001 else ("downtrend" if slope < -0.0001 else "sideways")
+            trendline = {"type": t_type, "x1": idx1, "y1": highs[idx1], "x2": len(df_hist)-1, "y2": highs[idx2] + slope * (len(df_hist)-1-idx2)}
+        elif df_hist['Phase'].iloc[-1] == 'Sideways' and len(pivot_lows) >= 2:
             idx1, idx2 = pivot_lows[-2][0], pivot_lows[-1][0]
-            # Flat line connecting the recent sideways low
-            trendline = {"type": "sideways", "x1": idx1, "y1": lows[idx2], "x2": len(df)-1, "y2": lows[idx2]}
+            slope = (lows[idx2] - lows[idx1]) / (idx2 - idx1)
+            t_type = "uptrend" if slope > 0.0001 else ("downtrend" if slope < -0.0001 else "sideways")
+            trendline = {"type": t_type, "x1": idx1, "y1": lows[idx1], "x2": len(df_hist)-1, "y2": lows[idx2] + slope * (len(df_hist)-1-idx2)}
 
         # Geometric Patterns & Channels
         patterns = []
@@ -184,7 +263,7 @@ def get_live_data(ticker, dataset_path, timeframe="1d"):
             
             slope_high = (ph2[1] - ph1[1]) / (ph2[0] - ph1[0]) if ph2[0] != ph1[0] else 0
             slope_low = (pl2[1] - pl1[1]) / (pl2[0] - pl1[0]) if pl2[0] != pl1[0] else 0
-            end_idx = len(df) - 1
+            end_idx = len(df_hist) - 1
             
             proj_high = ph2[1] + slope_high * (end_idx - ph2[0])
             proj_low = pl2[1] + slope_low * (end_idx - pl2[0])
@@ -222,8 +301,8 @@ def get_live_data(ticker, dataset_path, timeframe="1d"):
 
         # Auto Support & Resistance
         sr_order = 15 
-        res_levels = [highs[i] for i in range(sr_order, len(df)-sr_order) if highs[i] == max(highs[i-sr_order:i+sr_order+1])]
-        sup_levels = [lows[i] for i in range(sr_order, len(df)-sr_order) if lows[i] == min(lows[i-sr_order:i+sr_order+1])]
+        res_levels = [highs[i] for i in range(sr_order, len(df_hist)-sr_order) if highs[i] == max(highs[i-sr_order:i+sr_order+1])]
+        sup_levels = [lows[i] for i in range(sr_order, len(df_hist)-sr_order) if lows[i] == min(lows[i-sr_order:i+sr_order+1])]
         
         def filter_levels(levels, threshold=0.015):
             filtered = []
@@ -239,7 +318,7 @@ def get_live_data(ticker, dataset_path, timeframe="1d"):
         # Daily Pivot Points
         last_h = highs[-2] if len(highs) > 1 else highs[-1]
         last_l = lows[-2] if len(lows) > 1 else lows[-1]
-        last_c = df['Close'].iloc[-2] if len(df) > 1 else df['Close'].iloc[-1]
+        last_c = df_hist['Close'].iloc[-2] if len(df_hist) > 1 else df_hist['Close'].iloc[-1]
         pivot_p = (last_h + last_l + last_c) / 3
         pivot_points = {
             "P": pivot_p,
@@ -292,14 +371,16 @@ def get_live_data(ticker, dataset_path, timeframe="1d"):
         data = []
         for i in range(len(df)):
             row = df.iloc[i]
-            c_signal = get_candle_signal(i)
-            fvg = get_fvg(i)
+            is_future_val = bool(row.get('is_future', False))
+            c_signal = get_candle_signal(i) if not is_future_val else None
+            fvg = get_fvg(i) if not is_future_val else None
 
             candle_obj = {
-                "date": df.index[i].strftime('%d %b'),
+                "date": df.index[i].strftime('%d %b %H:%M') if timeframe in ["5m", "15m", "30m", "1h", "90m"] else (df.index[i].strftime('%d %b') if hasattr(df.index[i], 'strftime') else str(df.index[i])),
                 "open": round(float(row['Open']), 2), "high": round(float(row['High']), 2),
                 "low": round(float(row['Low']), 2), "close": round(float(row['Close']), 2),
                 "volume": int(row['Volume']), "phase": row['Phase'],
+                "is_future": is_future_val,
                 "sma20": round(float(row['SMA_20']), 2) if pd.notna(row['SMA_20']) else None,
                 "sma50": round(float(row['SMA_50']), 2) if pd.notna(row['SMA_50']) else None,
                 "ema9": round(float(row['EMA_9']), 2) if pd.notna(row['EMA_9']) else None,

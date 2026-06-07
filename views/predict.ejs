@@ -6,12 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="canonical" href="https://finorapulse.com/predict?ticker=<%= ticker %>">
 
-    <title>AI Stock Price Prediction & Sentiment Forecast: <%= ticker %> | FinoraPulse</title>
-    <meta name="title" content="AI Stock Price Prediction & Sentiment Forecast: <%= ticker %> | FinoraPulse">
+    <title>AI Stock Price Prediction & Technical Forecast: <%= ticker %> | FinoraPulse</title>
+    <meta name="title" content="AI Stock Price Prediction & Technical Forecast: <%= ticker %> | FinoraPulse">
     <meta name="description"
-        content="Access real-time AI stock prediction, deep algorithmic forecasting, and comprehensive market sentiment analysis for <%= ticker %> on the FinoraPulse AI Terminal.">
+        content="Access real-time AI stock prediction, deep algorithmic forecasting, and comprehensive market analysis for <%= ticker %> on the FinoraPulse AI Terminal.">
     <meta name="keywords"
-        content="<%= ticker %> price prediction, <%= ticker %> AI forecast, <%= ticker %> stock analysis, <%= ticker %> sentiment, FinoraPulse, stock prediction, algorithmic trading">
+        content="<%= ticker %> price prediction, <%= ticker %> AI forecast, <%= ticker %> stock analysis, FinoraPulse, stock prediction, algorithmic trading">
     <meta name="author" content="Kartik M G (FinoraPulse.com)">
     <meta name="robots" content="index, follow">
     <meta name="language" content="English">
@@ -21,9 +21,9 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://finorapulse.com/predict?ticker=<%= ticker %>">
-    <meta property="og:title" content="AI Stock Price Prediction & Sentiment Forecast: <%= ticker %>">
+    <meta property="og:title" content="AI Stock Price Prediction & Technical Forecast: <%= ticker %>">
     <meta property="og:description"
-        content="Access real-time AI stock prediction, deep algorithmic forecasting, and comprehensive market sentiment analysis for <%= ticker %>.">
+        content="Access real-time AI stock prediction, deep algorithmic forecasting, and comprehensive market analysis for <%= ticker %>.">
     <meta property="og:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
     <meta property="og:site_name" content="FinoraPulse">
     <meta property="og:locale" content="en_US">
@@ -33,7 +33,7 @@
     <meta property="twitter:url" content="https://finorapulse.com/predict?ticker=<%= ticker %>">
     <meta property="twitter:title" content="AI Stock Forecast: <%= ticker %> | FinoraPulse">
     <meta property="twitter:description"
-        content="Access real-time AI stock prediction, deep algorithmic forecasting, and comprehensive market sentiment analysis for <%= ticker %>.">
+        content="Access real-time AI stock prediction, deep algorithmic forecasting, and comprehensive market analysis for <%= ticker %>.">
     <meta property="twitter:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
 
     <link
@@ -54,7 +54,7 @@
       "@type": ["SoftwareApplication", "WebApplication"],
       "name": "FinoraPulse AI Stock Predictor - <%= ticker %>",
       "alternateName": ["AI Stock Price Prediction Terminal", "Neural Network Trend Forecaster"],
-      "description": "Access real-time machine learning forecasts, candle psychology analysis, smart money flows, and NLP sentiment tracking for <%= ticker %>.",
+      "description": "Access real-time machine learning forecasts, candle psychology analysis, and smart money flows for <%= ticker %>.",
       "operatingSystem": "Web",
       "applicationCategory": ["FinancialApplication", "Utility"],
       "url": "https://finorapulse.com/predict?ticker=<%= ticker %>",
@@ -111,7 +111,7 @@
       ]
     }
     </script>
-    <script type="application/ld+json"> 
+    <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "FAQPage",
@@ -121,15 +121,7 @@
             "name": "How does the FinoraPulse AI stock predictor work?",
             "acceptedAnswer": {
             "@type": "Answer",
-            "text": "FinoraPulse uses advanced neural networks and machine learning models trained on years of historical tick-level data, technical patterns, and sentiment catalyst inputs to project the 5-day stock path."
-            }
-        },
-        {
-            "@type": "Question",
-            "name": "Is the AI stock sentiment analysis real-time?",
-            "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, our NLP engines continuously scan news headlines, social media channels, and SEC filings to produce real-time fear/greed signals and sentiment scores."
+            "text": "FinoraPulse uses advanced neural networks and machine learning models trained on years of historical tick-level data and technical patterns to project the 5-day stock path."
             }
         },
         {
@@ -172,14 +164,33 @@
         },
         {
           "@type": "HowToStep",
-          "name": "Review Technical Array and Sentiment Dials",
-          "text": "Check moving average gauges, smart money insider transactions, and quarterly catalyst timelines."
+          "name": "Review Technical Array and Smart Money Flow",
+          "text": "Check moving average gauges and smart money insider transactions."
         }
       ]
     }
     </script>
 
     <style>
+        .chart-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(8, 10, 12, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            color: #00E5FF;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+        }
+
         /* TECHNICAL ANALYSIS STYLES */
         .ta-section {
             background: #080a0c;
@@ -416,6 +427,16 @@
             <%- include('partials/sidebar') %>
 
                 <main class="content-panel">
+                    <div style="margin-bottom: 10px;">
+                        <a href="/technical?ticker=<%= ticker %>&timeframe=1d" id="tech-btn" class="btn"
+                            style="background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid #a855f7; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; margin-bottom: 5px;">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M3 3v18h18v-2H5V3H3zm14 8.5l4-4V11h2V4h-7v2h3.5l-4.5 4.5L12 7l-7 7.5L6.5 16l5.5-6 3 3.5z" />
+                            </svg>
+                            Technical Strategies
+                        </a>
+                    </div>
                     <div
                         style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
                         <h1 style="margin: 0; font-size: 2.5rem;">
@@ -424,6 +445,7 @@
                         <div style="text-align: right;">
 
                             <div class="tf-btn-group">
+                                <button class="tf-btn" onclick="changeTimeframe('5m', this)">5 Min</button>
                                 <button class="tf-btn active" onclick="changeTimeframe('1d', this)">1 Day</button>
                                 <button class="tf-btn" onclick="changeTimeframe('1wk', this)">1 Week</button>
                             </div>
@@ -499,14 +521,6 @@
                         </div>
 
                     </div>
-                    <a href="/technical?ticker=<%= ticker %>&timeframe=1d" id="tech-btn" class="btn"
-                        style="background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid #a855f7; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M3 3v18h18v-2H5V3H3zm14 8.5l4-4V11h2V4h-7v2h3.5l-4.5 4.5L12 7l-7 7.5L6.5 16l5.5-6 3 3.5z" />
-                        </svg>
-                        Technical Strategies
-                    </a>
 
                     <div class="chart-card">
                         <div class="fundamentals-header" style="border: none; padding-bottom: 0; color: #8E9BAE;">AI
@@ -514,6 +528,9 @@
 
                         <div class="scroll-wrapper" id="main-chart-scroll">
                             <div style="position: relative; height: 400px; min-width: 800px;">
+                                <div id="predict-chart-loading" class="chart-loading-overlay">
+                                    <div class="loading-pulse">Recalculating AI Model Projection Path...</div>
+                                </div>
                                 <canvas id="liveChart"></canvas>
                             </div>
                         </div>
@@ -603,85 +620,11 @@
 
 
 
-                    <div
-                        style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid rgba(168, 85, 247, 0.4); margin-bottom: 20px; box-shadow: 0 0 20px rgba(168, 85, 247, 0.1), inset 0 0 10px rgba(168, 85, 247, 0.05);">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; margin-bottom: 15px;">
-                            <div>
-                                <h3 style="margin: 0; color: #fff; font-size: 1.3rem;">🎙️ NLP Earnings "Truth
-                                    Extractor"</h3>
-                                <p style="margin: 5px 0 0 0; color: #8E9BAE; font-size: 0.85rem;">AI linguistic analysis
-                                    of the most recent quarterly earnings call transcript.</p>
-                            </div>
-                            <div style="text-align: right;">
-                                <div
-                                    style="font-size: 0.7rem; color: #8E9BAE; letter-spacing: 1px; text-transform: uppercase;">
-                                    Executive Tone</div>
-                                <div id="nlp-tone"
-                                    style="font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: bold; color: #a855f7;">
-                                    Scanning...</div>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; gap: 30px; flex-wrap: wrap;">
-                            <div style="flex: 1; min-width: 250px;">
-                                <div
-                                    style="font-size: 0.8rem; color: #8E9BAE; text-transform: uppercase; margin-bottom: 10px; font-weight: bold;">
-                                    Keyword Frequency Heatmap</div>
-                                <div id="nlp-keywords" style="display: flex; flex-wrap: wrap; gap: 10px;">
-                                    <div class="loading-pulse">Processing linguistics...</div>
-                                </div>
-                            </div>
-
-                            <div
-                                style="flex: 2; min-width: 300px; background: #080a0c; padding: 15px; border-radius: 12px; border: 1px solid #1e293b;">
-                                <div
-                                    style="font-size: 0.8rem; color: #8E9BAE; text-transform: uppercase; margin-bottom: 10px; font-weight: bold;">
-                                    The Hidden Truth</div>
-                                <ul id="nlp-bullets"
-                                    style="margin: 0; padding-left: 20px; color: #e2e8f0; font-size: 0.95rem; line-height: 1.6;">
-                                    <li>Extracting subtext...</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
                         <div class="fundamentals-container" style="margin-top: 0;">
                             <div class="fundamentals-header">Asset Analysis</div>
                             <div class="fundamentals-grid" id="fundamentals-target">
                                 <div class="loading-pulse">Retrieving Asset Data...</div>
-                            </div>
-                        </div>
-
-                        <div class="fundamentals-container" style="margin-top: 0;">
-                            <div class="fundamentals-header" style="display: flex; justify-content: space-between;">
-                                <span>Upcoming Catalysts</span>
-                                <span style="font-size: 0.8rem; color: #00E5FF;">TIMELINE</span>
-                            </div>
-                            <div class="catalyst-list" id="catalysts-target">
-                                <div class="loading-pulse">Scanning Event Calendar...</div>
-                            </div>
-                        </div>
-
-                        <div class="sentiment-container"
-                            style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: 100%;">
-                            <div class="fundamentals-header" style="display: flex; justify-content: space-between;">
-                                <span>AI Sentiment Engine</span>
-                                <span id="fg-state" style="font-weight: bold; color: #f59e0b;">Scanning Web...</span>
-                            </div>
-                            <div
-                                style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase;">
-                                <span>Extreme Fear (0)</span><span>Neutral (50)</span><span>Extreme Greed (100)</span>
-                            </div>
-                            <div
-                                style="height: 12px; background: #0f172a; border-radius: 6px; margin: 10px 0 20px 0; overflow: hidden; border: 1px solid #334155;">
-                                <div id="fg-bar"
-                                    style="height: 100%; width: 50%; background: #f59e0b; transition: all 1s ease-in-out;">
-                                </div>
-                            </div>
-                            <div id="news-target" style="height: 190px; overflow-y: auto; padding-right: 10px;">
-                                <div class="loading-pulse">Running NLP on Latest Headlines...</div>
                             </div>
                         </div>
                     </div>
@@ -769,7 +712,7 @@
                 // 🚨 NEW: Update the Technical page button URL!
                 document.getElementById('tech-btn').href = `/technical?ticker=${currentTicker}&timeframe=${tf}`;
 
-                const titles = { '90m': '6-Hour Forecast', '1d': '5-Day Forecast', '1wk': '1-Month Forecast' };
+                const titles = { '5m': '25-Min Forecast', '90m': '6-Hour Forecast', '1d': '5-Day Forecast', '1wk': '1-Month Forecast' };
                 document.getElementById('forecast-title').innerText = titles[tf];
                 document.getElementById('sync-status').innerText = "Recalculating AI Model...";
 
@@ -831,9 +774,13 @@
             }
 
             function refresh() {
+                const loadingOverlay = document.getElementById('predict-chart-loading');
+                if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
                 fetch(`/api/stats?ticker=${currentTicker}&timeframe=${currentTimeframe}`)
                     .then(res => res.json())
                     .then(data => {
+                        if (loadingOverlay) loadingOverlay.style.display = 'none';
                         if (data.error) {
                             document.getElementById('sync-status').innerText = data.error;
                             return;
@@ -977,7 +924,10 @@
                             setTimeout(scrollToLatest, 100);
                         }
 
-                    }).catch(err => console.log("Waiting for network...", err));
+                    }).catch(err => {
+                        console.log("Waiting for network...", err);
+                        if (loadingOverlay) loadingOverlay.style.display = 'none';
+                    });
             }
 
             setInterval(refresh, 5000);
@@ -992,14 +942,13 @@
 
             async function fetchFundamentals(ticker) {
                 const target = document.getElementById('fundamentals-target');
-                const catTarget = document.getElementById('catalysts-target');
                 let curSy = "$"; if (ticker.includes('.NS') || ticker.includes('.BO') || ticker === 'INR=X') curSy = "₹"; if (ticker.includes('EUR')) curSy = "€"; if (ticker.includes('GBP')) curSy = "£"; if (ticker.includes('JPY')) curSy = "¥"; if (ticker.includes('^')) curSy = "";
 
                 try {
                     const response = await fetch(`/api/fundamentals?ticker=${ticker}`);
                     const f = await response.json();
 
-                    if (f.error) { target.innerHTML = `<div style="color:#FF007F">Error fetching data</div>`; catTarget.innerHTML = `<div style="color:#FF007F">No events found</div>`; return; }
+                    if (f.error) { target.innerHTML = `<div style="color:#FF007F">Error fetching data</div>`; return; }
 
                     if (f.asset_type === 'crypto') {
                         document.querySelector('.fundamentals-header').innerText = "Network Tokenomics";
@@ -1015,13 +964,6 @@
                         if (f.historical && f.historical.years && f.historical.years.length > 0) { document.getElementById('advanced-fund-section').style.display = 'block'; fundHistoryData = f.historical; renderAdvancedFundChart('pe'); }
                         if (f.income_stmt && f.income_stmt.years && f.income_stmt.years.length > 0) { document.getElementById('income-stmt-section').style.display = 'block'; incomeStmtData = f.income_stmt; renderIncomeChart(curSy); }
                     }
-
-                    if (f.catalysts && f.catalysts.length > 0) {
-                        catTarget.innerHTML = f.catalysts.map(cat => {
-                            let icon = "📌"; if (cat.type === 'warning') icon = "⚠️"; if (cat.type === 'danger') icon = "🔥"; if (cat.type === 'neutral') icon = "⏳";
-                            return `<div class="catalyst-item cat-${cat.type}"><div style="display:flex; align-items:center; gap: 10px;"><span>${icon}</span><span style="font-weight: 600; font-size: 0.9rem; color: #f8fafc;">${cat.event}</span></div><span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #8E9BAE;">${cat.date}</span></div>`;
-                        }).join('');
-                    } else { catTarget.innerHTML = `<div style="color: #8E9BAE; font-size: 0.85rem;">No upcoming events scheduled.</div>`; }
                 } catch (err) { }
             }
 
@@ -1087,16 +1029,7 @@
 
             fetchFundamentals(currentTicker);
 
-            async function fetchSentiment(ticker) {
-                try {
-                    const response = await fetch(`/api/sentiment?ticker=${ticker}`);
-                    const data = await response.json();
-                    if (data.error || !data.articles) { document.getElementById('news-target').innerHTML = `<div style="color:#ef4444">No recent news available.</div>`; return; }
-                    document.getElementById('fg-state').innerText = `${data.state} (${data.score})`; document.getElementById('fg-state').style.color = data.color; document.getElementById('fg-state').style.textShadow = `0 0 10px ${data.color}`; document.getElementById('fg-bar').style.width = `${data.score}%`; document.getElementById('fg-bar').style.background = data.color; document.getElementById('fg-bar').style.boxShadow = `0 0 15px ${data.color}`;
-                    document.getElementById('news-target').innerHTML = data.articles.map(article => { let badgeColor = article.tag === "Bullish" ? "rgba(0, 255, 157, 0.15)" : (article.tag === "Bearish" ? "rgba(255, 0, 127, 0.15)" : "rgba(142, 155, 174, 0.15)"); let textColor = article.tag === "Bullish" ? "#00FF9D" : (article.tag === "Bearish" ? "#FF007F" : "#8E9BAE"); return `<div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><a href="${article.link}" target="_blank" style="color: #f8fafc; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: block; margin-bottom: 5px;">${article.title}</a><div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;"><span style="color: #8E9BAE;">${article.publisher}</span><span style="background: ${badgeColor}; color: ${textColor}; padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid ${badgeColor};">${article.tag} [${article.sentiment}]</span></div></div>`; }).join('');
-                } catch (err) { }
-            }
-            fetchSentiment(currentTicker);
+
 
             async function loadPeerComparison(ticker) {
                 const peerTarget = document.getElementById('peerGraph');

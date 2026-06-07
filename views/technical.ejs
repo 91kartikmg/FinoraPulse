@@ -173,6 +173,125 @@
     </script>
 
     <style>
+        .chart-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(8, 10, 12, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            color: #00E5FF;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+        }
+
+        /* AI Technical Quant Score Styles */
+        .tech-health-panel {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border-left: 4px solid #8E9BAE;
+            transition: opacity 0.3s;
+        }
+        
+        .tech-health-gauge {
+            width: 180px;
+            position: relative;
+            text-align: center;
+            flex-shrink: 0;
+        } 
+        .tech-gauge-bg {
+            width: 100%;
+            padding-top: 50%;
+            background: conic-gradient(from 270deg at 50% 100%, #ff4d4d 0deg, #f59e0b 90deg, #00FF9D 180deg, transparent 180deg);
+            border-radius: 200px 200px 0 0;
+            position: relative;
+        }
+        .tech-gauge-inner {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            right: 14px;
+            bottom: 0;
+            background: #0d1117;
+            border-radius: 200px 200px 0 0;
+        }
+        .tech-gauge-needle {
+            position: absolute;
+            bottom: 0;
+            left: calc(50% - 2px);
+            width: 4px;
+            height: 90%;
+            background: #fff;
+            border-radius: 4px;
+            transform-origin: bottom center;
+            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        .tech-health-score-value {
+            margin-top: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: -2px;
+        }
+        
+        .tech-health-text {
+            flex-grow: 1;
+        }
+        .tech-health-title {
+            font-size: 0.8rem;
+            color: #a855f7;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .tech-health-summary {
+            font-size: 1.15rem;
+            color: #f8fafc;
+            line-height: 1.6;
+        }
+
+        .highlight-good {
+            color: #00FF9D !important;
+            font-weight: bold;
+        }
+        .highlight-bad {
+            color: #ff4d4d !important;
+            font-weight: bold;
+        }
+        .highlight-neutral {
+            color: #f59e0b !important;
+            font-weight: bold;
+        }
+        
+        @media screen and (max-width: 768px) {
+            .tech-health-panel {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+                padding: 20px;
+            }
+            .tech-health-text {
+                text-align: center;
+            }
+        }
+
         .strategy-header {
             display: flex;
             justify-content: space-between;
@@ -635,6 +754,15 @@
             height: 100% !important;
             overflow: hidden !important;
         }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(38, 166, 154, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(38, 166, 154, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(38, 166, 154, 0); }
+        }
+        @keyframes blink {
+            from, to { border-color: transparent }
+            50% { border-color: #38bdf8; }
+        }
     </style>
 </head>
 
@@ -656,9 +784,31 @@
                                     <%= ticker %>
                                 </span></h1>
                             <p style="margin: 5px 0 0 0; color: #8E9BAE; font-size: 0.9rem;">Timeframe: <strong
-                                    style="color: #fff;">
+                                    id="timeframe-label" style="color: #fff;">
                                     <%= timeframe %>
                                 </strong></p>
+                        </div>
+                        <div class="tf-btn-group">
+                            <button class="tf-btn <%= timeframe === '5m' ? 'active' : '' %>" onclick="changeTimeframe('5m', this)">5 Min</button>
+                            <button class="tf-btn <%= timeframe === '1d' ? 'active' : '' %>" onclick="changeTimeframe('1d', this)">1 Day</button>
+                            <button class="tf-btn <%= timeframe === '1wk' ? 'active' : '' %>" onclick="changeTimeframe('1wk', this)">1 Week</button>
+                        </div>
+                    </div>
+
+                    <!-- AI Technical Health Score Panel -->
+                    <div class="tech-health-panel" id="tech-health-panel" style="display: none;">
+                        <div class="tech-health-gauge">
+                            <div class="tech-gauge-bg">
+                                <div class="tech-gauge-inner"></div>
+                                <div id="tech-needle" class="tech-gauge-needle" style="transform: rotate(0deg);"></div>
+                            </div>
+                            <div class="tech-health-score-value" id="tech-score-text">0/100</div>
+                        </div>
+                        <div class="tech-health-text">
+                            <div class="tech-health-title">✨ AI Technical Evaluation</div>
+                            <div class="tech-health-summary" id="tech-summary-text">
+                                Analyzing technical indicators...
+                            </div>
                         </div>
                     </div>
 
@@ -705,9 +855,9 @@
                                 <label class="tool-checkbox" style="color: #f472b6; margin-left: 5px;"><input
                                         type="checkbox" id="toggle-psar"> Trend Dots</label>
                                 <label class="tool-checkbox" style="color: #cbd5e1; margin-left: 5px;"><input
-                                        type="checkbox" id="toggle-vpvr" checked> Vol Profile</label>
+                                        type="checkbox" id="toggle-vpvr"> Vol Profile</label>
                                 <label class="tool-checkbox" style="color: #4ade80; margin-left: 5px;"><input
-                                        type="checkbox" id="toggle-candlesignals" checked> Signals</label>
+                                        type="checkbox" id="toggle-candlesignals"> Signals</label>
 
                                 <div style="width: 1px; height: 20px; background: #30363d; margin: 0 5px;"></div>
 
@@ -723,7 +873,24 @@
                             </div>
                         </div>
 
+                        <!-- AI Trend Suggestion Alert Box -->
+                        <div id="ai-trend-suggestion" style="margin-bottom: 15px; padding: 12px 20px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); border: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; display: none;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 0.75rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; background: rgba(38, 166, 154, 0.1); color: #26a69a; border: 1px solid rgba(38, 166, 154, 0.2); letter-spacing: 0.5px;">AI FORECAST GAUGE</span>
+                                <span id="trend-summary-text" style="font-size: 0.95rem; font-weight: bold; color: #fff;">Analyzing trend projections...</span>
+                            </div>
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <span id="ema9-projection" style="font-family: monospace; font-size: 0.82rem; font-weight: bold; color: #22d3ee; margin-right: 5px;">EMA 9: --</span>
+                                <span id="ema21-projection" style="font-family: monospace; font-size: 0.82rem; font-weight: bold; color: #818cf8; margin-right: 5px;">EMA 21: --</span>
+                                <span id="sma20-projection" style="font-family: monospace; font-size: 0.82rem; font-weight: bold; color: #38bdf8; margin-right: 5px;">SMA 20: --</span>
+                                <span id="sma50-projection" style="font-family: monospace; font-size: 0.82rem; font-weight: bold; color: #f59e0b;">SMA 50: --</span>
+                            </div>
+                        </div>
+
                         <div id="svg-container">
+                            <div id="tech-chart-loading" class="chart-loading-overlay">
+                                <div class="loading-pulse">Calculating Technical Indicators...</div>
+                            </div>
                             <svg id="main-svg" style="width: 100%; height: 100%; display: block;">
                                 <g id="grid-layer"></g>
                                 <g id="volume-layer" opacity="0.15"></g>
@@ -812,7 +979,10 @@
                             </div>
                         </div>
                         <div id="pattern-container"
-                            style="height: 350px; width: 100%; user-select: none; overflow: hidden; display: block; cursor: crosshair;">
+                            style="position: relative; height: 350px; width: 100%; user-select: none; overflow: hidden; display: block; cursor: crosshair;">
+                            <div id="pattern-chart-loading" class="chart-loading-overlay">
+                                <div class="loading-pulse">Analyzing Candlestick Patterns...</div>
+                            </div>
                             <svg id="pattern-svg" style="width: 100%; height: 100%; display: block;">
                                 <g id="pattern-grid-layer"></g>
                                 <g id="pattern-candle-layer" style="shape-rendering: crispEdges;"></g>
@@ -822,6 +992,26 @@
                                 <line id="cross-h-pat" class="crosshair" x1="0" y1="0" x2="100%" y2="0" />
                                 <line id="cross-v-pat" class="crosshair" x1="0" y1="0" x2="0" y2="100%" />
                             </svg>
+                    </div>
+
+                    <!-- AI Technical Analyst Summary Card -->
+                    <div class="chart-card" id="ai-summary-section" style="margin-top: 25px; display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h3 style="margin: 0; color: #e2e8f0; display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: #38bdf8;">🤖</span> AI Technical Analyst Executive Summary
+                                </h3>
+                                <div style="display: flex; align-items: center; gap: 5px; background: rgba(38, 166, 154, 0.1); border: 1px solid rgba(38, 166, 154, 0.2); padding: 3px 8px; border-radius: 4px;">
+                                    <span style="width: 6px; height: 6px; background: #26a69a; border-radius: 50%; display: inline-block; animation: pulse-green 1.5s infinite;"></span>
+                                    <span style="font-size: 0.65rem; color: #26a69a; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">Live Quant Analysis</span>
+                                </div>
+                            </div>
+                            <button id="copy-summary-btn" onclick="copySummaryText()" style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; border-radius: 6px;">
+                                📋 Copy Report
+                            </button>
+                        </div>
+                        <div id="ai-summary-content" style="font-family: 'Inter', sans-serif; font-size: 0.95rem; line-height: 1.7; color: #cbd5e1; background: rgba(13, 17, 23, 0.5); border: 1px solid #1e293b; padding: 25px; border-radius: 12px; min-height: 120px; max-height: 400px; overflow-y: auto; position: relative;">
+                            <div id="ai-summary-text" style="font-family: 'Inter', sans-serif; font-size: 0.95rem; line-height: 1.7; color: #e2e8f0; white-space: pre-line;">Generating technical analysis script...</div>
                         </div>
                     </div>
 
@@ -832,7 +1022,21 @@
 
         <script>
             const currentTicker = "<%= ticker %>";
-            const currentTimeframe = "<%= timeframe %>";
+            let currentTimeframe = "<%= timeframe %>";
+
+            function changeTimeframe(tf, btnElement) {
+                currentTimeframe = tf;
+                document.querySelectorAll('.tf-btn').forEach(btn => btn.classList.remove('active'));
+                btnElement.classList.add('active');
+
+                const tfLabel = document.getElementById('timeframe-label');
+                if (tfLabel) {
+                    tfLabel.innerText = tf;
+                }
+
+                drawnLines = []; // Clear manual drawings since index/price scales change
+                fetchOHLCData();
+            }
 
             let ohlcData = [];
 
@@ -858,8 +1062,8 @@
 
             // UI States
             let showSMA20 = false, showSMA50 = false, showEMA9 = false, showEMA21 = false, showVWAP = false;
-            let showBB = false, showVPVR = true, showIchimoku = false, showSuperTrend = false, showFVG = false;
-            let showPSAR = false, showCandleSignals = true;
+            let showBB = false, showVPVR = false, showIchimoku = false, showSuperTrend = false, showFVG = false;
+            let showPSAR = false, showCandleSignals = false;
 
             // NEW STATES FOR PATTERN CANVAS
             let showPatternSR = false, showAutoPatterns = true, showAutoTrendline = true, showAutoFib = false, showPivotPoints = false;
@@ -944,9 +1148,17 @@
             }
 
             async function fetchOHLCData() {
+                const techOverlay = document.getElementById('tech-chart-loading');
+                const patternOverlay = document.getElementById('pattern-chart-loading');
+                if (techOverlay) techOverlay.style.display = 'flex';
+                if (patternOverlay) patternOverlay.style.display = 'flex';
+
                 try {
                     const res = await fetch(`/api/chart-svg?ticker=${currentTicker}&timeframe=${currentTimeframe}`);
                     let data = await res.json();
+
+                    if (techOverlay) techOverlay.style.display = 'none';
+                    if (patternOverlay) patternOverlay.style.display = 'none';
 
                     if (data.error || !Array.isArray(data)) {
                         document.getElementById('overlay-layer').innerHTML = `<text x="50%" y="50%" fill="#ef5350" font-size="20" font-weight="bold" text-anchor="middle">⚠️ Error: ${data.error || 'Invalid Data'}</text>`;
@@ -958,7 +1170,11 @@
                     offset = Math.max(0, ohlcData.length - visibleCount);
                     patternOffset = Math.max(0, ohlcData.length - patternVisibleCount);
                     renderAll();
+                    updateTrendSuggestion();
+                    generateAITechnicalScript();
                 } catch (e) {
+                    if (techOverlay) techOverlay.style.display = 'none';
+                    if (patternOverlay) patternOverlay.style.display = 'none';
                     document.getElementById('overlay-layer').innerHTML = `<text x="50%" y="50%" fill="#ef5350" font-size="16" font-weight="bold" text-anchor="middle">Network Error: ${e.message}</text>`;
                 }
             }
@@ -1201,6 +1417,10 @@
 
                 displayData.forEach((d, i) => {
                     const x = i * chartState.candleW, midX = x + (chartState.candleW / 2);
+                    if (i % timeStep === 0) timeHtml += `<text x="${midX}" y="${h - 15}" class="time-text">${d.date}</text>`;
+
+                    if (d.is_future) return;
+
                     const color = d.close >= d.open ? "#26a69a" : "#ef5350";
                     const vH = (d.volume / maxV) * 60;
                     volHtml += `<rect x="${x + 2}" y="${h - chartState.padB - vH}" width="${chartState.candleW - 4}" height="${vH}" fill="${color}" />`;
@@ -1208,8 +1428,6 @@
                     const bodyT = getY(Math.max(d.open, d.close)), bodyB = getY(Math.min(d.open, d.close));
                     candleHtml += `<line x1="${midX}" y1="${getY(d.high)}" x2="${midX}" y2="${getY(d.low)}" stroke="${color}" stroke-width="1.5" />`;
                     candleHtml += `<rect x="${x + (chartState.candleW * 0.15)}" y="${bodyT}" width="${chartState.candleW * 0.7}" height="${Math.max(Math.abs(bodyT - bodyB), 1.5)}" fill="${color}" />`;
-
-                    if (i % timeStep === 0) timeHtml += `<text x="${midX}" y="${h - 15}" class="time-text">${d.date}</text>`;
 
                     if (showCandleSignals && d.candle_signal && d.candle_signal.signal !== 'neutral') {
                         const isBull = d.candle_signal.signal === 'bullish';
@@ -1239,10 +1457,63 @@
                     if (pathD) overlayHtml += `<path d="${pathD}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-dasharray="${dash}" stroke-linejoin="round" />`;
                 };
 
-                if (showSMA20) drawPath('sma20', '#38bdf8', 2);
-                if (showSMA50) drawPath('sma50', '#f59e0b', 2);
-                if (showEMA9) drawPath('ema9', '#22d3ee', 1.5);
-                if (showEMA21) drawPath('ema21', '#818cf8', 1.5);
+                const drawSplitIndicatorPath = (dataKey, defaultColor, defaultWidth = 2) => {
+                    let histPoints = [];
+                    let futurePoints = [];
+                    let lastHistPoint = null;
+
+                    displayData.forEach((d, i) => {
+                        const val = d[dataKey];
+                        if (val != null) {
+                            const x = i * chartState.candleW + (chartState.candleW / 2);
+                            const y = getY(val);
+                            if (d.is_future) {
+                                futurePoints.push(`${x},${y}`);
+                            } else {
+                                histPoints.push(`${x},${y}`);
+                                lastHistPoint = `${x},${y}`;
+                            }
+                        }
+                    });
+
+                    if (histPoints.length > 0) {
+                        let pathD = "M " + histPoints.join(" L ");
+                        overlayHtml += `<path d="${pathD}" fill="none" stroke="${defaultColor}" stroke-width="${defaultWidth}" stroke-linejoin="round" />`;
+                    }
+
+                    if (futurePoints.length > 0) {
+                        const histSub = displayData.filter(d => !d.is_future && d[dataKey] != null);
+                        const futSub = displayData.filter(d => d.is_future && d[dataKey] != null);
+                        let trendColor = "#8E9BAE";
+                        if (histSub.length > 0 && futSub.length > 0) {
+                            const startVal = histSub[histSub.length - 1][dataKey];
+                            const endVal = futSub[futSub.length - 1][dataKey];
+                            const diff = endVal - startVal;
+                            const threshold = startVal * 0.0002;
+                            if (diff > threshold) {
+                                trendColor = "#26a69a";
+                            } else if (diff < -threshold) {
+                                trendColor = "#ef5350";
+                            }
+                        }
+
+                        let pathPoints = [];
+                        if (lastHistPoint) {
+                            pathPoints.push(lastHistPoint);
+                        }
+                        pathPoints = pathPoints.concat(futurePoints);
+
+                        if (pathPoints.length > 0) {
+                            let pathD = "M " + pathPoints.join(" L ");
+                            overlayHtml += `<path d="${pathD}" fill="none" stroke="${trendColor}" stroke-width="${defaultWidth + 0.5}" stroke-dasharray="4,4" stroke-linejoin="round" />`;
+                        }
+                    }
+                };
+
+                if (showSMA20) drawSplitIndicatorPath('sma20', '#38bdf8', 2);
+                if (showSMA50) drawSplitIndicatorPath('sma50', '#f59e0b', 2);
+                if (showEMA9) drawSplitIndicatorPath('ema9', '#22d3ee', 1.5);
+                if (showEMA21) drawSplitIndicatorPath('ema21', '#818cf8', 1.5);
                 if (showVWAP) drawPath('vwap', '#fbbf24', 2, "4,4");
 
                 if (showIchimoku) {
@@ -1533,12 +1804,15 @@
 
                 displayData.forEach((d, i) => {
                     const x = i * patternState.candleW, midX = x + (patternState.candleW / 2);
+                    if (i % timeStep === 0) timeHtml += `<text x="${midX}" y="${h - 15}" class="time-text">${d.date}</text>`;
+
+                    if (d.is_future) return;
+
                     const color = d.close >= d.open ? "#26a69a" : "#ef5350";
                     const bodyT = getY(Math.max(d.open, d.close)), bodyB = getY(Math.min(d.open, d.close));
 
                     candleHtml += `<line x1="${midX}" y1="${getY(d.high)}" x2="${midX}" y2="${getY(d.low)}" stroke="${color}" stroke-width="1.5" />`;
                     candleHtml += `<rect x="${x + (patternState.candleW * 0.15)}" y="${bodyT}" width="${patternState.candleW * 0.7}" height="${Math.max(Math.abs(bodyT - bodyB), 1.5)}" fill="${color}" />`;
-                    if (i % timeStep === 0) timeHtml += `<text x="${midX}" y="${h - 15}" class="time-text">${d.date}</text>`;
 
                     if (showCandleSignals && d.candle_signal && d.candle_signal.signal !== 'neutral') {
                         const isBull = d.candle_signal.signal === 'bullish';
@@ -1567,9 +1841,11 @@
                 }
 
                 // Market Phase Badge
-                if (lastCandle && lastCandle.phase) {
-                    const phaseColor = lastCandle.phase === 'Uptrend' ? '#26a69a' : (lastCandle.phase === 'Downtrend' ? '#ef5350' : '#8E9BAE');
-                    patternDrawHtml += `<g transform="translate(20, 20)"><rect width="130" height="26" rx="4" fill="#0f172a" stroke="${phaseColor}" stroke-width="1"/><text x="65" y="18" fill="${phaseColor}" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">PHASE: ${lastCandle.phase.toUpperCase()}</text></g>`;
+                const histData = ohlcData.filter(d => !d.is_future);
+                const lastHistCandle = histData.length > 0 ? histData[histData.length - 1] : lastCandle;
+                if (lastHistCandle && lastHistCandle.phase) {
+                    const phaseColor = lastHistCandle.phase === 'Uptrend' ? '#26a69a' : (lastHistCandle.phase === 'Downtrend' ? '#ef5350' : '#8E9BAE');
+                    patternDrawHtml += `<g transform="translate(20, 20)"><rect width="130" height="26" rx="4" fill="#0f172a" stroke="${phaseColor}" stroke-width="1"/><text x="65" y="18" fill="${phaseColor}" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">PHASE: ${lastHistCandle.phase.toUpperCase()}</text></g>`;
                 }
 
                 // Auto S/R Lines
@@ -1738,6 +2014,383 @@
 
             document.getElementById('btn-fullscreen-main').onclick = () => toggleFullScreen(document.querySelectorAll('.chart-card')[0]);
             document.getElementById('btn-fullscreen-pattern').onclick = () => toggleFullScreen(document.querySelectorAll('.chart-card')[1]);
+
+            function updateTrendSuggestion() {
+                if (!ohlcData || ohlcData.length === 0) return;
+
+                const histData = ohlcData.filter(d => !d.is_future);
+                const futData = ohlcData.filter(d => d.is_future);
+
+                if (histData.length === 0 || futData.length === 0) return;
+
+                const lastHist = histData[histData.length - 1];
+                const lastFut = futData[futData.length - 1];
+
+                const ema9Hist = lastHist.ema9;
+                const ema9Fut = lastFut.ema9;
+                const ema21Hist = lastHist.ema21;
+                const ema21Fut = lastFut.ema21;
+                const sma20Hist = lastHist.sma20;
+                const sma20Fut = lastFut.sma20;
+                const sma50Hist = lastHist.sma50;
+                const sma50Fut = lastFut.sma50;
+
+                const suggestionEl = document.getElementById('ai-trend-suggestion');
+                const textEl = document.getElementById('trend-summary-text');
+                const ema9El = document.getElementById('ema9-projection');
+                const ema21El = document.getElementById('ema21-projection');
+                const sma20El = document.getElementById('sma20-projection');
+                const sma50El = document.getElementById('sma50-projection');
+
+                if (!suggestionEl) return;
+
+                let ema9Trend = 'flat', ema21Trend = 'flat', sma20Trend = 'flat', sma50Trend = 'flat';
+                let ema9Text = 'Consolidating', ema21Text = 'Consolidating', sma20Text = 'Consolidating', sma50Text = 'Consolidating';
+
+                const checkTrend = (histVal, futVal) => {
+                    if (histVal && futVal) {
+                        const diff = futVal - histVal;
+                        const pct = diff / histVal;
+                        if (pct > 0.0002) return { trend: 'up', text: '↗ Uptrend' };
+                        if (pct < -0.0002) return { trend: 'down', text: '↘ Downtrend' };
+                    }
+                    return { trend: 'flat', text: 'Consolidating' };
+                };
+
+                const resEma9 = checkTrend(ema9Hist, ema9Fut);
+                ema9Trend = resEma9.trend; ema9Text = resEma9.text;
+
+                const resEma21 = checkTrend(ema21Hist, ema21Fut);
+                ema21Trend = resEma21.trend; ema21Text = resEma21.text;
+
+                const resSma20 = checkTrend(sma20Hist, sma20Fut);
+                sma20Trend = resSma20.trend; sma20Text = resSma20.text;
+
+                const resSma50 = checkTrend(sma50Hist, sma50Fut);
+                sma50Trend = resSma50.trend; sma50Text = resSma50.text;
+
+                const updateEl = (el, label, text, trend) => {
+                    if (el) {
+                        el.innerText = `${label}: ${text}`;
+                        el.style.color = trend === 'up' ? '#26a69a' : (trend === 'down' ? '#ef5350' : '#8E9BAE');
+                    }
+                };
+
+                updateEl(ema9El, 'EMA 9', ema9Text, ema9Trend);
+                updateEl(ema21El, 'EMA 21', ema21Text, ema21Trend);
+                updateEl(sma20El, 'SMA 20', sma20Text, sma20Trend);
+                updateEl(sma50El, 'SMA 50', sma50Text, sma50Trend);
+
+                const trends = [ema9Trend, ema21Trend, sma20Trend, sma50Trend];
+                const ups = trends.filter(t => t === 'up').length;
+                const downs = trends.filter(t => t === 'down').length;
+
+                let overallText = 'Consolidating Range 🔄';
+                let badgeColor = 'rgba(234, 179, 8, 0.1)';
+                let badgeText = '#eab308';
+                let badgeBorder = 'rgba(234, 179, 8, 0.2)';
+
+                if (ups === 4) {
+                    overallText = 'Strong Bullish Trend Forecasted 🚀';
+                    badgeColor = 'rgba(38, 166, 154, 0.1)';
+                    badgeText = '#26a69a';
+                    badgeBorder = 'rgba(38, 166, 154, 0.2)';
+                } else if (downs === 4) {
+                    overallText = 'Strong Bearish Trend Forecasted ⚠️';
+                    badgeColor = 'rgba(239, 83, 80, 0.1)';
+                    badgeText = '#ef5350';
+                    badgeBorder = 'rgba(239, 83, 80, 0.2)';
+                } else if (ups >= 2 && ups > downs) {
+                    overallText = 'Bullish Trend Bias 📈';
+                    badgeColor = 'rgba(34, 197, 94, 0.1)';
+                    badgeText = '#22c55e';
+                    badgeBorder = 'rgba(34, 197, 94, 0.2)';
+                } else if (downs >= 2 && downs > ups) {
+                    overallText = 'Bearish Trend Bias 📉';
+                    badgeColor = 'rgba(239, 83, 80, 0.1)';
+                    badgeText = '#ef5350';
+                    badgeBorder = 'rgba(239, 83, 80, 0.2)';
+                }
+
+                textEl.innerText = overallText;
+                
+                const badge = suggestionEl.querySelector('span');
+                if (badge) {
+                    badge.style.background = badgeColor;
+                    badge.style.color = badgeText;
+                    badge.style.borderColor = badgeBorder;
+                }
+
+                suggestionEl.style.display = 'flex';
+
+                // Calculate dynamic Technical Quant Score (1 to 100)
+                let score = 50;
+
+                // 1. Moving average trend slopes (forecasted future vs current)
+                if (ema9Trend === 'up') score += 10;
+                else if (ema9Trend === 'down') score -= 10;
+
+                if (ema21Trend === 'up') score += 10;
+                else if (ema21Trend === 'down') score -= 10;
+
+                if (sma20Trend === 'up') score += 10;
+                else if (sma20Trend === 'down') score -= 10;
+
+                if (sma50Trend === 'up') score += 10;
+                else if (sma50Trend === 'down') score -= 10;
+
+                // 2. Alignment & crossovers
+                if (ema9Hist && ema21Hist) {
+                    if (ema9Hist > ema21Hist) score += 5;
+                    else score -= 5;
+                }
+                if (sma20Hist && sma50Hist) {
+                    if (sma20Hist > sma50Hist) score += 5;
+                    else score -= 5;
+                }
+
+                // 3. Price position relative to key moving averages
+                const currentPrice = lastHist.close;
+                if (currentPrice && sma50Hist) {
+                    if (currentPrice > sma50Hist) score += 10;
+                    else score -= 10;
+                }
+                if (currentPrice && sma20Hist) {
+                    if (currentPrice > sma20Hist) score += 5;
+                    else score -= 5;
+                }
+
+                // Clamp score between 1 and 100
+                score = Math.max(1, Math.min(100, Math.round(score)));
+
+                // Rotate the needle (from -90deg to +90deg)
+                const degrees = ((score / 100) * 180) - 90;
+                const needleEl = document.getElementById('tech-needle');
+                if (needleEl) needleEl.style.transform = `rotate(${degrees}deg)`;
+
+                // Update score text
+                const scoreTextEl = document.getElementById('tech-score-text');
+                if (scoreTextEl) scoreTextEl.innerText = `${score}/100`;
+
+                // Determine evaluation state and meaning
+                let evaluationState = "";
+                let evaluationClass = "";
+                let panelBorderColor = "";
+                let meaningExplanation = "";
+
+                if (score > 50) {
+                    evaluationState = "Bullish";
+                    evaluationClass = "highlight-good";
+                    panelBorderColor = "#00FF9D";
+                    meaningExplanation = `A score of <strong>${score}</strong> indicates a <strong>Bullish</strong> momentum. Immediate upward projections are supported by rising indicators and positive moving average alignment, suggesting a favorable outlook for long positions.`;
+                } else if (score < 50) {
+                    evaluationState = "Bearish";
+                    evaluationClass = "highlight-bad";
+                    panelBorderColor = "#ff4d4d";
+                    meaningExplanation = `A score of <strong>${score}</strong> indicates a <strong>Bearish</strong> pressure. Downward projections are reinforced by falling moving averages and bearish crossovers, suggesting increased downside risk or short setup opportunities.`;
+                } else {
+                    evaluationState = "Neutral";
+                    evaluationClass = "highlight-neutral";
+                    panelBorderColor = "#f59e0b";
+                    meaningExplanation = `A score of <strong>50</strong> represents a <strong>Neutral</strong> consolidation phase. Short-term indicators are flat or conflicting, suggesting range-bound volatility with no clear directional bias.`;
+                }
+
+                // Update evaluation explanation and description
+                const summaryTextEl = document.getElementById('tech-summary-text');
+                if (summaryTextEl) {
+                    summaryTextEl.innerHTML = `
+                        The AI Technical Score of the asset is currently evaluated at <span class="${evaluationClass}">${score}/100</span>, indicating a <strong>${evaluationState}</strong> posture.
+                        ${meaningExplanation}
+                        <div style="font-size: 0.82rem; color: #8E9BAE; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                            <strong>Meter Definition:</strong> This indicator measures technical trend health from 1 to 100. Scores below 50 reflect bearish momentum (sell pressure dominates), scores above 50 signal bullish momentum (buy pressure dominates), and exactly 50 represents consolidation.
+                        </div>
+                    `;
+                }
+
+                // Update panel color and display
+                const panelEl = document.getElementById('tech-health-panel');
+                if (panelEl) {
+                    panelEl.style.borderLeftColor = panelBorderColor;
+                    panelEl.style.display = 'flex';
+                }
+            }
+
+            let typingTimer = null;
+            function typeWriterEffect(elementId, text) {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+                
+                if (typingTimer) {
+                    clearInterval(typingTimer);
+                }
+
+                let formattedText = text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #38bdf8;">$1</strong>')
+                    .replace(/\n/g, '<br>');
+
+                element.innerHTML = '';
+                
+                let index = 0;
+                typingTimer = setInterval(() => {
+                    if (index >= formattedText.length) {
+                        clearInterval(typingTimer);
+                        element.innerHTML = formattedText;
+                        return;
+                    }
+                    
+                    if (formattedText[index] === '<') {
+                        const closeIdx = formattedText.indexOf('>', index);
+                        if (closeIdx !== -1) {
+                            index = closeIdx + 1;
+                        } else {
+                            index++;
+                        }
+                    } else {
+                        index += 3;
+                    }
+                    
+                    element.innerHTML = formattedText.substring(0, index) + '<span style="border-right: 2px solid #38bdf8; animation: blink 0.75s step-end infinite;">&nbsp;</span>';
+                }, 10);
+            }
+
+            function copySummaryText() {
+                const element = document.getElementById('ai-summary-text');
+                if (!element) return;
+                const text = element.innerText;
+                
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = document.getElementById('copy-summary-btn');
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '✅ Copied!';
+                    btn.style.color = '#26a69a';
+                    btn.style.borderColor = 'rgba(38, 166, 154, 0.4)';
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.style.color = '';
+                        btn.style.borderColor = '';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            }
+
+            function generateAITechnicalScript() {
+                if (!ohlcData || ohlcData.length === 0) return;
+
+                const histData = ohlcData.filter(d => !d.is_future);
+                const futData = ohlcData.filter(d => d.is_future);
+
+                if (histData.length === 0) return;
+
+                const lastHist = histData[histData.length - 1];
+                const lastFut = futData.length > 0 ? futData[futData.length - 1] : lastHist;
+
+                const ticker = currentTicker;
+                const timeframe = currentTimeframe;
+                const currentPrice = lastHist.close;
+                
+                const rsi = lastHist.rsi;
+                const macd = lastHist.macd;
+                const macdSignal = lastHist.signal;
+                const macdHist = lastHist.hist;
+                
+                const sma20Hist = lastHist.sma20;
+                const sma50Hist = lastHist.sma50;
+                const ema9Hist = lastHist.ema9;
+                const ema9Fut = lastFut.ema9;
+                const ema21Hist = lastHist.ema21;
+                const ema21Fut = lastFut.ema21;
+                
+                const metaCandle = ohlcData[ohlcData.length - 1];
+                const patterns = metaCandle.patterns || [];
+                const sr_levels = metaCandle.sr_levels;
+
+                let overview = "";
+                if (sma20Hist && sma50Hist) {
+                    if (currentPrice > sma20Hist && sma20Hist > sma50Hist) {
+                        overview = `**Market Structure Overview:**\n${ticker} is exhibiting a solid bullish market structure on the ${timeframe} timeframe, trading at a price of **${currentPrice.toFixed(2)}**. The asset is holding above both its 20-period SMA (${sma20Hist.toFixed(2)}) and 50-period SMA (${sma50Hist.toFixed(2)}), with the shorter SMA riding above the longer SMA, indicating strong buying momentum.`;
+                    } else if (currentPrice < sma20Hist && sma20Hist < sma50Hist) {
+                        overview = `**Market Structure Overview:**\n${ticker} is currently in a confirmed bearish phase on the ${timeframe} timeframe, trading at a price of **${currentPrice.toFixed(2)}**. The price remains capped under its 20-period SMA (${sma20Hist.toFixed(2)}) and 50-period SMA (${sma50Hist.toFixed(2)}). With the shorter SMA trending below the longer SMA, sellers remain in clear control of the primary trend.`;
+                    } else {
+                        overview = `**Market Structure Overview:**\n${ticker} is trading in a consolidation pattern on the ${timeframe} timeframe, with a last close price of **${currentPrice.toFixed(2)}**. The price action is oscillating around its 20-period SMA (${sma20Hist.toFixed(2)}) and 50-period SMA (${sma50Hist.toFixed(2)}), signaling lack of directional dominance.`;
+                    }
+                } else {
+                    overview = `**Market Structure Overview:**\n${ticker} is currently trading at a price of **${currentPrice.toFixed(2)}** on the ${timeframe} timeframe. Indicators are being processed.`;
+                }
+
+                let maScript = "";
+                if (ema9Fut && ema9Hist && ema21Fut && ema21Hist) {
+                    const ema9Diff = ema9Fut - ema9Hist;
+                    const ema21Diff = ema21Fut - ema21Hist;
+                    if (ema9Diff > 0 && ema21Diff > 0) {
+                        maScript = `\n\n**Moving Average Projections:**\nThe short-term EMA 9 and EMA 21 are both projecting positive slopes into the future. EMA 9 is forecasted to rise from ${ema9Hist.toFixed(2)} to ${ema9Fut.toFixed(2)}, indicating that immediate upward momentum is expected to accelerate.`;
+                    } else if (ema9Diff < 0 && ema21Diff < 0) {
+                        maScript = `\n\n**Moving Average Projections:**\nThe short-term EMA 9 and EMA 21 are projecting negative slopes. EMA 9 is forecasted to drift lower from ${ema9Hist.toFixed(2)} to ${ema9Fut.toFixed(2)}, pointing to sustained near-term downward pressure.`;
+                    } else {
+                        maScript = `\n\n**Moving Average Projections:**\nThe short-term EMAs (EMA 9 and EMA 21) are flattening out. EMA 9 is projected to move from ${ema9Hist.toFixed(2)} to ${ema9Fut.toFixed(2)}, signaling immediate consolidation.`;
+                    }
+                }
+
+                let oscScript = "\n\n**Momentum Indicators:**\n";
+                if (rsi != null) {
+                    if (rsi > 70) {
+                        oscScript += `Relative Strength Index (RSI) is currently at **${rsi.toFixed(2)}**, placing the asset in overbought territory. This suggests a potential near-term cooldown or pullback risk. `;
+                    } else if (rsi < 30) {
+                        oscScript += `Relative Strength Index (RSI) is at **${rsi.toFixed(2)}**, placing the asset in oversold territory, indicating high exhaustion and a potential rebound opportunity. `;
+                    } else {
+                        oscScript += `RSI is currently neutral at **${rsi.toFixed(2)}**, indicating balanced buying and selling pressure. `;
+                    }
+                }
+                
+                if (macd != null && macdSignal != null && macdHist != null) {
+                    const isCrossover = macd > macdSignal;
+                    if (isCrossover && macdHist > 0) {
+                        oscScript += `The MACD indicator shows a bullish momentum bias, with the MACD line hovering above the signal line and the histogram demonstrating expanding green momentum bars (${macdHist.toFixed(2)}).`;
+                    } else if (!isCrossover && macdHist < 0) {
+                        oscScript += `The MACD indicator reinforces the bearish trend, with the MACD line staying below the signal line and the histogram printing expanding red momentum bars (${macdHist.toFixed(2)}).`;
+                    } else {
+                        oscScript += `The MACD lines are converging with a narrowing histogram (${macdHist.toFixed(2)}), pointing to a transitional phase in momentum.`;
+                    }
+                }
+
+                let levelsScript = "";
+                if (sr_levels && (sr_levels.support.length > 0 || sr_levels.resistance.length > 0)) {
+                    levelsScript = `\n\n**Key Support & Resistance Levels:**\n`;
+                    if (sr_levels.resistance.length > 0) {
+                        levelsScript += `Immediate resistance ceilings are identified at: **${sr_levels.resistance.map(r => r.toFixed(2)).join(', ')}**. `;
+                    }
+                    if (sr_levels.support.length > 0) {
+                        levelsScript += `On the downside, structural support floors are established at: **${sr_levels.support.map(s => s.toFixed(2)).join(', ')}**. `;
+                    }
+                }
+                
+                if (patterns && patterns.length > 0) {
+                    const pattern = patterns[0];
+                    levelsScript += `Additionally, a **${pattern.name}** chart formation has been detected by the pattern engine, projecting a bias towards ${pattern.name.includes('Bullish') ? 'upward breakout' : (pattern.name.includes('Bearish') ? 'downward breakdown' : 'range-bound consolidation')}.`;
+                }
+
+                let outlookScript = "";
+                if (futData.length > 0) {
+                    const finalFutPrice = lastFut.close;
+                    const netChange = finalFutPrice - currentPrice;
+                    const pctChange = (netChange / currentPrice) * 100;
+                    
+                    outlookScript = `\n\n**AI Quantitative Forecast:**\nOver the next 10 predicted candles, the AI forecasting model projects the price of ${ticker} to move from ${currentPrice.toFixed(2)} towards a target of **${finalFutPrice.toFixed(2)}** (${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(2)}%). `;
+                    
+                    if (pctChange > 0.5) {
+                        outlookScript += `The predictive model advises a **BULLISH** stance, indicating potential long setups with entry zones near support floors, keeping target profit levels aligned with the forecasted targets.`;
+                    } else if (pctChange < -0.5) {
+                        outlookScript += `The model advises a **BEARISH** tactical stance, recommending short setups on rallies towards resistance levels or staying defensive in cash positions.`;
+                    } else {
+                        outlookScript += `The model projects **CONSOLIDATION** and range-bound trading, recommending range-bound scalp strategies between the support and resistance limits.`;
+                    }
+                }
+
+                const fullScript = `${overview}${maScript}${oscScript}${levelsScript}${outlookScript}`;
+
+                document.getElementById('ai-summary-section').style.display = 'block';
+                typeWriterEffect('ai-summary-text', fullScript);
+            }
 
             window.addEventListener('resize', renderAll);
             fetchOHLCData();

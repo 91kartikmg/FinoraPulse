@@ -155,9 +155,8 @@ def run_prediction():
     direction_accuracy = round((dir_matches.sum() / len(dir_matches)) * 100, 2) if len(dir_matches) > 0 else 0
 
     errors = abs(eval_df['Past_AI_Price'] - eval_df['Close'])
-    threshold = eval_df['Close'] * 0.0025 
-    price_matches = (errors <= threshold).sum()
-    price_accuracy = round((price_matches / len(errors)) * 100, 2) if len(errors) > 0 else 0
+    mape = (errors / eval_df['Close']).mean() * 100
+    price_accuracy = round(100 - mape, 2) if len(errors) > 0 else 0
 
     eval_df['Actual_Pct_Change'] = eval_df['Close'].pct_change()
     eval_df['AI_Signal'] = pred_dir.shift(1) 

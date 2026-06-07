@@ -546,10 +546,40 @@ app.get('/api/admin/suggestions', async (req, res) => {
 // ==========================================
 app.get('/', (req, res) => res.render('home'));
 app.get('/predict', requireLogin, (req, res) => res.render('predict', { ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase() }));
-app.get('/technical', requireLogin, (req, res) => res.render('technical', {
-    ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase(),
-    timeframe: req.query.timeframe || '1d' // <-- ADD THIS
-}));
+app.get('/technical', requireLogin, async (req, res) => {
+    const ticker = (req.query.ticker || 'RELIANCE.NS').toUpperCase();
+    const timeframe = req.query.timeframe || '1d';
+    const cacheKey = `technical_html_${ticker}_${timeframe}`;
+
+    try {
+        const cachedHTML = await getCache(cacheKey, TTL.TECHNICAL);
+        if (cachedHTML) {
+            console.log(`⚡ Technical HTML Cache HIT: ${cacheKey}`);
+            const customizedHTML = cachedHTML.replace('___USER_NAME_PLACEHOLDER___', res.locals.user.username);
+            return res.send(customizedHTML);
+        }
+
+        console.log(`🔄 Technical HTML Cache MISS: ${cacheKey}, rendering fresh...`);
+        const placeholderUser = { username: '___USER_NAME_PLACEHOLDER___' };
+
+        res.render('technical', {
+            ticker,
+            timeframe,
+            user: placeholderUser
+        }, async (err, html) => {
+            if (err) {
+                console.error("Technical EJS render error:", err);
+                return res.status(500).send("Render error");
+            }
+            await setCache(cacheKey, html);
+            const customizedHTML = html.replace('___USER_NAME_PLACEHOLDER___', res.locals.user.username);
+            res.send(customizedHTML);
+        });
+    } catch (e) {
+        console.error("Technical page cache handler error:", e);
+        res.render('technical', { ticker, timeframe });
+    }
+});
 app.get('/macro', requireLogin, (req, res) => res.render('macro', { country: req.query.country || 'IN' }));
 app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap', { country: (req.query.country || 'US').toUpperCase() }));
 app.get('/calculator', (req, res) => res.render('calculator'));
@@ -603,8 +633,6 @@ const TTL = {
     SMART_MONEY_13F: 15 * 24 * 60 * 60 * 1000,
     SMART_MONEY_SMI: 24 * 60 * 60 * 1000,
     SMART_MONEY_OPTIONS: 5 * 60 * 1000,
-    SENTIMENT: 4 * 60 * 60 * 1000,
-    EARNINGS_NLP: 24 * 60 * 60 * 1000,
     HEATMAP: 1 * 60 * 60 * 1000,
     SEARCH: 30 * 60 * 1000,
     CORRELATION: 12 * 60 * 60 * 1000,
@@ -617,10 +645,24 @@ async function cachedFetch(cacheKey, ttlMs, fetchFn) {
         console.log(`⚡ Cache HIT: ${cacheKey}`);
         return cached;
     }
+
+    // 5-minute cooldown for transient errors (rate-limiting, timeout, etc.)
+    const errorKey = `err_${cacheKey}`;
+    const cachedError = await getCache(errorKey, 5 * 60 * 1000);
+    if (cachedError !== null) {
+        console.log(`⚡ Cache HIT (Error Cooldown): ${cacheKey}`);
+        return cachedError;
+    }
+
     console.log(`🔄 Cache MISS: ${cacheKey}, fetching fresh...`);
     const data = await fetchFn();
-    if (data && !data.error) {
-        await setCache(cacheKey, data);
+    if (data) {
+        if (!data.error) {
+            await setCache(cacheKey, data);
+        } else {
+            // Cache error temporarily to prevent DDOS loops under rate limits
+            await setCache(errorKey, data);
+        }
     }
     return data;
 }
@@ -694,23 +736,7 @@ app.get('/api/smart-money', async (req, res) => {
     res.json(result);
 });
 
-app.get('/api/sentiment', async (req, res) => {
-    const ticker = req.query.ticker?.toUpperCase();
-    if (!ticker) return res.status(400).json({ error: "Ticker required" });
-    const result = await cachedFetch(`feature_sentiment_${ticker}`, TTL.SENTIMENT, () =>
-        fetchPythonData('ml_models', 'ml_engine.py', ['sentiment', ticker])
-    );
-    res.json(result);
-});
 
-app.get('/api/earnings-nlp', async (req, res) => {
-    const ticker = req.query.ticker?.toUpperCase();
-    if (!ticker) return res.status(400).json({ error: "Ticker required" });
-    const result = await cachedFetch(`feature_earnings_nlp_${ticker}`, TTL.EARNINGS_NLP, () =>
-        fetchPythonData('ml_models', 'ml_engine.py', ['earnings', ticker])
-    );
-    res.json(result);
-});
 
 app.get('/api/heatmap-data', async (req, res) => {
     const country = (req.query.country || 'US').toUpperCase();
@@ -768,31 +794,46 @@ const SUPPORTED_COUNTRIES = [
     "SE", "BE", "SG", "HK", "ZA"
 ];
 
-async function runMacroBatchUpdate() {
-    console.log("🌎 [MACRO BATCH] Starting Global Economic Sync...");
+async function runMacroBatchUpdate(force = false) {
+    console.log(`🌎 [MACRO BATCH] Starting Global Economic Sync (Force Update: ${force})...`);
     try {
-        const corrData = await fetchPythonData('macro_quant', 'macro_engine.py', ['correlation']);
-        if (!corrData.error) await setCache('macro_correlation', corrData);
+        const hasCorr = await getCache('macro_correlation', TTL.CORRELATION);
+        if (force || hasCorr === null) {
+            const corrData = await fetchPythonData('macro_quant', 'macro_engine.py', ['correlation']);
+            if (!corrData.error) await setCache('macro_correlation', corrData);
+        }
     } catch (e) { }
 
     for (const country of SUPPORTED_COUNTRIES) {
         try {
-            const macroData = await fetchPythonData('macro_quant', 'macro_engine.py', ['macro', country]);
-            if (!macroData.error) {
-                await setCache(`macro_${country}`, macroData);
-                console.log(`✅ Cached Macro: ${country}`);
+            const hasMacro = await getCache(`macro_${country}`, TTL.MACRO);
+            if (force || hasMacro === null) {
+                const macroData = await fetchPythonData('macro_quant', 'macro_engine.py', ['macro', country]);
+                if (!macroData.error) {
+                    await setCache(`macro_${country}`, macroData);
+                    console.log(`✅ Cached Macro: ${country}`);
+                }
+            } else {
+                console.log(`⚡ Warm Cache for Macro: ${country} (Skipping Python spawn)`);
             }
-            const liquidityData = await fetchPythonData('macro_quant', 'macro_engine.py', ['liquidity', country]);
-            if (!liquidityData.error) await setCache(`liquidity_${country}`, liquidityData);
 
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            const hasLiquidity = await getCache(`liquidity_${country}`, TTL.MACRO);
+            if (force || hasLiquidity === null) {
+                const liquidityData = await fetchPythonData('macro_quant', 'macro_engine.py', ['liquidity', country]);
+                if (!liquidityData.error) await setCache(`liquidity_${country}`, liquidityData);
+            }
+
+            if (force || hasMacro === null || hasLiquidity === null) {
+                // Yield to event loop and delay slightly between active Python syncs
+                await new Promise(resolve => setTimeout(resolve, 5000));
+            }
         } catch (err) { }
     }
     console.log("🏁 [MACRO BATCH] Sync Complete!");
 }
 
-cron.schedule('0 3 * * 0', runMacroBatchUpdate);
-runMacroBatchUpdate();
+cron.schedule('0 3 * * 0', () => runMacroBatchUpdate(true));
+runMacroBatchUpdate(false);
 
 // ==========================================
 // 11. SITEMAP GENERATION
@@ -896,7 +937,7 @@ app.get('/api/strategy/trend', async (req, res) => {
     );
 
     res.json(result);
-});
+}); 
 
 app.get('/api/strategy/momentum', async (req, res) => {
     const ticker = req.query.ticker?.toUpperCase();
