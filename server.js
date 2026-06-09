@@ -584,6 +584,10 @@ app.get('/macro', requireLogin, (req, res) => res.render('macro', { country: req
 app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap', { country: (req.query.country || 'US').toUpperCase() }));
 app.get('/calculator', (req, res) => res.render('calculator'));
 app.get('/privacy-policy', (req, res) => res.render('privacy_policy'));
+app.get('/terms-of-service', (req, res) => res.render('terms_of_service'));
+app.get('/disclaimer', (req, res) => res.render('disclaimer'));
+app.get('/about', (req, res) => res.render('about'));
+app.get('/contact', (req, res) => res.render('contact'));
 
 
 // ==========================================
@@ -800,6 +804,76 @@ app.get('/api/search-suggest', async (req, res) => {
         }
     });
     res.json(result || []);
+});
+
+// Real-Time Market Tickers and Institutional Flows API
+app.get('/api/market', async (req, res) => {
+    const tickers = ['AAPL', 'MSFT', 'NVDA', 'RELIANCE.NS', 'TCS.NS', 'BTC-USD', 'ETH-USD', 'EURUSD=X', 'USDINR=X'];
+    try {
+        const quotes = await cachedFetch('market_prices_summary', 30 * 1000, async () => {
+            return await fetchQuotes(tickers);
+        });
+
+        const dataMap = {};
+        quotes.forEach(q => {
+            if (q.symbol) {
+                dataMap[q.symbol] = {
+                    price: q.price || 0,
+                    change: q.changePercent || 0
+                };
+            }
+        });
+
+        const stocks = quotes.filter(q => ['AAPL', 'MSFT', 'NVDA', 'RELIANCE.NS', 'TCS.NS'].includes(q.symbol)).map(q => ({
+            symbol: q.symbol.replace('.NS', ''),
+            original_ticker: q.symbol,
+            price: q.price || 0,
+            change: q.changePercent || 0
+        }));
+
+        const crypto = quotes.filter(q => ['BTC-USD', 'ETH-USD'].includes(q.symbol)).map(q => ({
+            symbol: q.symbol.replace('-USD', ''),
+            original_ticker: q.symbol,
+            price: q.price || 0,
+            change: q.changePercent || 0
+        }));
+
+        const forex = quotes.filter(q => ['EURUSD=X', 'USDINR=X'].includes(q.symbol)).map(q => ({
+            symbol: q.symbol.replace('=X', ''),
+            original_ticker: q.symbol,
+            price: q.price || 0,
+            change: q.changePercent || 0
+        }));
+
+        res.json({
+            ...dataMap,
+            stocks,
+            crypto,
+            forex
+        });
+    } catch (err) {
+        console.error("Market API error:", err.message);
+        res.status(500).json({ error: "Failed to load market summary", stocks: [], crypto: [], forex: [] });
+    }
+});
+
+app.get('/api/fii-dii', async (req, res) => {
+    try {
+        const result = await cachedFetch('liquidity_IN', TTL.MACRO, () =>
+            fetchPythonData('macro_quant', 'macro_engine.py', ['liquidity', 'IN'])
+        );
+        if (result && result.error) {
+            return res.json({ error: result.error });
+        }
+        res.json({
+            fii: result.foreign_val || 0,
+            dii: result.domestic_val || 0,
+            status: result.status || 'Neutral'
+        });
+    } catch (e) {
+        console.error("FII-DII API error:", e.message);
+        res.status(500).json({ error: "Failed to fetch institutional flows" });
+    }
 });
 
 // ==========================================

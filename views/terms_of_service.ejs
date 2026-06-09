@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service | FinoraPulse AI</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
+
+    <style>
+        .policy-card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            color: #e2e8f0;
+            line-height: 1.7;
+        }
+
+        .policy-section {
+            margin-bottom: 30px;
+        }
+
+        .policy-section h2 {
+            font-size: 1.4rem;
+            color: #00E5FF;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .policy-section p,
+        .policy-section ul {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+
+        .policy-section ul {
+            padding-left: 20px;
+        }
+
+        .policy-section li {
+            margin-bottom: 8px;
+        }
+
+        .policy-section code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 229, 255, 0.08);
+            color: #00E5FF;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <%- include('partials/header') %>
+
+        <div class="main-wrapper">
+            <%- include('partials/sidebar') %>
+
+                <main class="content-panel"
+                    style="padding: 30px; display: flex; flex-direction: column; min-height: 100%;">
+                    <div style="margin-bottom: 15px;">
+                        <a href="/"
+                            style="color: #8E9BAE; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
+                            ← Back to Home Terminal
+                        </a>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <h1 style="margin: 0; font-size: 2.2rem; font-weight: 700; color: #fff;">Terms of Service</h1>
+                        <div style="font-size: 0.85rem; color: #64748b; font-family: 'JetBrains Mono', monospace;">
+                            LAST_UPDATED: <span style="color: #00ff9d;">2026-06-09</span>
+                        </div>
+                    </div>
+
+                    <div class="policy-card">
+                        <div class="policy-section">
+                            <h2>1. Acceptance of Terms</h2>
+                            <p>
+                                By accessing or using FinoraPulse (the "Platform", "Website", "Service"), you agree to be bound by these Terms of Service. If you do not agree to all of the terms and conditions contained herein, do not access or use the Platform.
+                            </p>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>2. Educational & Simulated Platform</h2>
+                            <p>
+                                FinoraPulse is a fully simulated, educational stock market terminal. All functionalities, including virtual portfolio trading, stock forecasts, macroeconomic indicators, heatmaps, and price targets:
+                            </p>
+                            <ul>
+                                <li>Are for educational, research, and entertainment purposes only.</li>
+                                <li>Do <strong>not</strong> involve real-world capital, stock orders, or actual brokerage services.</li>
+                                <li>Are simulated using virtual balances (<code>virtualBalance</code>). No real cash can be deposited, earned, or withdrawn from the Platform.</li>
+                            </ul>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>3. Account Registration & Security</h2>
+                            <p>
+                                To access certain tools (e.g., AI price predictor, global heatmaps, trading simulator), you must create a registered account. You are responsible for keeping your login credentials confidential. You agree to notify us immediately of any unauthorized access to your account. We reserve the right to suspend or terminate accounts that violate our usage terms.
+                            </p>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>4. Intellectual Property & Fair Use</h2>
+                            <p>
+                                The software code, design layout, neural network logic, and mathematical formulations on FinoraPulse are the intellectual property of Kartik M G. You may not:
+                            </p>
+                            <ul>
+                                <li>Reverse engineer, scrape, or systematically crawl data from our Platform API endpoints (e.g., <code>/api/stats</code>, <code>/api/macro-explorer</code>).</li>
+                                <li>Use the Platform for commercial resale of technical analysis data.</li>
+                                <li>Perform denial-of-service (DoS) attacks or flood the Node server with automated requests.</li>
+                            </ul>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>5. Disclaimer of Warranties</h2>
+                            <p>
+                                THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT ANY WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. FinoraPulse does not guarantee the accuracy, timeliness, completeness, or reliability of any technical stock forecasts, institutional FII/DII flows, sentiment evaluations, or compounding calculator outputs. All stock predictions are generated algorithmically and are subject to market volatility.
+                            </p>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>6. Limitation of Liability</h2>
+                            <p>
+                                IN NO EVENT SHALL FINORAPULSE, ITS CREATORS, OR ADMINISTRATORS BE LIABLE FOR ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, LOSS OF PROFITS, TRADING LOSSES, CAPITAL DRAWDOWNS, OR LOSS OF DATA) ARISING OUT OF THE USE OR INABILITY TO USE THE PLATFORM. YOU USE THE INFORMATION PROVIDED AT YOUR OWN RISK.
+                            </p>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>7. Changes to Terms</h2>
+                            <p>
+                                We reserve the right to modify or replace these Terms of Service at any time. Changes will be posted directly on this page with an updated timestamp. Continuing to access the terminal after such changes constitutes acceptance of the new terms.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Include Footer inside scrollable area -->
+                    <%- include('partials/footer') %>
+                </main>
+        </div>
+
+</body>
+
+</html>

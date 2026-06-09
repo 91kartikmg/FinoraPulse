@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | FinoraPulse AI Terminal</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
+
+    <style>
+        .policy-card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            color: #e2e8f0;
+            line-height: 1.7;
+        }
+
+        .policy-section {
+            margin-bottom: 30px;
+        }
+
+        .policy-section h2 {
+            font-size: 1.4rem;
+            color: #00E5FF;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .policy-section p,
+        .policy-section ul {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+
+        .policy-section ul {
+            padding-left: 20px;
+        }
+
+        .policy-section li {
+            margin-bottom: 8px;
+        }
+
+        .policy-section code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 229, 255, 0.08);
+            color: #00E5FF;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <%- include('partials/header') %>
+
+        <div class="main-wrapper">
+            <%- include('partials/sidebar') %>
+
+                <main class="content-panel"
+                    style="padding: 30px; display: flex; flex-direction: column; min-height: 100%;">
+                    <div style="margin-bottom: 15px;">
+                        <a href="/"
+                            style="color: #8E9BAE; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
+                            ← Back to Home Terminal
+                        </a>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <h1 style="margin: 0; font-size: 2.2rem; font-weight: 700; color: #fff;">About FinoraPulse</h1>
+                        <div style="font-size: 0.85rem; color: #64748b; font-family: 'JetBrains Mono', monospace;">
+                            SYSTEM_VER: <span style="color: #00ff9d;">v2.8.4-stable</span>
+                        </div>
+                    </div>
+
+                    <div class="policy-card">
+                        <div class="policy-section">
+                            <h2>Our Vision</h2>
+                            <p>
+                                FinoraPulse was founded by Kartik M G as an educational quantitative finance terminal designed to bridge the gap between complex algorithmic modeling and retail investors. Our mission is to make advanced market analysis toolkits—traditionally reserved for institutional quant desks—accessible, understandable, and highly visual.
+                            </p>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>The Technology Stack</h2>
+                            <p>
+                                The FinoraPulse platform is built upon a high-performance Node.js back-end combined with algorithmic Python scripts that parse capital flows and price trends:
+                            </p>
+                            <ul>
+                                <li><strong>Front-End Rendering:</strong> Built with semantic HTML5 and customized EJS (Embedded JavaScript) templates, styled with a modern, glassmorphic visual system.</li>
+                                <li><strong>Server Engine:</strong> Powered by Express.js with a multi-layered caching framework (LRU Cache and JSON file system cache) to handle complex indicators without API bottlenecks.</li>
+                                <li><strong>Data Integration:</strong> Incorporates live quote data via Yahoo Finance endpoints, enabling real-time macro analysis and sector heatmap distributions.</li>
+                                <li><strong>Machine Learning:</strong> Utilizes server-side Python intelligence (neural network patterns and regression curves) to model and plot 5-day stock forecast projections.</li>
+                            </ul>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>Why Choose FinoraPulse?</h2>
+                            <p>
+                                Unlike generic tracking sites, FinoraPulse combines multiple disciplines of quant analysis into a single unified terminal:
+                            </p>
+                            <ul>
+                                <li><strong>Market Sentiment Analysis:</strong> Algorithmic parsing of current news feeds to determine relative bullish or bearish bias.</li>
+                                <li><strong>Institutional Flow Tracking (FII/DII):</strong> Visual monitors mapping foreign and domestic capital flows.</li>
+                                <li><strong>Advanced Calculators:</strong> Professional real-time solvers for position sizing, CAGR growth, option payoffs, and compounding returns.</li>
+                            </ul>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>Contact Developer</h2>
+                            <p>
+                                FinoraPulse is developed and maintained by Kartik M G. We welcome suggestion proposals, bug reports, and integration queries. You can submit suggestions via the terminal console or reach us directly at <code>finorapulse@gmail.com</code>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Include Footer inside scrollable area -->
+                    <%- include('partials/footer') %>
+                </main>
+        </div>
+
+</body>
+
+</html>

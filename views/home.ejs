@@ -267,31 +267,46 @@
     <div class="main-wrapper">
         <%- include('partials/sidebar') %>
 
-        <main class="content-panel" style="padding: 30px;">
+        <main class="content-panel" style="padding: 25px;">
             
             <h1 class="sr-only">FinoraPulse AI - Stock Market Prediction Terminal</h1>
             
-            <div class="pinora">
-                <img src="/images/finorapulse-log.png" alt="FinoraPulse AI Stock Prediction Terminal Logo" width="60%">
+            <!-- Sleek Dashboard Header -->
+            <div class="dashboard-header-container">
+                <div class="dashboard-brand-wrapper">
+                    <img src="/images/finorapulse-logo-full.png" alt="FinoraPulse Logo" class="dashboard-brand-logo">
+                    <div class="dashboard-title-group">
+                        <h2>Quant Terminal Dashboard</h2>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px;">
+                            <span style="height: 6px; width: 6px; background: var(--neon-green); border-radius: 50%; animation: pulse-glow 2s infinite;"></span>
+                            <span style="font-size: 0.65rem; color: var(--text-muted); font-family: 'JetBrains Mono'; letter-spacing: 0.5px; text-transform: uppercase;">
+                                NEURAL_NET: <span style="color: var(--text-main);">ONLINE</span> // FEED: <span style="color: var(--neon-cyan);">REALTIME</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-system-vitals">
+                    <div class="vital-stat-block">
+                        <div class="vital-stat-label">Confidence Rate</div>
+                        <div class="vital-stat-value" style="color: var(--neon-green);">98.2%</div>
+                    </div>
+                    <div class="vital-stat-block">
+                        <div class="vital-stat-label">Latency Status</div>
+                        <div class="vital-stat-value">12ms (Normal)</div>
+                    </div>
+                </div>
             </div>
-            
-            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <div>
-                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
-                        <span style="height: 8px; width: 8px; background: var(--neon-green); border-radius: 50%; animation: pulse-glow 2s infinite;"></span>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono'; letter-spacing: 1px;">
-                            NEURAL_NET: <span style="color: var(--text-main);">ONLINE</span> // FEED: <span style="color: var(--neon-cyan);">REALTIME</span>
-                        </span>
-                    </div>
-                </div>
 
-                <div style="display: flex; gap: 20px; background: var(--term-surface); padding: 15px 25px; border-radius: 6px; border: 1px solid var(--term-border);">
-                    <div style="text-align: right;">
-                        <div style="color: var(--text-muted); font-size: 0.65rem; letter-spacing: 1px;">CONFIDENCE</div>
-                        <div style="color: #fff; font-family: 'JetBrains Mono'; font-weight: bold; font-size: 1.1rem;">98.2%</div>
-                    </div>
+            <!-- Ticker Chart Control Bar -->
+            <div class="chart-controls-wrapper">
+                <div class="chart-selector-title">📈 QUANT MARKET SCANNER</div>
+                <div class="asset-selector-tabs">
+                    <button class="asset-tab-btn active" onclick="switchMainAsset('RELIANCE.NS')">RELIANCE</button>
+                    <button class="asset-tab-btn" onclick="switchMainAsset('AAPL')">AAPL</button>
+                    <button class="asset-tab-btn" onclick="switchMainAsset('BTC-USD')">BITCOIN</button>
+                    <button class="asset-tab-btn" onclick="switchMainAsset('EURUSD=X')">EUR/USD</button>
                 </div>
-            </header>
+            </div>
 
             <div class="ai-chart-container" id="chart-wrapper">
                 <div class="crt-overlay"></div>
@@ -300,11 +315,79 @@
                 <canvas id="tv-chart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; cursor: crosshair;"></canvas>
 
                 <div class="chart-hud">
-                    <div style="color: var(--neon-cyan); font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #1e293b; padding-bottom: 5px;">MARKET_PULSE_DETECTOR</div>
+                    <div style="color: var(--neon-cyan); font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #1e293b; padding-bottom: 5px;" id="chart-hud-title">RELIANCE_PULSE</div>
                     <div style="margin-bottom: 3px;">TICK: <span id="live-tick-price" style="color:#fff; font-size: 1.1rem;">AWAITING_DATA...</span></div>
-                    <div>TREND: <span style="color:var(--neon-green)">ACCELERATING_UP</span></div>
+                    <div>TREND: <span style="color:var(--neon-green)" id="chart-hud-trend">ACCELERATING_UP</span></div>
                 </div>
             </div>
+
+            <!-- Sleek Dashboard Grid (Dynamic Cards & FII/DII Matrix) -->
+            <div class="bottom-quant-grid">
+                <!-- Column 1: Live Market Watch (Dynamic Cards render destination) -->
+                <div id="dynamic-cards">
+                    <div style="background: var(--term-surface); border: 1px solid var(--term-border); border-radius: 8px; padding: 20px; text-align: center; color: var(--text-muted);">
+                        🔄 Connecting to market data terminal feed...
+                    </div>
+                </div>
+
+                <!-- Column 2: Institutional Flow Matrix & Sentiment Meter -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Institutional Flows Card -->
+                    <div class="quant-card">
+                        <div class="quant-card-header">
+                            <div class="quant-card-title">
+                                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--neon-green);"></span>
+                                Institutional Flow Matrix (India)
+                            </div>
+                            <span id="liquidity-status" style="font-size: 0.7rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: rgba(0, 255, 157, 0.1); border: 1px solid rgba(0, 255, 157, 0.2); color: var(--neon-green);">
+                                Loading...
+                            </span>
+                        </div>
+                        
+                        <div class="liquidity-metric-row">
+                            <span class="liquidity-metric-name">Foreign Institutional flow (FII)</span>
+                            <span class="liquidity-metric-value" id="fii-val" style="color: var(--neon-green);">--</span>
+                        </div>
+                        <div class="liquidity-progress-bar">
+                            <div class="liquidity-progress-fill" id="fii-bar" style="background: var(--neon-green);"></div>
+                        </div>
+
+                        <div class="liquidity-metric-row">
+                            <span class="liquidity-metric-name">Domestic Institutional flow (DII)</span>
+                            <span class="liquidity-metric-value" id="dii-val" style="color: var(--neon-green);">--</span>
+                        </div>
+                        <div class="liquidity-progress-bar">
+                            <div class="liquidity-progress-fill" id="dii-bar" style="background: var(--neon-green);"></div>
+                        </div>
+
+                        <div class="net-flow-row">
+                            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Net Market Flow</span>
+                            <span id="net-val" style="font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 800;">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Market Sentiment (Fear & Greed) Gauge -->
+                    <div class="quant-card">
+                        <div class="quant-card-header">
+                            <div class="quant-card-title">
+                                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--neon-cyan);"></span>
+                                Market Sentiment Index
+                            </div>
+                        </div>
+                        <div class="sentiment-meter-container">
+                            <div class="sentiment-gauge-wrapper">
+                                <div class="sentiment-gauge-bg">
+                                    <div class="sentiment-gauge-inner"></div>
+                                    <div id="sentiment-needle" class="sentiment-gauge-needle"></div>
+                                </div>
+                            </div>
+                            <div class="sentiment-score-value" id="sentiment-score-text">74/100</div>
+                            <div class="sentiment-desc-text" id="sentiment-desc-text">Moderate Greed - Institutional flows show signs of progressive capital accumulation.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <%- include('partials/footer') %>
         </main>
 
@@ -386,11 +469,59 @@
         // Data Simulation
         let historyData = [];
         let prediction = [];
-        let price = 150;
+        let currentAsset = 'RELIANCE.NS';
 
-        for(let i=0; i<80; i++) { price += (Math.random() - 0.45) * 4; historyData.push(price); }
-        let last = historyData[historyData.length-1];
-        for(let i=0; i<40; i++) { last += (Math.random() - 0.40) * 5; prediction.push(last); }
+        // Ticker-specific default configurations
+        const assetConfig = {
+            'RELIANCE.NS': { base: 2450, stepSize: 8, decimals: 2, label: 'RELIANCE_PULSE', trend: 'ACCELERATING_UP', trendColor: 'var(--neon-green)' },
+            'AAPL': { base: 182, stepSize: 0.6, decimals: 2, label: 'AAPL_PULSE', trend: 'STABILIZING', trendColor: 'var(--neon-cyan)' },
+            'BTC-USD': { base: 67200, stepSize: 180, decimals: 0, label: 'BTC_PULSE_USD', trend: 'BULLISH_BREAKOUT', trendColor: 'var(--neon-green)' },
+            'EURUSD=X': { base: 1.085, stepSize: 0.002, decimals: 4, label: 'EUR_USD_CROSS', trend: 'SIDEWAYS_CONSOLIDATION', trendColor: 'var(--text-muted)' }
+        };
+
+        function generateData(ticker) {
+            const config = assetConfig[ticker] || assetConfig['RELIANCE.NS'];
+            let price = config.base;
+            historyData = [];
+            prediction = [];
+
+            for(let i=0; i<80; i++) { 
+                price += (Math.random() - 0.46) * config.stepSize; 
+                historyData.push(price); 
+            }
+            let last = historyData[historyData.length-1];
+            for(let i=0; i<40; i++) { 
+                last += (Math.random() - 0.42) * config.stepSize * 1.2; 
+                prediction.push(last); 
+            }
+        }
+
+        // Initialize default
+        generateData('RELIANCE.NS');
+
+        function switchMainAsset(ticker) {
+            currentAsset = ticker;
+            generateData(ticker);
+            
+            const config = assetConfig[ticker] || assetConfig['RELIANCE.NS'];
+            document.getElementById('chart-hud-title').innerText = config.label;
+            const trendEl = document.getElementById('chart-hud-trend');
+            trendEl.innerText = config.trend;
+            trendEl.style.color = config.trendColor;
+            
+            const liveTickEl = document.getElementById('live-tick-price');
+            const symbolPrefix = (ticker === 'EURUSD=X' ? '$' : (ticker.includes('.NS') ? '₹' : '$'));
+            liveTickEl.innerText = symbolPrefix + historyData[historyData.length - 1].toFixed(config.decimals);
+
+            // Update tab button CSS states
+            document.querySelectorAll('.asset-tab-btn').forEach(btn => {
+                if (btn.getAttribute('onclick').includes(ticker)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
 
         function draw() {
             const width = canvas.width / window.devicePixelRatio;
@@ -400,11 +531,18 @@
 
             const paddingX = 40, paddingRight = 70, paddingY = 40;
             const all = [...historyData, ...prediction];
-            const min = Math.min(...all) - 2; 
-            const max = Math.max(...all) + 2; 
+            
+            const rawMin = Math.min(...all);
+            const rawMax = Math.max(...all);
+            const diff = rawMax - rawMin || 1;
+            const min = rawMin - diff * 0.05; 
+            const max = rawMax + diff * 0.05; 
 
             function y(v) { return height - paddingY - ((v - min) / (max - min)) * (height - paddingY * 2); }
             const step = (width - paddingX - paddingRight) / (historyData.length + prediction.length - 1);
+
+            const config = assetConfig[currentAsset] || assetConfig['RELIANCE.NS'];
+            const symbolPrefix = (currentAsset === 'EURUSD=X' ? '$' : (currentAsset.includes('.NS') ? '₹' : '$'));
 
             // 1. Grid & Price Labels
             ctx.fillStyle = "#64748b";
@@ -422,7 +560,7 @@
                 ctx.moveTo(paddingX, gy); ctx.lineTo(width - paddingRight, gy);
                 ctx.stroke();
 
-                ctx.fillText("$" + priceVal.toFixed(2), width - paddingRight + 15, gy);
+                ctx.fillText(symbolPrefix + priceVal.toFixed(config.decimals), width - paddingRight + 15, gy);
             }
 
             // 2. Time Grid
@@ -526,7 +664,7 @@
                 ctx.fillStyle = "#fff";
                 ctx.fillRect(width - paddingRight, mouseY - 10, 60, 20);
                 ctx.fillStyle = "#000";
-                ctx.fillText("$" + exactPrice.toFixed(2), width - paddingRight + 30, mouseY);
+                ctx.fillText(symbolPrefix + exactPrice.toFixed(config.decimals), width - paddingRight + 30, mouseY);
             }
 
             requestAnimationFrame(draw);
@@ -538,12 +676,14 @@
         setInterval(() => {
             historyData.push(prediction.shift());
             let last = historyData[historyData.length - 1];
-            let next = last + (Math.random() - 0.40) * 4;
+            const config = assetConfig[currentAsset] || assetConfig['RELIANCE.NS'];
+            let next = last + (Math.random() - 0.40) * config.stepSize;
             prediction.push(next);
             historyData.shift();
 
             // Update & Flash
-            tickEl.innerText = "$" + next.toFixed(2);
+            const symbolPrefix = (currentAsset === 'EURUSD=X' ? '$' : (currentAsset.includes('.NS') ? '₹' : '$'));
+            tickEl.innerText = symbolPrefix + next.toFixed(config.decimals);
             tickEl.classList.remove("flash-active");
             void tickEl.offsetWidth; // Trigger reflow
             tickEl.classList.add("flash-active");
@@ -563,16 +703,67 @@
                 const diiVal = document.getElementById('dii-val');
                 const netVal = document.getElementById('net-val');
                 const statusBox = document.getElementById('liquidity-status');
+                const fiiBar = document.getElementById('fii-bar');
+                const diiBar = document.getElementById('dii-bar');
 
                 if(fiiVal) {
-                    fiiVal.innerText = (data.fii >= 0 ? "+" : "-") + fmt(data.fii) + " Cr";
+                    fiiVal.innerText = (data.fii >= 0 ? "₹+" : "₹-") + fmt(data.fii) + " Cr";
                     fiiVal.style.color = data.fii >= 0 ? "var(--neon-green)" : "var(--neon-red)";
+                }
+                if(diiVal) {
+                    diiVal.innerText = (data.dii >= 0 ? "₹+" : "₹-") + fmt(data.dii) + " Cr";
+                    diiVal.style.color = data.dii >= 0 ? "var(--neon-green)" : "var(--neon-red)";
+                }
+                if(netVal) {
+                    const netValue = data.fii + data.dii;
+                    netVal.innerText = (netValue >= 0 ? "₹+" : "₹-") + fmt(netValue) + " Cr";
+                    netVal.style.color = netValue >= 0 ? "var(--neon-green)" : "var(--neon-red)";
                 }
                 if(statusBox) {
                     statusBox.innerText = data.status;
                     statusBox.style.color = data.status.includes("Bullish") ? "var(--neon-green)" : "var(--neon-red)";
+                    statusBox.style.background = data.status.includes("Bullish") ? "rgba(0, 255, 65, 0.1)" : "rgba(255, 51, 102, 0.1)";
+                    statusBox.style.borderColor = data.status.includes("Bullish") ? "rgba(0, 255, 65, 0.2)" : "rgba(255, 51, 102, 0.2)";
                 }
-                // ... Additional DOM logic left intact for your global partial ...
+
+                // Update progress bar widths based on proportions
+                const maxVal = Math.max(Math.abs(data.fii), Math.abs(data.dii), 1);
+                if(fiiBar) {
+                    fiiBar.style.width = (Math.abs(data.fii) / maxVal * 100) + "%";
+                    fiiBar.style.background = data.fii >= 0 ? "var(--neon-green)" : "var(--neon-red)";
+                }
+                if(diiBar) {
+                    diiBar.style.width = (Math.abs(data.dii) / maxVal * 100) + "%";
+                    diiBar.style.background = data.dii >= 0 ? "var(--neon-green)" : "var(--neon-red)";
+                }
+
+                // Update Sentiment Index Needle & Score values
+                const sentimentScoreText = document.getElementById('sentiment-score-text');
+                const sentimentNeedle = document.getElementById('sentiment-needle');
+                const sentimentDescText = document.getElementById('sentiment-desc-text');
+                
+                let sentimentScore = 50;
+                if (data.status.includes("Strong Bullish")) sentimentScore = 88;
+                else if (data.status.includes("Bullish")) sentimentScore = 74;
+                else if (data.status.includes("Strong Bearish")) sentimentScore = 15;
+                else if (data.status.includes("Bearish")) sentimentScore = 32;
+                
+                if(sentimentScoreText) sentimentScoreText.innerText = sentimentScore + "/100";
+                if(sentimentNeedle) {
+                    const degrees = ((sentimentScore / 100) * 180) - 90;
+                    sentimentNeedle.style.transform = `rotate(${degrees}deg)`;
+                }
+                if(sentimentDescText) {
+                    if (sentimentScore > 75) {
+                        sentimentDescText.innerText = "Strong Greed - High institutional cash inflows indicate deep primary buyer support.";
+                    } else if (sentimentScore > 50) {
+                        sentimentDescText.innerText = "Moderate Greed - Institutional flows show signs of progressive capital accumulation.";
+                    } else if (sentimentScore > 30) {
+                        sentimentDescText.innerText = "Moderate Fear - Defensive domestic fund behavior as global flow exits benchmarks.";
+                    } else {
+                        sentimentDescText.innerText = "Extreme Fear - Mass foreign capital outflow detected. Volatility risk accelerating.";
+                    }
+                }
             } catch (err) { console.error("Matrix Error:", err); }
         }
         loadLiquidityMatrix();

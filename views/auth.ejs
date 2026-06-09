@@ -16,9 +16,38 @@
         }
         body { margin: 0; background-color: var(--bg-dark); color: var(--text-main); font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
         
-        .auth-container { background: var(--card-bg); width: 100%; max-width: 400px; padding: 2rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); box-sizing: border-box; margin: 20px; }
+        .auth-container { position: relative; background: var(--card-bg); width: 100%; max-width: 400px; padding: 2.5rem 2rem 2rem 2rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); box-sizing: border-box; margin: 20px; }
         .logo { text-align: center; margin-bottom: 2rem; font-size: 1.5rem; font-weight: 700; }
         .accent { color: var(--accent); }
+        
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+        }
+        .close-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: var(--error);
+            transform: scale(1.05);
+        }
+        .close-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+        }
         
         .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
         .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; color: var(--text-muted); transition: all 0.3s; border-bottom: 2px solid transparent; }
@@ -41,6 +70,12 @@
 <body>
 
 <div class="auth-container">
+    <a href="/" class="close-btn" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+    </a>
     <div class="logo">StockPulse <span class="accent">AI</span></div>
 
     <div class="error-msg" id="ajax-error"></div>

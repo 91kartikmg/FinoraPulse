@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disclaimer | FinoraPulse AI</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
+
+    <style>
+        .policy-card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            color: #e2e8f0;
+            line-height: 1.7;
+        }
+
+        .policy-section {
+            margin-bottom: 30px;
+        }
+
+        .policy-section h2 {
+            font-size: 1.4rem;
+            color: #ff4d4d; /* Red/coral theme for warning disclaimer */
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .policy-section p,
+        .policy-section ul {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+
+        .policy-section ul {
+            padding-left: 20px;
+        }
+
+        .policy-section li {
+            margin-bottom: 8px;
+        }
+
+        .policy-section code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 77, 77, 0.08);
+            color: #ff4d4d;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <%- include('partials/header') %>
+
+        <div class="main-wrapper">
+            <%- include('partials/sidebar') %>
+
+                <main class="content-panel"
+                    style="padding: 30px; display: flex; flex-direction: column; min-height: 100%;">
+                    <div style="margin-bottom: 15px;">
+                        <a href="/"
+                            style="color: #8E9BAE; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
+                            ← Back to Home Terminal
+                        </a>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <h1 style="margin: 0; font-size: 2.2rem; font-weight: 700; color: #fff;">Financial Disclaimer</h1>
+                        <div style="font-size: 0.85rem; color: #64748b; font-family: 'JetBrains Mono', monospace;">
+                            DISCLOSURE_ID: <span style="color: #ff4d4d;">SIM-SEC-09</span>
+                        </div>
+                    </div>
+
+                    <div class="policy-card">
+                        <div class="policy-section">
+                            <h2>1. Educational & Non-Advisory Purpose</h2>
+                            <p>
+                                The content, charts, and forecasts provided on FinoraPulse are compiled for <strong>educational, research, and informational purposes only</strong>. None of the materials or calculations presented on this Platform constitute investment advice, legal advice, tax advice, or a personal stock recommendation.
+                            </p>
+                            <p>
+                                We do not recommend buying, selling, or holding any financial asset, stock, cryptocurrency, currency pair, or derivative contract. Financial markets are inherently risky, and you should always conduct your own research and consult a licensed financial advisor before making any real-world investment decisions.
+                            </p>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>2. Simulated Trading Environment</h2>
+                            <p>
+                                All trading exercises, order bookings, and portfolios on FinoraPulse are **100% simulated**. The Platform:
+                            </p>
+                            <ul>
+                                <li>Does not connect to any exchange order routing system.</li>
+                                <li>Does not hold, request, or handle actual user funds or bank capital.</li>
+                                <li>Uses standard historical feeds and mathematical algorithms to mock transaction P&L without actual capital risk.</li>
+                            </ul>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>3. AI Forecasting Performance Disclaimer</h2>
+                            <p>
+                                Stock prediction projections (e.g., our 5-day neural forecasting paths) are generated by machine learning models using technical indicators. Machine learning models analyze historical patterns, but past performance **is not indicative of future results**. Markets are influenced by unpredictable geopolitical events, earnings results, macroeconomic changes, and emotional biases that mathematical models cannot fully anticipate.
+                            </p>
+                        </div>
+
+                        <div class="policy-section">
+                            <h2>4. Accuracy of Data</h2>
+                            <p>
+                                While we attempt to pull accurate public market metrics and indicators from reliable feeds (such as Yahoo Finance), we do not warrant or guarantee the accuracy, completeness, timeliness, or sequencing of the data. The data may be delayed, incomplete, or contain errors. We are not responsible for any trading losses or decisions made based on this data.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Include Footer inside scrollable area -->
+                    <%- include('partials/footer') %>
+                </main>
+        </div>
+
+</body>
+
+</html>

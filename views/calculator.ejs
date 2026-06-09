@@ -33,6 +33,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    <meta name="google-adsense-account" content="ca-pub-9322873035906803">
 
     <script type="application/ld+json">
     {
@@ -168,14 +169,15 @@
     <style>
         /* Existing FinoraPulse Core Styles */
         :root {
-            --card-bg: #1e293b;
+            --card-bg: rgba(15, 23, 42, 0.65);
             --border: #334155;
             --accent: #38bdf8;
             --bg-dark: #041027;
             --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --text-muted: #8e9bae;
             --profit: #00FF9D;
             --loss: #FF007F;
+            --border-glow: rgba(0, 229, 255, 0.15);
         }
 
         .macro-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
@@ -190,6 +192,7 @@
         .tool-nav li.active {
             background: rgba(56, 189, 248, 0.15); border-color: var(--accent); color: var(--accent);
             border-left: 4px solid var(--accent);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.1);
         }
 
         /* Calculator UI Styles */
@@ -199,32 +202,43 @@
 
         .stat-card {
             background: var(--card-bg); padding: 30px; border-radius: 16px;
-            border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-glow); box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            backdrop-filter: blur(15px);
+            transition: border-color 0.3s;
+        }
+        .stat-card:hover {
+            border-color: rgba(0, 229, 255, 0.3);
         }
 
-        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; margin-bottom: 30px; }
         .input-group { display: flex; flex-direction: column; gap: 10px; }
-        .input-group label { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group label { color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         
         .slider-wrapper { display: flex; align-items: center; gap: 15px; }
         
-        .input-group input[type="number"] {
+        .input-group input[type="number"], select {
             background: #0f172a; border: 1px solid var(--border); color: white;
             padding: 10px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 1rem; outline: none; transition: border-color 0.2s;
-            width: 110px; text-align: right;
+            width: 120px; text-align: right;
+            box-sizing: border-box;
         }
-        .input-group input[type="number"]:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+        select {
+            text-align: left;
+            width: 100%;
+            cursor: pointer;
+        }
+        .input-group input[type="number"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
 
         /* Custom Range Slider (Line Adjustment) CSS */
         input[type=range] {
             -webkit-appearance: none; width: 100%; background: transparent; flex-grow: 1;
         }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%;
-            background: var(--accent); cursor: pointer; margin-top: -7px;
+            -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%;
+            background: var(--accent); cursor: pointer; margin-top: -6px;
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.6); transition: transform 0.1s;
         }
-        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.25); }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%; height: 6px; cursor: pointer; background: var(--border); border-radius: 3px;
         }
@@ -233,18 +247,20 @@
 
         /* Results Display */
         .result-panel {
-            background: #0d1117; border: 1px solid var(--border); border-radius: 12px; padding: 25px;
+            background: #070b13; border: 1px solid var(--border); border-radius: 12px; padding: 25px;
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
+            box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.02);
         }
         .result-item { display: flex; flex-direction: column; gap: 5px; }
-        .result-label { font-size: 0.8rem; color: #a855f7; text-transform: uppercase; font-weight: bold; }
-        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 900; color: #fff; }
+        .result-label { font-size: 0.75rem; color: #a855f7; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
+        .result-value { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 900; color: #fff; }
         
-        .val-profit { color: var(--profit); }
-        .val-loss { color: var(--loss); }
+        .val-profit { color: var(--profit); text-shadow: 0 0 10px rgba(0, 255, 157, 0.2); }
+        .val-loss { color: var(--loss); text-shadow: 0 0 10px rgba(255, 0, 127, 0.2); }
 
-        /* SIP Chart Container */
-        .chart-container { height: 250px; width: 250px; margin: 0 auto; }
+        /* Chart Containers */
+        .chart-container { height: 220px; width: 220px; margin: 0 auto; flex-shrink: 0; }
+        .line-chart-container { height: 280px; width: 100%; margin: 20px 0 0 0; }
 
         /* ✨ MOBILE RESPONSIVE & HAMBURGER MENU CSS ✨ */
         @media screen and (max-width: 768px) {
@@ -288,6 +304,8 @@
             <div style="font-size: 0.8rem; color: #a855f7; text-transform: uppercase; font-weight: bold; margin-bottom: 15px; padding-left: 5px;">Toolkit</div>
             <ul class="tool-nav">
                 <li class="active" onclick="switchTool('sip', this)">SIP Calculator</li>
+                <li onclick="switchTool('lumpsum', this)">Lumpsum Planner</li>
+                <li onclick="switchTool('options', this)">Option Payoff</li>
                 <li onclick="switchTool('pnl', this)">Profit & Loss</li>
                 <li onclick="switchTool('position', this)">Position Sizer</li>
                 <li onclick="switchTool('cagr', this)">CAGR Calculator</li>
@@ -348,6 +366,136 @@
                         <span class="result-label" style="color:var(--profit);">Total Wealth</span>
                         <span class="result-value val-profit" id="sip-total">₹11,61,695</span>
                     </div>
+                </div>
+            </div>
+
+            <div id="tool-lumpsum" class="calc-section stat-card">
+                <h2 style="margin-top:0; color:var(--text-main);">Lumpsum Investment Planner</h2>
+                <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: center;">
+                    <div style="flex: 1; min-width: 300px;">
+                        <div class="input-grid" style="grid-template-columns: 1fr;">
+                            <div class="input-group">
+                                <label>Total Investment (₹)</label>
+                                <div class="slider-wrapper">
+                                    <input type="range" id="lump-amount-slider" min="500" max="10000000" step="500" value="25000">
+                                    <input type="number" id="lump-amount" min="500" max="10000000" value="25000">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Expected Return Rate (p.a %)</label>
+                                <div class="slider-wrapper">
+                                    <input type="range" id="lump-rate-slider" min="0" max="50" step="0.5" value="12">
+                                    <input type="number" id="lump-rate" min="0" max="50" value="12">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Time Period (Years)</label>
+                                <div class="slider-wrapper">
+                                    <input type="range" id="lump-years-slider" min="1" max="40" step="1" value="10">
+                                    <input type="number" id="lump-years" min="1" max="40" value="10">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Compounding Frequency</label>
+                                <select id="lump-compound-freq">
+                                    <option value="12">Monthly</option>
+                                    <option value="4">Quarterly</option>
+                                    <option value="2">Half-Yearly</option>
+                                    <option value="1" selected>Yearly</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="lumpChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="result-panel" style="margin-top: 20px;">
+                    <div class="result-item">
+                        <span class="result-label">Principal Amount</span>
+                        <span class="result-value" id="lump-invested">₹25,000</span>   
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label" style="color:var(--accent);">Est. Interest</span>
+                        <span class="result-value" id="lump-returns" style="color:var(--accent);">₹52,646</span>
+                    </div>
+                    <div class="result-item" style="text-align: right;">
+                        <span class="result-label" style="color:var(--profit);">Total Value</span>
+                        <span class="result-value val-profit" id="lump-total">₹77,646</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tool-options" class="calc-section stat-card">
+                <h2 style="margin-top:0; color:var(--text-main);">Option Payoff Simulator</h2>
+                <p style="color:var(--text-muted); font-size:0.9rem; margin-top:-5px; margin-bottom: 20px;">Simulate basic Options payoffs at expiration and view the net profit/loss profile curve.</p>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Option Type</label>
+                        <select id="opt-type">
+                            <option value="CALL" selected>Call Option</option>
+                            <option value="PUT">Put Option</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Trade Action</label>
+                        <select id="opt-action">
+                            <option value="BUY" selected>Buy (Long)</option>
+                            <option value="SELL">Sell (Short)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Strike Price ($)</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="opt-strike-slider" min="1" max="1000" step="1" value="150">
+                            <input type="number" id="opt-strike" min="1" max="1000" value="150">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Option Premium ($)</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="opt-premium-slider" min="0.1" max="100" step="0.1" value="5">
+                            <input type="number" id="opt-premium" min="0.1" max="100" value="5">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Contract Qty (multiplier: 100)</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="opt-contracts-slider" min="1" max="50" step="1" value="1">
+                            <input type="number" id="opt-contracts" min="1" max="50" value="1">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Target Expiry Price ($)</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="opt-target-slider" min="1" max="1000" step="1" value="160">
+                            <input type="number" id="opt-target" min="1" max="1000" value="160">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-panel">
+                    <div class="result-item">
+                        <span class="result-label">Break-Even Price</span>
+                        <span class="result-value" id="opt-breakeven" style="font-size: 1.5rem; color: var(--accent);">--</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Max Risk</span>
+                        <span class="result-value" id="opt-risk" style="font-size: 1.5rem; color: var(--loss);">--</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Max Profit</span>
+                        <span class="result-value" id="opt-profit" style="font-size: 1.5rem; color: var(--profit);">--</span>
+                    </div>
+                    <div class="result-item" style="text-align: right;">
+                        <span class="result-label" id="opt-status-label">P&L at Target</span>
+                        <span class="result-value" id="opt-pnl">--</span>
+                    </div>
+                </div>
+
+                <div class="line-chart-container">
+                    <canvas id="optPayoffChart"></canvas>
                 </div>
             </div>
 
@@ -650,6 +798,216 @@
         syncSliders('cagr-years', updateCAGR);
         updateCAGR();
 
+        // --- 6. LUMPSUM CALCULATOR LOGIC ---
+        let lumpChartInstance = null;
+
+        function updateLumpsum() {
+            const p = parseFloat(document.getElementById('lump-amount').value) || 0;
+            const r = parseFloat(document.getElementById('lump-rate').value) || 0;
+            const t = parseFloat(document.getElementById('lump-years').value) || 0;
+            const n = parseFloat(document.getElementById('lump-compound-freq').value) || 1;
+
+            const ratePerPeriod = (r / 100) / n;
+            const periods = n * t;
+
+            const total = p * Math.pow(1 + ratePerPeriod, periods);
+            const returns = total - p;
+
+            document.getElementById('lump-invested').innerText = '₹' + fmt(p);
+            document.getElementById('lump-returns').innerText = '₹' + fmt(returns);
+            document.getElementById('lump-total').innerText = '₹' + fmt(total);
+
+            if (lumpChartInstance) {
+                lumpChartInstance.data.datasets[0].data = [p, returns];
+                lumpChartInstance.update();
+            } else {
+                const ctx = document.getElementById('lumpChart').getContext('2d');
+                lumpChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Principal', 'Est. Interest'],
+                        datasets: [{
+                            data: [p, returns],
+                            backgroundColor: ['#1e293b', '#a855f7'],
+                            borderColor: '#0f172a',
+                            borderWidth: 2,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { label: (c) => ' ₹' + fmt(c.parsed) } }
+                        },
+                        cutout: '75%'
+                    }
+                });
+            }
+        }
+        syncSliders('lump-amount', updateLumpsum);
+        syncSliders('lump-rate', updateLumpsum);
+        syncSliders('lump-years', updateLumpsum);
+        document.getElementById('lump-compound-freq').addEventListener('change', updateLumpsum);
+        updateLumpsum();
+
+        // --- 7. OPTION PAYOFF LOGIC ---
+        let optChartInstance = null;
+
+        function updateOptions() {
+            const type = document.getElementById('opt-type').value;
+            const action = document.getElementById('opt-action').value;
+            const strike = parseFloat(document.getElementById('opt-strike').value) || 0;
+            const premium = parseFloat(document.getElementById('opt-premium').value) || 0;
+            const contracts = parseFloat(document.getElementById('opt-contracts').value) || 0;
+            const targetPrice = parseFloat(document.getElementById('opt-target').value) || 0;
+
+            const multiplier = 100;
+            const totalPremium = premium * contracts * multiplier;
+
+            let breakeven = 0;
+            let maxRisk = "";
+            let maxProfit = "";
+            let targetPnL = 0;
+
+            if (type === 'CALL') {
+                breakeven = strike + premium;
+                if (action === 'BUY') {
+                    maxRisk = '$-' + fmt(totalPremium);
+                    maxProfit = 'Uncapped';
+                    targetPnL = (Math.max(0, targetPrice - strike) - premium) * contracts * multiplier;
+                } else {
+                    maxRisk = 'Uncapped';
+                    maxProfit = '$' + fmt(totalPremium);
+                    targetPnL = (premium - Math.max(0, targetPrice - strike)) * contracts * multiplier;
+                }
+            } else {
+                breakeven = strike - premium;
+                if (action === 'BUY') {
+                    maxRisk = '$-' + fmt(totalPremium);
+                    maxProfit = '$' + fmt((strike - premium) * contracts * multiplier);
+                    targetPnL = (Math.max(0, strike - targetPrice) - premium) * contracts * multiplier;
+                } else {
+                    maxRisk = '$' + fmt((strike - premium) * contracts * multiplier);
+                    maxProfit = '$' + fmt(totalPremium);
+                    targetPnL = (premium - Math.max(0, strike - targetPrice)) * contracts * multiplier;
+                }
+            }
+
+            document.getElementById('opt-breakeven').innerText = '$' + fmt(breakeven);
+            document.getElementById('opt-risk').innerText = maxRisk;
+            document.getElementById('opt-profit').innerText = maxProfit;
+
+            const pnlEl = document.getElementById('opt-pnl');
+            const statusLabelEl = document.getElementById('opt-status-label');
+
+            if (targetPnL >= 0) {
+                statusLabelEl.innerText = "Profit at Target";
+                statusLabelEl.style.color = "var(--profit)";
+                pnlEl.className = "result-value val-profit";
+                pnlEl.innerText = '+$' + fmt(targetPnL);
+            } else {
+                statusLabelEl.innerText = "Loss at Target";
+                statusLabelEl.style.color = "var(--loss)";
+                pnlEl.className = "result-value val-loss";
+                pnlEl.innerText = '-$' + fmt(Math.abs(targetPnL));
+            }
+
+            const pricePoints = [];
+            const pnlPoints = [];
+            
+            const minPrice = Math.max(0.1, strike * 0.5);
+            const maxPrice = strike * 1.5;
+            const step = (maxPrice - minPrice) / 50;
+
+            for (let i = 0; i <= 50; i++) {
+                const p = minPrice + (i * step);
+                let pnl = 0;
+                if (type === 'CALL') {
+                    if (action === 'BUY') {
+                        pnl = (Math.max(0, p - strike) - premium) * contracts * multiplier;
+                    } else {
+                        pnl = (premium - Math.max(0, p - strike)) * contracts * multiplier;
+                    }
+                } else {
+                    if (action === 'BUY') {
+                        pnl = (Math.max(0, strike - p) - premium) * contracts * multiplier;
+                    } else {
+                        pnl = (premium - Math.max(0, strike - p)) * contracts * multiplier;
+                    }
+                }
+                pricePoints.push(p);
+                pnlPoints.push(pnl);
+            }
+
+            if (optChartInstance) {
+                optChartInstance.data.labels = pricePoints.map(p => '$' + p.toFixed(1));
+                optChartInstance.data.datasets[0].data = pnlPoints;
+                optChartInstance.update();
+            } else {
+                const ctx = document.getElementById('optPayoffChart').getContext('2d');
+                optChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: pricePoints.map(p => '$' + p.toFixed(1)),
+                        datasets: [{
+                            label: 'Payoff Curve',
+                            data: pnlPoints,
+                            borderColor: '#38bdf8',
+                            borderWidth: 3,
+                            backgroundColor: 'rgba(56, 189, 248, 0.05)',
+                            fill: true,
+                            tension: 0.1,
+                            pointRadius: 0,
+                            pointHoverRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    title: (items) => 'Price: ' + items[0].label,
+                                    label: (c) => ' P&L: ' + (c.parsed.y >= 0 ? '+' : '') + '$' + fmt(c.parsed.y)
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(51, 65, 85, 0.3)' },
+                                ticks: { color: '#8e9bae', maxTicksLimit: 10 }
+                            },
+                            y: {
+                                grid: {
+                                    color: (context) => {
+                                        if (context.tick.value === 0) {
+                                            return 'rgba(255, 255, 255, 0.5)';
+                                        }
+                                        return 'rgba(51, 65, 85, 0.3)';
+                                    },
+                                    lineWidth: (context) => context.tick.value === 0 ? 2 : 1
+                                },
+                                ticks: {
+                                    color: '#8e9bae',
+                                    callback: (v) => (v >= 0 ? '+' : '') + '$' + fmt(v)
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        syncSliders('opt-strike', updateOptions);
+        syncSliders('opt-premium', updateOptions);
+        syncSliders('opt-contracts', updateOptions);
+        syncSliders('opt-target', updateOptions);
+        document.getElementById('opt-type').addEventListener('change', updateOptions);
+        document.getElementById('opt-action').addEventListener('change', updateOptions);
+        updateOptions();
     </script>
 </body>
 </html>
