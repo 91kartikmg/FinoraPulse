@@ -996,7 +996,7 @@ app.get('/setup-admin', async (req, res) => {
     try {
         const hashedPassword = await bcrypt.hash('91kartikmg@KKK', 10);
         const newAdmin = new Admin({
-            email: 'kartikgowda94@gmail.com', // Replace with your desired admin email
+            email: process.env.ADMIN_EMAIL || 'finorapulse@gmail.com', // Use env variable or default to finorapulse@gmail.com
             password: hashedPassword
         });
         await newAdmin.save();
