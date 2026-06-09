@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice Portfolio & Trade History | FinoraPulse AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/header.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
+
+    <style>
+        /* CSS for Trading Portfolio layout */
+        .history-container {
+            display: block;
+            margin-bottom: 30px;
+        }
+
+        /* Panels */
+        .panel-card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Holdings & History Table */
+        .holdings-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .holdings-table th {
+            color: #94a3b8;
+            font-weight: 600;
+            padding: 12px 10px;
+            border-bottom: 1px solid #1e293b;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .holdings-table td {
+            padding: 15px 10px;
+            border-bottom: 1px solid #1e293b;
+            color: #f8fafc;
+        }
+
+        .holdings-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .badge-pill {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-buy {
+            background: rgba(0,255,157,0.1);
+            color: #00ff9d;
+            border: 1px solid rgba(0,255,157,0.2);
+        }
+
+        .badge-sell {
+            background: rgba(255,0,85,0.1);
+            color: #ff0055;
+            border: 1px solid rgba(255,0,85,0.2);
+        }
+
+        .color-up {
+            color: #00ff9d !important;
+        }
+
+        .color-down {
+            color: #ff0055 !important;
+        }
+
+        .bottom-nav-tabs {
+            display: flex;
+            gap: 15px;
+            border-bottom: 1px solid #1e293b;
+            margin-bottom: 20px;
+        }
+
+        .bottom-tab {
+            padding: 10px 5px;
+            cursor: pointer;
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .bottom-tab.active {
+            color: #38bdf8;
+            border-bottom-color: #38bdf8;
+        }
+    </style>
+</head>
+
+<body>
+
+    <%- include('partials/header') %>
+
+    <div class="main-wrapper">
+        <%- include('partials/sidebar') %>
+
+        <main class="content-panel" style="padding: 30px;">
+            <div style="margin-bottom: 15px;">
+                <a href="/technical" style="color: #8E9BAE; text-decoration: none; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
+                    ← Back to Technical Chart
+                </a>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h1 style="margin: 0; font-size: 2.2rem; font-weight: 700;">Practice Portfolio Terminal</h1>
+                <div style="font-size: 0.85rem; color: #64748b; font-family: 'JetBrains Mono', monospace;">
+                    ACCOUNT: <span style="color: #00ff9d;">PRACTICE SESS</span>
+                </div>
+            </div>
+
+            <div class="history-container">
+                
+                <!-- Portfolio Holdings & History -->
+                <div class="panel-card" style="min-height: 500px; width: 100%;">
+                    <div class="bottom-nav-tabs">
+                        <div class="bottom-tab active" onclick="switchTab('holdings')">Active Holdings</div>
+                        <div class="bottom-tab" onclick="switchTab('history')">Trade History Logs</div>
+                    </div>
+
+                    <!-- Active Holdings Table -->
+                    <div id="holdings-section" style="overflow-x: auto;">
+                        <table class="holdings-table">
+                            <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th>Shares</th>
+                                    <th>Avg Buy Price</th>
+                                    <th>Current Price</th>
+                                    <th>Current Value</th>
+                                    <th>Profit/Loss</th>
+                                    <th style="text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="holdings-tbody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; color: #64748b; padding: 30px;">
+                                        No active positions. Go back to the Technical charts page to place simulated trades.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- History Section -->
+                    <div id="history-section" style="display: none; overflow-x: auto;">
+                        <table class="holdings-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Asset</th>
+                                    <th>Action</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-tbody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: #64748b; padding: 30px;">
+                                        No trades recorded yet.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            
+            <%- include('partials/footer') %>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPortfolio();
+        });
+
+        // Switch bottom tab views (Active holdings vs Trade history logs)
+        function switchTab(tab) {
+            const holdingsTab = document.querySelector('.bottom-tab:nth-child(1)');
+            const historyTab = document.querySelector('.bottom-tab:nth-child(2)');
+            const holdingsSec = document.getElementById('holdings-section');
+            const historySec = document.getElementById('history-section');
+
+            if (tab === 'holdings') {
+                holdingsTab.classList.add('active');
+                historyTab.classList.remove('active');
+                holdingsSec.style.display = 'block';
+                historySec.style.display = 'none';
+            } else {
+                holdingsTab.classList.remove('active');
+                historyTab.classList.add('active');
+                holdingsSec.style.display = 'none';
+                historySec.style.display = 'block';
+            }
+        }
+
+        // Retrieve user portfolio data and populate dashboard elements
+        async function loadPortfolio() {
+            try {
+                const response = await fetch('/api/trading/portfolio');
+                const data = await response.json();
+
+                if (response.ok && !data.error) {
+
+
+                    // Populate Holdings Table
+                    const holdingsTbody = document.getElementById('holdings-tbody');
+                    if (data.holdings && data.holdings.length > 0) {
+                        holdingsTbody.innerHTML = data.holdings.map(h => {
+                            const isHUp = h.profitLoss >= 0;
+                            const isIndian = h.ticker.endsWith('.NS') || h.ticker.endsWith('.BO') || h.ticker === 'INR=X';
+                            const sym = isIndian ? '₹' : '$';
+                            const formattedProfitLoss = (isHUp ? '+' : '-') + sym + Math.abs(h.profitLoss).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            return `
+                                <tr>
+                                    <td>
+                                        <div style="font-weight: 700; color:#f8fafc;">${h.ticker}</div>
+                                        <div style="font-size:0.75rem; color:#94a3b8;">${h.name}</div>
+                                    </td>
+                                    <td style="font-family: 'JetBrains Mono', monospace; font-weight:600;">${h.shares}</td>
+                                    <td style="font-family: 'JetBrains Mono', monospace;">${sym}${h.averageBuyPrice.toFixed(2)}</td>
+                                    <td style="font-family: 'JetBrains Mono', monospace;">${sym}${h.currentPrice.toFixed(2)}</td>
+                                    <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">${sym}${h.currentValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td class="${isHUp ? 'color-up' : 'color-down'}" style="font-family: 'JetBrains Mono', monospace; font-weight:600;">
+                                        ${formattedProfitLoss}<br>
+                                        <span style="font-size: 0.75rem;">(${isHUp ? '+' : ''}${h.profitLossPct.toFixed(2)}%)</span>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <a href="/technical?ticker=${h.ticker}" class="badge-pill badge-buy" style="border:1px solid rgba(0,255,157,0.3); text-decoration:none; font-family:inherit; font-weight:bold; display:inline-block;">Chart/Trade</a>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        holdingsTbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: #64748b; padding: 30px;">
+                                    No active positions. Go back to the Technical charts page to place simulated trades.
+                                </td>
+                            </tr>
+                        `;
+                    }
+
+                    // Populate Trade History Table
+                    const historyTbody = document.getElementById('history-tbody');
+                    if (data.tradeHistory && data.tradeHistory.length > 0) {
+                        const sortedHistory = [...data.tradeHistory].reverse();
+                        historyTbody.innerHTML = sortedHistory.map(t => {
+                            const date = new Date(t.timestamp).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            const totalVal = t.shares * t.price;
+                            const isIndian = t.ticker.endsWith('.NS') || t.ticker.endsWith('.BO') || t.ticker === 'INR=X';
+                            const sym = isIndian ? '₹' : '$';
+                            return `
+                                <tr>
+                                    <td style="color: #94a3b8;">${date}</td>
+                                    <td style="font-weight: 700;">${t.ticker}</td>
+                                    <td>
+                                        <span class="badge-pill ${t.type === 'BUY' ? 'badge-buy' : 'badge-sell'}">${t.type}</span>
+                                    </td>
+                                    <td style="font-family: 'JetBrains Mono', monospace;">${t.shares}</td>
+                                    <td style="font-family: 'JetBrains Mono', monospace;">${sym}${t.price.toFixed(2)}</td>
+                                    <td style="font-family: 'JetBrains Mono', monospace; font-weight:700;">${sym}${totalVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        historyTbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #64748b; padding: 30px;">
+                                    No trades recorded yet.
+                                </td>
+                            </tr>
+                        `;
+                    }
+
+                } else {
+                    console.error("Failed to load portfolio stats.");
+                }
+            } catch (err) {
+                console.error("Connectivity error loading portfolio:", err);
+            }
+        }
+    </script>
+
+</body>
+
+</html>

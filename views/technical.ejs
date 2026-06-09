@@ -941,6 +941,126 @@
                         </div>
                     </div>
 
+                    <!-- VIRTUAL TRADING TERMINAL -->
+                    <div class="chart-card" id="virtual-trading-panel" style="padding: 25px; margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem;">Virtual Paper Trading Terminal</h3>
+                            <a href="/trade-history" style="color: #38bdf8; text-decoration: none; font-size: 0.85rem; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                                View Complete Portfolio & Trade History →
+                            </a>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Available Cash</div>
+                                    <div id="virtual-cash-display" style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">$100,000.00</div>
+                                </div>
+                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Position in <%= ticker %></div>
+                                    <div id="virtual-holding-display" style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">0 Shares</div>
+                                </div>
+                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Average Buy Price</div>
+                                    <div id="virtual-avg-price-display" style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">$0.00</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; margin-top: 5px; background: rgba(13, 17, 23, 0.4); padding: 20px; border: 1px solid var(--border); border-radius: 8px;">
+                                <div style="flex: 1; min-width: 150px;">
+                                    <label style="display: block; font-size: 0.75rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">Order Action</label>
+                                    <div style="display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #0d1117; height: 42px; box-sizing: border-box;">
+                                        <button type="button" id="trade-btn-buy" onclick="setChartTradeAction('BUY')" style="flex: 1; border: none; background: #26a69a; color: #000; font-weight: bold; cursor: pointer; transition: all 0.2s;">BUY</button>
+                                        <button type="button" id="trade-btn-sell" onclick="setChartTradeAction('SELL')" style="flex: 1; border: none; background: transparent; color: #8E9BAE; font-weight: bold; cursor: pointer; transition: all 0.2s;">SELL</button>
+                                    </div>
+                                </div>
+                                
+                                <div style="flex: 1; min-width: 120px;">
+                                    <label style="display: block; font-size: 0.75rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">Quantity</label>
+                                    <input type="number" id="trade-qty-input" value="1" min="1" step="1" oninput="recalcChartTradeEstimate()" style="width: 100%; height: 42px; padding: 10px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: bold; outline: none; box-sizing: border-box;">
+                                </div>
+                                
+                                <div style="flex: 1.5; min-width: 180px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">
+                                        <span>Estimated Cost</span>
+                                        <span id="chart-trade-currency" style="color: #64748b;">USD</span>
+                                    </div>
+                                    <div style="background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 0 15px; height: 42px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+                                        <span id="chart-trade-estimate-price" style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #8E9BAE;">$0.00 each</span>
+                                        <span id="chart-trade-estimate-total" style="font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #fff; font-size: 1rem;">$0.00</span>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" id="chart-trade-submit-btn" onclick="executeChartTrade()" style="height: 42px; padding: 0 25px; background: #26a69a; border: none; border-radius: 6px; color: #000; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; box-shadow: 0 4px 15px rgba(38,166,154,0.3);">
+                                    BUY <%= ticker %>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LIVE SENTIMENT & NEWS TERMINAL -->
+                    <div class="chart-card" id="sentiment-analysis-panel" style="padding: 25px; margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                                <span>🤖</span> AI News & Sentiment Terminal
+                            </h3>
+                            <span style="font-size: 0.8rem; color: #8e9bae; font-family: 'JetBrains Mono', monospace;" id="sentiment-last-updated">PENDING...</span>
+                        </div>
+
+                        <!-- Main Grid Layout -->
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                            <!-- Top Sentiment Summary: Gauge and Score Cards -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <!-- Sentiment Score Card -->
+                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
+                                    <div>
+                                        <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Overall Sentiment</div>
+                                        <div id="sentiment-overall-label" style="font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 800; color: #8e9bae;">LOADING...</div>
+                                    </div>
+                                    <div id="sentiment-overall-icon" style="font-size: 2.2rem;">📡</div>
+                                </div>
+
+                                <!-- Sentiment Gauge Card -->
+                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 20px;">
+                                    <div style="position: relative; width: 80px; height: 40px; overflow: hidden; flex-shrink: 0;">
+                                        <!-- Outer arc -->
+                                        <div style="width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(from 270deg at 50% 50%, #ff0055 0deg, #f59e0b 90deg, #00FF9D 180deg, transparent 180deg); box-sizing: border-box; position: absolute; top: 0; left: 0;"></div>
+                                        <!-- Inner cutout to create semi-circle arch -->
+                                        <div style="width: 60px; height: 60px; border-radius: 50%; background: #0d1117; position: absolute; top: 10px; left: 10px;"></div>
+                                        <!-- Center pin -->
+                                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #fff; position: absolute; bottom: 0; left: 36px; z-index: 5;"></div>
+                                        <!-- Needle -->
+                                        <div id="sentiment-gauge-needle" style="width: 2px; height: 32px; background: #fff; position: absolute; bottom: 0; left: 39px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 4; box-shadow: 0 0 5px rgba(255,255,255,0.8);"></div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Sentiment Index</div>
+                                        <div id="sentiment-index-val" style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">0.00</div>
+                                    </div>
+                                </div>
+
+                                <!-- Key Buzzwords Card -->
+                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Key Market Drivers</div>
+                                    <div id="sentiment-drivers-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">
+                                        <span style="font-size: 0.75rem; color: #64748b;">No active drivers</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- News Timeline List -->
+                            <div style="background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
+                                <div style="font-size: 0.8rem; color: #8e9bae; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">
+                                    Latest Headwinds & Catalysts
+                                </div>
+                                <div id="sentiment-news-list" style="display: flex; flex-direction: column; gap: 15px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
+                                    <div style="text-align: center; color: #64748b; padding: 20px; font-size: 0.9rem;">
+                                        Analyzing news articles...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="chart-card">
                         <button class="close-fullscreen-btn" onclick="exitFullScreen(this)"
                             title="Close Full Screen">×</button>
@@ -1015,7 +1135,7 @@
                         </div>
                     </div>
 
-                    <div style="height:60px;"></div>
+                    <%- include('partials/footer') %>
                 </main>
                 <aside class="side-panel right"></aside>
         </div>
@@ -2391,6 +2511,254 @@
                 document.getElementById('ai-summary-section').style.display = 'block';
                 typeWriterEffect('ai-summary-text', fullScript);
             }
+
+            // ==========================================
+            // VIRTUAL TRADING PORTAL INTEGRATED JS
+            // ==========================================
+            let chartTradeAction = 'BUY';
+            let activeStockPrice = 0;
+            const isIndianStock = currentTicker.endsWith('.NS') || currentTicker.endsWith('.BO') || currentTicker === 'INR=X';
+            const curSym = isIndianStock ? '₹' : '$';
+
+            // Fetch user balance and holdings details
+            async function loadChartTradePortfolio() {
+                try {
+                    const response = await fetch('/api/trading/portfolio');
+                    const data = await response.json();
+
+                    if (response.ok && !data.error) {
+                        const cash = data.virtualBalance;
+                        document.getElementById('virtual-cash-display').innerText = `₹${cash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                        // Filter holdings for the current stock ticker
+                        const holding = data.holdings.find(h => h.ticker === currentTicker);
+                        if (holding) {
+                            document.getElementById('virtual-holding-display').innerText = `${holding.shares} Shares`;
+                            document.getElementById('virtual-avg-price-display').innerText = `${curSym}${holding.averageBuyPrice.toFixed(2)}`;
+                        } else {
+                            document.getElementById('virtual-holding-display').innerText = `0 Shares`;
+                            document.getElementById('virtual-avg-price-display').innerText = `${curSym}0.00`;
+                        }
+                    }
+                } catch (err) {
+                    console.error("Failed to load portfolio stats in chart:", err);
+                }
+            }
+
+            // Set BUY vs SELL
+            function setChartTradeAction(action) {
+                chartTradeAction = action;
+                const buyBtn = document.getElementById('trade-btn-buy');
+                const sellBtn = document.getElementById('trade-btn-sell');
+                const submitBtn = document.getElementById('chart-trade-submit-btn');
+
+                if (action === 'BUY') {
+                    buyBtn.style.background = '#26a69a';
+                    buyBtn.style.color = '#000';
+                    sellBtn.style.background = 'transparent';
+                    sellBtn.style.color = '#8E9BAE';
+                    submitBtn.style.background = '#26a69a';
+                    submitBtn.style.boxShadow = '0 4px 15px rgba(38,166,154,0.3)';
+                } else {
+                    buyBtn.style.background = 'transparent';
+                    buyBtn.style.color = '#8E9BAE';
+                    sellBtn.style.background = '#ff0055';
+                    sellBtn.style.color = '#fff';
+                    submitBtn.style.background = '#ff0055';
+                    submitBtn.style.boxShadow = '0 4px 15px rgba(255,0,85,0.3)';
+                }
+
+                submitBtn.innerText = `${action} ${currentTicker}`;
+                recalcChartTradeEstimate();
+            }
+
+            // Recalculate transaction estimate
+            function recalcChartTradeEstimate() {
+                if (activeStockPrice <= 0) {
+                    // Try to get price from ohlcData in memory if not already set
+                    if (ohlcData && ohlcData.length > 0) {
+                        const histData = ohlcData.filter(d => !d.is_future);
+                        if (histData.length > 0) {
+                            activeStockPrice = histData[histData.length - 1].close;
+                        }
+                    }
+                }
+
+                const qtyInput = document.getElementById('trade-qty-input');
+                let qty = parseInt(qtyInput.value);
+                if (isNaN(qty) || qty <= 0) {
+                    qty = 1;
+                    qtyInput.value = 1;
+                }
+
+                const subtotal = activeStockPrice * qty;
+                document.getElementById('chart-trade-currency').innerText = isIndianStock ? 'INR' : 'USD';
+                document.getElementById('chart-trade-estimate-price').innerText = `${curSym}${activeStockPrice.toFixed(2)} each`;
+                document.getElementById('chart-trade-estimate-total').innerText = `${curSym}${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
+
+            // Submit virtual trade request
+            async function executeChartTrade() {
+                const qtyInput = document.getElementById('trade-qty-input');
+                const qty = parseInt(qtyInput.value);
+                if (isNaN(qty) || qty <= 0) {
+                    alert("Please select a valid quantity of shares.");
+                    return;
+                }
+
+                const submitBtn = document.getElementById('chart-trade-submit-btn');
+                const originalText = submitBtn.innerText;
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'EXECUTING...';
+
+                try {
+                    const response = await fetch('/api/trading/trade', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            ticker: currentTicker,
+                            action: chartTradeAction,
+                            shares: qty
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        alert(data.message);
+                        loadChartTradePortfolio();
+                    } else {
+                        alert(data.error || 'Failed to complete transaction.');
+                    }
+                } catch (err) {
+                    console.error("Trade failed:", err);
+                    alert("Connectivity error during transaction.");
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = originalText;
+                }
+            }
+
+            // AI News & Sentiment Terminal Integration
+            async function loadSentimentTerminal() {
+                const listEl = document.getElementById('sentiment-news-list');
+                const labelEl = document.getElementById('sentiment-overall-label');
+                const iconEl = document.getElementById('sentiment-overall-icon');
+                const indexEl = document.getElementById('sentiment-index-val');
+                const needleEl = document.getElementById('sentiment-gauge-needle');
+                const driversEl = document.getElementById('sentiment-drivers-container');
+                const updatedEl = document.getElementById('sentiment-last-updated');
+
+                if (!listEl) return;
+
+                try {
+                    const res = await fetch(`/api/sentiment?ticker=${currentTicker}`);
+                    const data = await res.json();
+
+                    if (res.ok && !data.error) {
+                        const score = data.sentimentScore;
+                        const overall = data.overallSentiment;
+                        const drivers = data.keyDrivers || [];
+                        const articles = data.articles || [];
+
+                        // 1. Overall sentiment styling
+                        labelEl.innerText = overall.toUpperCase();
+                        if (overall === 'Bullish') {
+                            labelEl.style.color = '#00FF9D';
+                            iconEl.style.color = '#00FF9D';
+                            iconEl.innerText = '📈';
+                        } else if (overall === 'Bearish') {
+                            labelEl.style.color = '#ff0055';
+                            iconEl.style.color = '#ff0055';
+                            iconEl.innerText = '📉';
+                        } else {
+                            labelEl.style.color = '#8e9bae';
+                            iconEl.style.color = '#8e9bae';
+                            iconEl.innerText = '📡';
+                        }
+
+                        // 2. Score index value
+                        const prefix = score > 0 ? '+' : '';
+                        indexEl.innerText = `${prefix}${score.toFixed(2)}`;
+
+                        // 3. Gauge rotation: map -1 to +1 into a rotation
+                        // 0 is neutral (pointing straight up: 0deg rotation). 
+                        // -1 is bearish (pointing left: -90deg rotation).
+                        // +1 is bullish (pointing right: 90deg rotation).
+                        const deg = score * 90;
+                        needleEl.style.transform = `rotate(${deg}deg)`;
+
+                        // 4. Drivers container
+                        if (drivers.length > 0) {
+                            driversEl.innerHTML = drivers.map(d => `
+                                <span style="font-size: 0.75rem; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; padding: 3px 8px; border-radius: 12px; text-transform: capitalize;">
+                                    ${d}
+                                </span>
+                            `).join('');
+                        } else {
+                            driversEl.innerHTML = `<span style="font-size: 0.75rem; color: #64748b;">Neutral catalysts</span>`;
+                        }
+
+                        // 5. Render articles list
+                        if (articles.length > 0) {
+                            listEl.innerHTML = articles.map(a => {
+                                const isUp = a.sentiment === 'Bullish';
+                                const isDown = a.sentiment === 'Bearish';
+                                const tagColor = isUp ? 'rgba(0,255,157,0.1)' : (isDown ? 'rgba(255,0,85,0.1)' : 'rgba(255,255,255,0.05)');
+                                const tagText = isUp ? '#00ff9d' : (isDown ? '#ff0055' : '#8e9bae');
+                                const dateStr = a.publishTime ? new Date(a.publishTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent';
+
+                                return `
+                                    <div style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 8px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                                            <a href="${a.link}" target="_blank" style="color: #f8fafc; text-decoration: none; font-weight: 600; font-size: 0.9rem; line-height: 1.4; transition: color 0.2s;" onmouseover="this.style.color='#38bdf8'" onmouseout="this.style.color='#f8fafc'">
+                                                ${a.title}
+                                            </a>
+                                            <span style="font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; background: ${tagColor}; color: ${tagText}; text-transform: uppercase; flex-shrink: 0;">
+                                                ${a.sentiment}
+                                            </span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b;">
+                                            <span>${a.publisher}</span>
+                                            <span>${dateStr}</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+                        } else {
+                            listEl.innerHTML = `<div style="text-align: center; color: #64748b; padding: 20px; font-size: 0.9rem;">No news articles found for ${currentTicker}.</div>`;
+                        }
+
+                        // 6. Update last checked time
+                        updatedEl.innerText = `UPDATED: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                    } else {
+                        throw new Error(data.error || 'Invalid sentiment data');
+                    }
+                } catch (err) {
+                    console.error("Sentiment terminal load error:", err);
+                    listEl.innerHTML = `
+                        <div style="text-align: center; color: #ff0055; padding: 20px; font-size: 0.9rem;">
+                            ⚠️ News feed temporarily unavailable.
+                        </div>
+                    `;
+                    labelEl.innerText = "OFFLINE";
+                    labelEl.style.color = "#ff4d4d";
+                }
+            }
+
+            // Hook into the OHLC fetch to get price on load
+            const originalFetchOHLCData = fetchOHLCData;
+            fetchOHLCData = async function() {
+                await originalFetchOHLCData();
+                if (ohlcData && ohlcData.length > 0) {
+                    const histData = ohlcData.filter(d => !d.is_future);
+                    if (histData.length > 0) {
+                        activeStockPrice = histData[histData.length - 1].close;
+                        recalcChartTradeEstimate();
+                    }
+                }
+                loadChartTradePortfolio();
+                loadSentimentTerminal();
+            };
 
             window.addEventListener('resize', renderAll);
             fetchOHLCData();

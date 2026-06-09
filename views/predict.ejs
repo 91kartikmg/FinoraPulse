@@ -436,6 +436,13 @@
                             </svg>
                             Technical Strategies
                         </a>
+                        <a href="/technical?ticker=<%= ticker %>" class="btn"
+                            style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; margin-bottom: 5px; margin-left: 10px;">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/>
+                            </svg>
+                            Trade Virtual
+                        </a>
                     </div>
                     <div
                         style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
@@ -683,7 +690,7 @@
                         </div>
                     </div>
 
-                    <div style="height:60px;"></div>
+                    <%- include('partials/footer') %>
                 </main>
 
                 <aside class="side-panel right"></aside>

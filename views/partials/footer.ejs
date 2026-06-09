@@ -1,0 +1,39 @@
+<footer style="background: rgba(10, 15, 30, 0.95); border-top: 1px solid var(--border, #334155); padding: 40px 20px; font-family: 'Inter', sans-serif; color: #94a3b8; margin-top: 50px; border-radius: 8px;">
+    <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; align-items: start;">
+        <!-- Left Column: Branding -->
+        <div>
+            <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <img src="/images/finorapulse-logo-full.png" alt="FinoraPulse Logo" style="height: 28px; filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.2)); cursor: pointer;" onclick="window.location.href='/'">
+            </div>
+            <p style="font-size: 0.85rem; line-height: 1.6; color: #64748b; margin: 0 0 15px 0;">
+                Advanced AI-powered stock prediction, algorithmic charting, macroeconomic research, and paper trading analytics.
+            </p>
+            <div style="font-size: 0.75rem; color: #475569;">
+                &copy; <%= new Date().getFullYear() %> FinoraPulse. All rights reserved.
+            </div>
+        </div>
+
+        <!-- Center Column: Core Features -->
+        <div>
+            <h4 style="color: #f8fafc; font-size: 0.9rem; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Core Features</h4>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 8px; font-size: 0.85rem;">
+                <a href="/predict?ticker=RELIANCE.NS" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#00E5FF'" onmouseout="this.style.color='#94a3b8'">AI Price Predictor</a>
+                <a href="/macro" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#00E5FF'" onmouseout="this.style.color='#94a3b8'">Macro Quant Explorer</a>
+                <a href="/heatmap" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#00E5FF'" onmouseout="this.style.color='#94a3b8'">Market Heatmap</a>
+                <a href="/calculator" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#00E5FF'" onmouseout="this.style.color='#94a3b8'">Pro Calculators</a>
+            </div>
+        </div>
+
+        <!-- Right Column: Legal Information -->
+        <div>
+            <h4 style="color: #f8fafc; font-size: 0.9rem; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Legal & Disclosure</h4>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+                <a href="/privacy-policy" style="color: #00E5FF; text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#00FF9D'" onmouseout="this.style.color='#00E5FF'">Privacy Policy</a>
+                <a href="#" id="openAboutUsBtn" style="color: #00E5FF; text-decoration: none; font-weight: 600; transition: color 0.2s;" onmouseover="this.style.color='#00FF9D'" onmouseout="this.style.color='#00E5FF'">About Us</a>
+                <p style="font-size: 0.7rem; color: #475569; line-height: 1.5; margin: 5px 0 0 0;">
+                    <strong>Simulated Trading Notice:</strong> FinoraPulse provides mock trading tools. No actual capital is risked. All predictions are algorithmic suggestions and not financial advice.
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>

@@ -29,7 +29,23 @@ const userSchema = new mongoose.Schema({
     createdAt: { 
         type: Date, 
         default: Date.now 
-    }
+    },
+    virtualBalance: {
+        type: Number,
+        default: 100000
+    },
+    portfolio: [{
+        ticker: { type: String, required: true },
+        shares: { type: Number, required: true },
+        averageBuyPrice: { type: Number, required: true }
+    }],
+    tradeHistory: [{
+        ticker: { type: String, required: true },
+        type: { type: String, enum: ['BUY', 'SELL'], required: true },
+        shares: { type: Number, required: true },
+        price: { type: Number, required: true },
+        timestamp: { type: Date, default: Date.now }
+    }]
 });
 
 module.exports = mongoose.model('User', userSchema);

@@ -583,6 +583,7 @@ app.get('/technical', requireLogin, async (req, res) => {
 app.get('/macro', requireLogin, (req, res) => res.render('macro', { country: req.query.country || 'IN' }));
 app.get('/heatmap', requireLogin, (req, res) => res.render('heatmap', { country: (req.query.country || 'US').toUpperCase() }));
 app.get('/calculator', (req, res) => res.render('calculator'));
+app.get('/privacy-policy', (req, res) => res.render('privacy_policy'));
 
 
 // ==========================================
@@ -636,7 +637,8 @@ const TTL = {
     HEATMAP: 1 * 60 * 60 * 1000,
     SEARCH: 30 * 60 * 1000,
     CORRELATION: 12 * 60 * 60 * 1000,
-    TECHNICAL: 4 * 60 * 60 * 1000
+    TECHNICAL: 4 * 60 * 60 * 1000,
+    SENTIMENT: 1 * 60 * 60 * 1000
 };
 
 async function cachedFetch(cacheKey, ttlMs, fetchFn) {
@@ -744,6 +746,21 @@ app.get('/api/heatmap-data', async (req, res) => {
         fetchPythonData('macro_quant', 'macro_engine.py', ['heatmap', country])
     );
     res.json(result);
+});
+
+app.get('/api/sentiment', async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    if (!ticker) return res.status(400).json({ error: "Missing ticker query parameter." });
+
+    try {
+        const result = await cachedFetch(`sentiment_${ticker}`, TTL.SENTIMENT, () =>
+            fetchPythonData('fundamentals', 'news_engine.py', [ticker])
+        );
+        res.json(result);
+    } catch (err) {
+        console.error(`Error in /api/sentiment for ${ticker}:`, err);
+        res.status(500).json({ error: "Failed to fetch news sentiment analysis." });
+    }
 });
 
 function formatType(type) {
@@ -1017,6 +1034,601 @@ app.get('/api/chart-svg', async (req, res) => {
 // --- PAGE ROUTE ---
 app.get('/chart-view', requireLogin, (req, res) => {
     res.render('chart_view', { ticker: (req.query.ticker || 'RELIANCE.NS').toUpperCase() });
+});
+
+// --- FINORA AI TERMINAL CHATBOT ---
+app.post('/api/chat', requireLogin, async (req, res) => {
+    const { message, contextTicker, contextTimeframe } = req.body;
+    if (!message || message.trim() === '') {
+        return res.status(400).json({ error: "Message is required" });
+    }
+
+    try {
+        // 1. Parse ticker or country
+        let ticker = extractTicker(message, contextTicker);
+        let country = extractCountry(message);
+        
+        let contextData = { type: 'general', ticker: ticker, country: country };
+
+        // Helper regex matching
+        function extractTicker(msg, ctxTicker) {
+            const matches = msg.match(/\b([A-Z]{2,10}(?:\.[A-Z]{2,4})?|-USD|=X)\b/g);
+            if (matches && matches.length > 0) {
+                return matches[0];
+            }
+            const commonTickers = {
+                'reliance': 'RELIANCE.NS', 'tcs': 'TCS.NS', 'hdfc': 'HDFCBANK.NS', 
+                'infy': 'INFY.NS', 'sbin': 'SBIN.NS', 'aapl': 'AAPL', 
+                'msft': 'MSFT', 'nvda': 'NVDA', 'amzn': 'AMZN', 
+                'meta': 'META', 'googl': 'GOOGL', 'tsla': 'TSLA',
+                'bitcoin': 'BTC-USD', 'ethereum': 'ETH-USD'
+            };
+            const lowerMsg = msg.toLowerCase();
+            for (const key in commonTickers) {
+                if (lowerMsg.includes(key)) {
+                    return commonTickers[key];
+                }
+            }
+            return ctxTicker || null;
+        }
+
+        function extractCountry(msg) {
+            const countryMap = {
+                "india": "IN", "china": "CN", "japan": "JP", "germany": "DE", 
+                "uk": "GB", "united kingdom": "GB", "canada": "CA", "australia": "AU", 
+                "brazil": "BR", "mexico": "MX", "france": "FR", "italy": "IT", "usa": "US", "us": "US"
+            };
+            const lowerMsg = msg.toLowerCase();
+            for (const key in countryMap) {
+                if (lowerMsg.includes(key)) {
+                    return countryMap[key];
+                }
+            }
+            return null;
+        }
+
+        const tf = contextTimeframe || '1d';
+
+        // 2. Fetch context data
+        if (ticker) {
+            const chartData = await cachedFetch(`svg_chart_${ticker}_${tf}`, TTL.TECHNICAL, () =>
+                fetchPythonData('ml_models', 'ohlc_engine.py', [ticker, DATASET_PATH, tf])
+            );
+            if (chartData && !chartData.error) {
+                contextData = {
+                    type: 'technical',
+                    ticker,
+                    timeframe: tf,
+                    data: chartData
+                };
+            }
+        } else if (country) {
+            const macroResult = await cachedFetch(`macro_${country}`, TTL.MACRO, () =>
+                fetchPythonData('macro_quant', 'macro_engine.py', ['macro', country])
+            );
+            const liqResult = await cachedFetch(`liquidity_${country}`, TTL.MACRO, () =>
+                fetchPythonData('macro_quant', 'macro_engine.py', ['liquidity', country])
+            );
+
+            if (macroResult && !macroResult.error) {
+                const getLatest = (arr) => {
+                    if (!arr || arr.length === 0) return 0;
+                    for (let i = arr.length - 1; i >= 0; i--) {
+                        if (arr[i] !== 0 && arr[i] !== null) return arr[i];
+                    }
+                    return 0;
+                };
+                contextData = {
+                    type: 'macro',
+                    country,
+                    data: {
+                        gdp_growth: getLatest(macroResult.gdp_trend),
+                        inflation: getLatest(macroResult.inflation_trend),
+                        unemployment: getLatest(macroResult.unemployment_trend),
+                        bond_yield: getLatest(macroResult.bond_trend),
+                        interest_rate: getLatest(macroResult.interest_rate_trend),
+                        debt_to_gdp: getLatest(macroResult.debt_trend),
+                        foreign_val: liqResult?.foreign_val || 0,
+                        domestic_val: liqResult?.domestic_val || 0,
+                        net: liqResult?.net || 0,
+                        currency: liqResult?.currency || 'USD',
+                        status: liqResult?.status || 'Neutral'
+                    }
+                };
+            }
+        }
+
+        // 3. Generate response using Gemini API key if present, otherwise local quant fallback
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+        if (GEMINI_API_KEY) {
+            try {
+                const systemPrompt = `You are Finora AI, a premium quantitative stock analyst & macroeconomic terminal assistant at FinoraPulse.com.
+You have access to real-time market data, moving averages, forecasting engines, and macroeconomic indicators.
+Your tone is professional, technical, clear, and quantitative.
+Here is the context data for the query:
+${JSON.stringify(contextData, null, 2)}
+
+Instructions:
+- Format your output in clean Markdown with headers, bolding, and bullet points.
+- Quote actual numbers, percentages, and prices from the dataset.
+- Be concise and answer the user's question directly.
+- If the user asks about topics outside finance or macroeconomics, politely guide them back to trading and terminal analytics.`;
+
+                const response = await axios.post(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+                    {
+                        contents: [
+                            {
+                                role: "user",
+                                parts: [{ text: `${systemPrompt}\n\nUser Question: ${message}` }]
+                            }
+                        ]
+                    },
+                    { headers: { 'Content-Type': 'application/json' } }
+                );
+
+                const aiResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (aiResponse) {
+                    return res.json({ response: aiResponse });
+                }
+            } catch (apiErr) {
+                console.error("Gemini API Error, falling back to local engine:", apiErr.message);
+            }
+        }
+
+        // Fallback Local Quant Rules Engine
+        let responseText = "";
+        const fmt = (num) => new Intl.NumberFormat('en-US').format(Math.abs(num));
+
+        if (contextData.type === 'technical' && contextData.data) {
+            const data = contextData.data;
+            const tName = contextData.ticker;
+            const tFrame = contextData.timeframe;
+            const histData = data.filter(d => !d.is_future);
+            const futData = data.filter(d => d.is_future);
+
+            if (histData.length > 0) {
+                const lastHist = histData[histData.length - 1];
+                const lastFut = futData.length > 0 ? futData[futData.length - 1] : lastHist;
+
+                const currentPrice = lastHist.close;
+                const ema9Hist = lastHist.ema9;
+                const ema9Fut = lastFut.ema9;
+                const ema21Hist = lastHist.ema21;
+                const ema21Fut = lastFut.ema21;
+                const sma20Hist = lastHist.sma20;
+                const sma20Fut = lastFut.sma20;
+                const sma50Hist = lastHist.sma50;
+                const sma50Fut = lastFut.sma50;
+                const rsi = lastHist.rsi;
+                const macd = lastHist.macd;
+                const macdSignal = lastHist.signal;
+
+                // Technical Score calculation
+                let score = 50;
+                const checkTrendLocal = (hV, fV) => {
+                    if (hV && fV) {
+                        const d = fV - hV;
+                        if (d / hV > 0.0002) return 'up';
+                        if (d / hV < -0.0002) return 'down';
+                    }
+                    return 'flat';
+                };
+
+                const e9Tr = checkTrendLocal(ema9Hist, ema9Fut);
+                const e21Tr = checkTrendLocal(ema21Hist, ema21Fut);
+                const s20Tr = checkTrendLocal(sma20Hist, sma20Fut);
+                const s50Tr = checkTrendLocal(sma50Hist, sma50Fut);
+
+                if (e9Tr === 'up') score += 10; else if (e9Tr === 'down') score -= 10;
+                if (e21Tr === 'up') score += 10; else if (e21Tr === 'down') score -= 10;
+                if (s20Tr === 'up') score += 10; else if (s20Tr === 'down') score -= 10;
+                if (s50Tr === 'up') score += 10; else if (s50Tr === 'down') score -= 10;
+
+                if (ema9Hist && ema21Hist) score += (ema9Hist > ema21Hist ? 5 : -5);
+                if (sma20Hist && sma50Hist) score += (sma20Hist > sma50Hist ? 5 : -5);
+                if (currentPrice && sma50Hist) score += (currentPrice > sma50Hist ? 10 : -10);
+                if (currentPrice && sma20Hist) score += (currentPrice > sma20Hist ? 5 : -5);
+
+                score = Math.max(1, Math.min(100, Math.round(score)));
+                const trendText = score > 50 ? 'Bullish' : (score < 50 ? 'Bearish' : 'Neutral');
+
+                responseText = `### 🤖 Finora AI Technical Report: **${tName}** (${tFrame})
+
+**Current Price:** \`${currentPrice.toFixed(2)}\`
+**AI Forecast Target:** \`${lastFut.close.toFixed(2)}\` (\`${(lastFut.close > currentPrice ? '+' : '')}${((lastFut.close - currentPrice)/currentPrice * 100).toFixed(2)}%\`)
+
+#### 📈 Trend & Momentum Analysis
+- **Technical Quant Score:** **${score}/100** (${trendText} momentum)
+- **Moving Average Slopes:**
+  - **EMA 9 (Short term):** ${e9Tr === 'up' ? '↗ Rising' : (e9Tr === 'down' ? '↘ Falling' : '→ Flat')} (from ${ema9Hist?.toFixed(2)} to ${ema9Fut?.toFixed(2)})
+  - **SMA 50 (Medium term):** ${s50Tr === 'up' ? '↗ Rising' : (s50Tr === 'down' ? '↘ Falling' : '→ Flat')} (from ${sma50Hist?.toFixed(2)} to ${sma50Fut?.toFixed(2)})
+- The price is trading **${currentPrice > sma50Hist ? 'above' : 'below'}** its 50-period SMA, which indicates a **${currentPrice > sma50Hist ? 'primary uptrend' : 'primary downtrend'}**.
+
+#### 📊 Indicators & Levels
+- **RSI (14):** **${rsi ? rsi.toFixed(2) : '--'}** (${rsi > 70 ? '⚠️ Overbought' : (rsi < 30 ? '🚀 Oversold' : 'Neutral')})
+- **MACD:** ${macd ? `Line at ${macd.toFixed(2)} vs Signal ${macdSignal?.toFixed(2)} (${macd > macdSignal ? 'Bullish bias' : 'Bearish bias'})` : 'N/A'}
+
+#### 💡 Trading Recommendation
+The quantitative model suggests a **${trendText.toUpperCase()}** bias. ${score > 50 ? `Consider looking for long entry opportunities on minor pullbacks near short-term supports, targeting the forecasted level of **${lastFut.close.toFixed(2)}**.` : (score < 50 ? `Sustained downside pressure is expected. Maintain defensive risk management or watch resistance ceilings for short setups.` : `Market is consolidating. Scalping between key support and resistance limits is advised.`)}`;
+            } else {
+                responseText = `### 🤖 Finora AI Chatbot
+I found the ticker **${tName}** in our database, but we are currently waiting for historical OHLC data to build indicators. Please try again in a moment.`;
+            }
+        } else if (contextData.type === 'macro' && contextData.data) {
+            const data = contextData.data;
+            const cName = contextData.country;
+            responseText = `### 🤖 Finora AI Macro Report: **${cName}**
+
+#### 📊 Sovereign Growth & Economic Metrics
+- **GDP Growth Rate:** **${data.gdp_growth || '0.00'}%**
+- **Inflation Rate:** **${data.inflation || '0.00'}%**
+- **Unemployment Rate:** **${data.unemployment || '0.00'}%**
+- **Central Bank Interest Rate:** **${data.interest_rate || '0.00'}%**
+- **Government Debt to GDP:** **${data.debt_to_gdp || '0.00'}%**
+- **10-Year Bond Yield:** **${data.bond_yield || '0.00'}%**
+
+#### 💼 Capital Flows & Liquidity Matrix
+- **Foreign Flow (FII):** ${data.foreign_val >= 0 ? '+' : '-'}${fmt(data.foreign_val)} ${data.currency}
+- **Local Flow (DII):** ${data.domestic_val >= 0 ? '+' : '-'}${fmt(data.domestic_val)} ${data.currency}
+- **Net Market Flow:** **${data.net >= 0 ? '+' : '-'}${fmt(data.net)} ${data.currency}**
+- **Market Sentiment Status:** **${data.status || 'Neutral'}**
+
+#### 💡 Macro Analysis
+The macro indicators for **${cName}** show GDP growth at **${data.gdp_growth}%** against an inflation rate of **${data.inflation}%**. The net flow of institutional money stands at **${data.net >= 0 ? '+' : '-'}${fmt(data.net)} ${data.currency}**, which makes the primary equity market outlook **${data.net >= 0 ? 'favorable' : 'bearish/volatile'}** in the near term.`;
+        } else {
+            responseText = `### 🤖 Finora AI Terminal Assistant
+Welcome to the FinoraPulse AI Assistant! I can help you analyze stock/crypto charts and global macroeconomic metrics.
+
+Here are some things you can ask me:
+- **"Analyze RELIANCE.NS"** or **"Is AAPL bullish?"** to get a detailed technical indicator and AI forecast report.
+- **"GDP of India"** or **"Macro indicators for USA"** to get a comprehensive macroeconomic liquidity and growth breakdown.
+- **"Compare AAPL vs MSFT"** (if Gemini is activated via a \`GEMINI_API_KEY\` in your env).
+
+I am currently running on a **Local Quant Rules Engine** fallback. Add a \`GEMINI_API_KEY\` to your server's \`.env\` file to unlock fully conversational reasoning!`;
+        }
+
+        res.json({ response: responseText });
+    } catch (chatErr) {
+        console.error("Chatbot API Error:", chatErr);
+        res.status(500).json({ error: "Failed to generate AI response. Please try again." });
+    }
+});
+
+// ==========================================
+// 11.5 VIRTUAL DUMMY TRADING ROUTES
+// ==========================================
+
+// Helper function to fetch quotes using python quote engine
+async function fetchQuotes(tickers) {
+    const tickersArray = Array.isArray(tickers) ? tickers : [tickers];
+    if (tickersArray.length === 0) return [];
+    
+    try {
+        const result = await fetchPythonData('fundamentals', 'quote_engine.py', [tickersArray.join(',')]);
+        if (result && result.error) {
+            throw new Error(result.error);
+        }
+        return Array.isArray(result) ? result : [];
+    } catch (err) {
+        console.error("Quote fetch helper error:", err.message);
+        throw err;
+    }
+}
+
+// Helper function to fetch USD/INR rate
+async function getUsdInrRate() {
+    try {
+        const results = await fetchQuotes('USDINR=X');
+        const result = results.find(r => r.symbol === 'USDINR=X');
+        if (result && result.price) {
+            return result.price;
+        }
+    } catch (e) {
+        console.error("Error fetching USD/INR rate, using fallback:", e.message);
+    }
+    return 83.5; // robust fallback rate
+}
+
+// Page Route: Dedicated Trade History
+app.get('/trade-history', requireLogin, (req, res) => {
+    res.render('trade_history');
+});
+
+// API Route: Get real-time price quote from Yahoo Finance
+app.get('/api/trading/quote', requireLogin, async (req, res) => {
+    const ticker = req.query.ticker?.toUpperCase();
+    if (!ticker) {
+        return res.status(400).json({ error: "Ticker is required." });
+    }
+
+    try {
+        const results = await fetchQuotes(ticker);
+        const result = results.find(r => r.symbol === ticker);
+        if (!result || result.error) {
+            return res.status(404).json({ error: `Asset not found: ${ticker}` });
+        }
+
+        res.json({
+            symbol: result.symbol,
+            price: result.price || 0,
+            change: result.change || 0,
+            changePercent: result.changePercent || 0,
+            name: result.name || result.symbol,
+            currency: result.currency || 'USD'
+        });
+    } catch (err) {
+        console.error("Quote fetch error:", err.message);
+        res.status(500).json({ error: "Failed to fetch live price quote. Please try again." });
+    }
+});
+
+// API Route: Get user's current virtual portfolio
+app.get('/api/trading/portfolio', requireLogin, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        // Initialize virtualBalance if not already set (e.g. for pre-existing accounts)
+        if (user.virtualBalance === undefined) {
+            user.virtualBalance = 100000;
+            await user.save();
+        }
+
+        const holdings = user.portfolio || [];
+        const enrichedHoldings = [];
+        let holdingsValue = 0;
+
+        if (holdings.length > 0) {
+            const tickers = holdings.map(h => h.ticker);
+            try {
+                const quotes = await fetchQuotes(tickers);
+                const quoteMap = {};
+                quotes.forEach(q => {
+                    quoteMap[q.symbol] = q;
+                });
+
+                const rate = await getUsdInrRate();
+
+                holdings.forEach(h => {
+                    const quote = quoteMap[h.ticker] || {};
+                    const currentPrice = quote.price || h.averageBuyPrice;
+                    const value = currentPrice * h.shares;
+
+                    const isUSD = quote.currency === 'USD' || (!h.ticker.endsWith('.NS') && !h.ticker.endsWith('.BO') && h.ticker !== 'INR=X');
+                    const valueInInr = isUSD ? value * rate : value;
+                    holdingsValue += valueInInr;
+
+                    const profitLoss = (currentPrice - h.averageBuyPrice) * h.shares;
+                    const profitLossPct = h.averageBuyPrice > 0 
+                        ? ((currentPrice - h.averageBuyPrice) / h.averageBuyPrice) * 100 
+                        : 0;
+
+                    enrichedHoldings.push({
+                        ticker: h.ticker,
+                        shares: h.shares,
+                        averageBuyPrice: h.averageBuyPrice,
+                        currentPrice: currentPrice,
+                        currentValue: value,
+                        name: quote.name || h.ticker,
+                        profitLoss: profitLoss,
+                        profitLossPct: profitLossPct
+                    });
+                });
+            } catch (err) {
+                console.error("Holdings quote fetch error:", err.message);
+                // Fallback to average buy price if quote fetch fails
+                holdings.forEach(h => {
+                    const value = h.averageBuyPrice * h.shares;
+                    holdingsValue += value;
+                    enrichedHoldings.push({
+                        ticker: h.ticker,
+                        shares: h.shares,
+                        averageBuyPrice: h.averageBuyPrice,
+                        currentPrice: h.averageBuyPrice,
+                        currentValue: value,
+                        name: h.ticker,
+                        profitLoss: 0,
+                        profitLossPct: 0
+                    });
+                });
+            }
+        }
+
+        const totalPortfolioValue = user.virtualBalance + holdingsValue;
+        const totalProfitLoss = totalPortfolioValue - 100000;
+        const totalProfitLossPct = (totalProfitLoss / 100000) * 100;
+
+        res.json({
+            virtualBalance: user.virtualBalance,
+            holdingsValue: holdingsValue,
+            totalPortfolioValue: totalPortfolioValue,
+            totalProfitLoss: totalProfitLoss,
+            totalProfitLossPct: totalProfitLossPct,
+            holdings: enrichedHoldings,
+            tradeHistory: user.tradeHistory || []
+        });
+    } catch (err) {
+        console.error("Portfolio retrieval error:", err);
+        res.status(500).json({ error: "Failed to load portfolio." });
+    }
+});
+
+// API Route: Process Buy/Sell order
+app.post('/api/trading/trade', requireLogin, async (req, res) => {
+    let { ticker, action, shares } = req.body;
+    ticker = ticker?.toUpperCase();
+    action = action?.toUpperCase();
+    shares = Number(shares);
+
+    if (!ticker || !action || isNaN(shares) || shares <= 0) {
+        return res.status(400).json({ error: "Invalid trade arguments. Symbol, action (BUY/SELL), and quantity must be valid." });
+    }
+
+    try {
+        const user = await User.findById(req.session.userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        // Initialize virtualBalance if not already set
+        if (user.virtualBalance === undefined) {
+            user.virtualBalance = 100000;
+        }
+
+        // Fetch current quote
+        const results = await fetchQuotes(ticker);
+        const result = results.find(r => r.symbol === ticker);
+        if (!result || result.error) {
+            return res.status(404).json({ error: `Could not retrieve live price for: ${ticker}` });
+        }
+
+        const price = result.price || 0;
+        if (price <= 0) {
+            return res.status(400).json({ error: "Invalid asset price." });
+        }
+
+        const isUSD = result.currency === 'USD' || (!ticker.endsWith('.NS') && !ticker.endsWith('.BO') && ticker !== 'INR=X');
+        const rate = isUSD ? await getUsdInrRate() : 1;
+        const totalCostInAssetCurrency = price * shares;
+        const totalCostInInr = isUSD ? totalCostInAssetCurrency * rate : totalCostInAssetCurrency;
+
+        if (action === 'BUY') {
+            if (user.virtualBalance < totalCostInInr) {
+                return res.status(400).json({ error: `Insufficient virtual cash. Required: ₹${totalCostInInr.toFixed(2)}, Available: ₹${user.virtualBalance.toFixed(2)}` });
+            }
+
+            // Deduct balance
+            user.virtualBalance -= totalCostInInr;
+
+            // Update portfolio
+            const holdingIndex = user.portfolio.findIndex(h => h.ticker === ticker);
+            if (holdingIndex > -1) {
+                const existing = user.portfolio[holdingIndex];
+                const totalShares = existing.shares + shares;
+                const newAvgPrice = ((existing.shares * existing.averageBuyPrice) + totalCostInAssetCurrency) / totalShares;
+                
+                user.portfolio[holdingIndex].shares = totalShares;
+                user.portfolio[holdingIndex].averageBuyPrice = newAvgPrice;
+            } else {
+                user.portfolio.push({
+                    ticker: ticker,
+                    shares: shares,
+                    averageBuyPrice: price
+                });
+            }
+        } else if (action === 'SELL') {
+            const holdingIndex = user.portfolio.findIndex(h => h.ticker === ticker);
+            if (holdingIndex === -1 || user.portfolio[holdingIndex].shares < shares) {
+                const owned = holdingIndex === -1 ? 0 : user.portfolio[holdingIndex].shares;
+                return res.status(400).json({ error: `Insufficient shares. You want to sell ${shares} shares of ${ticker}, but only own ${owned}.` });
+            }
+
+            // Add balance
+            user.virtualBalance += totalCostInInr;
+
+            // Update portfolio
+            user.portfolio[holdingIndex].shares -= shares;
+            if (user.portfolio[holdingIndex].shares <= 0) {
+                user.portfolio.splice(holdingIndex, 1);
+            }
+        } else {
+            return res.status(400).json({ error: "Invalid action. Use BUY or SELL." });
+        }
+
+        // Record history
+        user.tradeHistory.push({
+            ticker: ticker,
+            type: action,
+            shares: shares,
+            price: price,
+            timestamp: new Date()
+        });
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: `Successfully executed ${action} of ${shares} shares of ${ticker} at $${price.toFixed(2)}`,
+            virtualBalance: user.virtualBalance
+        });
+    } catch (err) {
+        console.error("Trade execution error:", err);
+        res.status(500).json({ error: "Trade execution failed. Please try again." });
+    }
+});
+
+// API Route: Global Leaderboard
+app.get('/api/trading/leaderboard', requireLogin, async (req, res) => {
+    try {
+        const users = await User.find({}, 'username virtualBalance portfolio');
+        const leaderboard = [];
+
+        // Identify all tickers across all portfolios to fetch quotes in batch
+        const allTickersSet = new Set();
+        users.forEach(u => {
+            if (u.portfolio && u.portfolio.length > 0) {
+                u.portfolio.forEach(h => allTickersSet.add(h.ticker));
+            }
+        });
+
+        // Batch fetch quotes
+        const tickerList = Array.from(allTickersSet);
+        const quoteMap = {};
+
+        if (tickerList.length > 0) {
+            try {
+                const quotes = await fetchQuotes(tickerList);
+                quotes.forEach(q => {
+                    if (q.price) quoteMap[q.symbol] = q;
+                });
+            } catch (err) {
+                console.error("Leaderboard batch quote fetch error:", err.message);
+            }
+        }
+
+        const rate = await getUsdInrRate();
+
+        users.forEach(u => {
+            // Default virtual balance to 100000 if not present
+            const cash = u.virtualBalance !== undefined ? u.virtualBalance : 100000;
+            let holdingsValue = 0;
+
+            if (u.portfolio && u.portfolio.length > 0) {
+                u.portfolio.forEach(h => {
+                    const quote = quoteMap[h.ticker] || {};
+                    const price = quote.price || h.averageBuyPrice;
+                    const value = price * h.shares;
+
+                    const isUSD = quote.currency === 'USD' || (!h.ticker.endsWith('.NS') && !h.ticker.endsWith('.BO') && h.ticker !== 'INR=X');
+                    const valueInInr = isUSD ? value * rate : value;
+                    holdingsValue += valueInInr;
+                });
+            }
+
+            const netWorth = cash + holdingsValue;
+            const roi = ((netWorth - 100000) / 100000) * 100;
+
+            leaderboard.push({
+                username: u.username,
+                netWorth: netWorth,
+                roi: roi
+            });
+        });
+
+        // Sort leaderboard by networth descending
+        leaderboard.sort((a, b) => b.netWorth - a.netWorth);
+
+        // Keep top 10
+        const top10 = leaderboard.slice(0, 10);
+
+        res.json(top10);
+    } catch (err) {
+        console.error("Leaderboard calculation error:", err);
+        res.status(500).json({ error: "Failed to compile leaderboard." });
+    }
 });
 
 // ==========================================
