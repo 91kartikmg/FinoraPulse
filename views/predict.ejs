@@ -386,33 +386,22 @@
 
         @media screen and (max-width: 768px) {
             .ai-metrics-bar {
-                display: flex;
-                flex-wrap: nowrap !important;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                gap: 15px;
-                padding-bottom: 10px;
-                /* Optional smooth scrolling behavior */
-                scroll-behavior: smooth;
-            }
-
-            .ai-metrics-bar::-webkit-scrollbar {
-                height: 6px;
-            }
-
-            .ai-metrics-bar::-webkit-scrollbar-track {
-                background: #080a0c;
-                border-radius: 10px;
-            }
-
-            .ai-metrics-bar::-webkit-scrollbar-thumb {
-                background: #334155;
-                border-radius: 10px;
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 15px 20px !important;
+                overflow-x: visible !important;
+                padding: 15px !important;
             }
 
             .metric-block {
-                min-width: 200px;
-                flex-shrink: 0;
+                min-width: 0 !important;
+                flex-shrink: 1 !important;
+                border-right: none !important;
+                padding-right: 0 !important;
+            }
+
+            .metric-block .metric-value {
+                font-size: 1.05rem !important;
             }
         }
     </style>
@@ -426,37 +415,33 @@
             <%- include('partials/sidebar') %>
 
                 <main class="content-panel">
-                    <div style="margin-bottom: 10px;">
-                        <a href="/technical?ticker=<%= ticker %>&timeframe=1d" id="tech-btn" class="btn"
-                            style="background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid #a855f7; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; margin-bottom: 5px;">
+                    <div class="action-buttons-row">
+                        <a href="/technical?ticker=<%= ticker %>&timeframe=1d" id="tech-btn" class="btn action-btn-tech">
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                                 <path
                                     d="M3 3v18h18v-2H5V3H3zm14 8.5l4-4V11h2V4h-7v2h3.5l-4.5 4.5L12 7l-7 7.5L6.5 16l5.5-6 3 3.5z" />
                             </svg>
                             Technical Strategies
                         </a>
-                        <a href="/technical?ticker=<%= ticker %>" class="btn"
-                            style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; margin-bottom: 5px; margin-left: 10px;">
+                        <a href="/technical?ticker=<%= ticker %>" class="btn action-btn-trade">
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/>
                             </svg>
                             Trade Virtual
                         </a>
                     </div>
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
-                        <h1 style="margin: 0; font-size: 2.5rem;">
+                    <div class="predict-header-row">
+                        <h1 class="ticker-title">
                             <%= ticker %>
                         </h1>
-                        <div style="text-align: right;">
-
+                        <div class="forecast-info-box">
                             <div class="tf-btn-group">
                                 <button class="tf-btn" onclick="changeTimeframe('5m', this)">5 Min</button>
                                 <button class="tf-btn active" onclick="changeTimeframe('1d', this)">1 Day</button>
                                 <button class="tf-btn" onclick="changeTimeframe('1wk', this)">1 Week</button>
                             </div>
                             <h4 id="forecast-title" style="margin: 0; color: #94a3b8;">5-Day Forecast</h4>
-                            <h2 id="forecast-header" style="margin: 0; font-size: 2rem;"><span
+                            <h2 id="forecast-header" style="margin: 0;"><span
                                     id="currency-symbol">₹</span><span id="forecast-val">0.00</span></h2>
                             <div id="sync-status" style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">
                                 Connecting AI...</div>
@@ -526,6 +511,29 @@
                             </div>
                         </div>
 
+                    </div>
+
+                    <!-- Sleek Cyberpunk Share Panel -->
+                    <div class="share-panel-card">
+                        <span class="share-title">📤 Share AI Forecast:</span>
+                        <div class="share-buttons">
+                            <button onclick="shareToPlatform('twitter')" class="share-btn twitter-btn" title="Share on Twitter / X">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                Twitter
+                            </button>
+                            <button onclick="shareToPlatform('stocktwits')" class="share-btn stocktwits-btn" title="Share on Stocktwits">
+                                <span style="font-weight: 800; font-size: 0.8rem; font-family: sans-serif; margin-right: 2px;">ST</span>
+                                Stocktwits
+                            </button>
+                            <button onclick="shareToPlatform('whatsapp')" class="share-btn whatsapp-btn" title="Share on WhatsApp">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.46L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.528 1.977 14.053.953 11.428.951 5.99.951 1.567 5.32 1.564 10.75c-.001 1.705.452 3.37 1.31 4.8l-.859 3.135 3.204-.84c1.474.805 2.923 1.205 4.828 1.205zm11.516-7.393c-.267-.134-1.585-.783-1.83-.873-.247-.089-.427-.134-.607.134-.18.268-.697.873-.855 1.053-.158.18-.315.201-.582.067-.267-.134-1.13-.416-2.153-1.329-.795-.71-1.333-1.587-1.49-1.854-.158-.267-.017-.412.117-.545.12-.12.267-.312.4-.469.133-.156.178-.268.267-.446.089-.178.045-.335-.022-.469-.068-.134-.607-1.46-.83-1.996-.217-.52-.435-.45-.607-.459-.158-.008-.338-.01-.518-.01-.18 0-.473.067-.72.335-.248.268-.946.925-.946 2.256s.968 2.618 1.103 2.8c.135.18 1.906 2.91 4.618 4.08.645.278 1.148.445 1.541.569.648.206 1.237.177 1.702.108.518-.077 1.585-.648 1.808-1.273.224-.624.224-1.161.157-1.273-.067-.112-.247-.18-.514-.313z"/></svg>
+                                WhatsApp
+                            </button>
+                            <button onclick="shareToPlatform('telegram')" class="share-btn telegram-btn" title="Share on Telegram">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-1-.65-.35-1 .22-1.6 1.5-1.55 2.75-2.92 2.88-3.55.02-.1.01-.25-.09-.34-.1-.09-.25-.06-.35-.04-.15.03-2.52 1.6-7.1 4.68-.67.46-1.28.69-1.83.68-.6-.01-1.75-.34-2.6-.62-.85-.28-1.8-.43-1.74-.96.03-.27.4-.55 1.12-.84 4.39-1.91 7.31-3.17 8.77-3.79 4.18-1.77 5.05-2.08 5.61-2.09.13 0 .41.03.59.18.15.12.19.29.21.41.02.09.03.25.01.37z"/></svg>
+                                Telegram
+                            </button>
+                        </div>
                     </div>
 
                     <div class="chart-card">
@@ -635,8 +643,7 @@
                         </div>
                     </div>
                     <br>
-                    <div class="sentiment-container"
-                        style="background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: 400px;">
+                    <div class="sentiment-container">
                         <div class="fundamentals-header" style="display: flex; justify-content: space-between;">
                             <span>Smart Money Flow</span>
                             <span id="sm-status"
@@ -696,6 +703,29 @@
         </div>
 
         <script>
+            function shareToPlatform(platform) {
+                const currentURL = encodeURIComponent(window.location.href);
+                const ticker = "<%= ticker %>";
+                const forecastVal = document.getElementById('forecast-val')?.innerText || '0.00';
+                const currency = document.getElementById('currency-symbol')?.innerText || '₹';
+                const shareText = encodeURIComponent(`AI predicts ${ticker} price target of ${currency}${forecastVal}! Check out the neural forecasting path on FinoraPulse:`);
+                
+                let shareURL = '';
+                if (platform === 'twitter') {
+                    shareURL = `https://twitter.com/intent/tweet?text=${shareText}&url=${currentURL}`;
+                } else if (platform === 'stocktwits') {
+                    shareURL = `https://stocktwits.com/widgets/share?body=${shareText}%20${currentURL}`;
+                } else if (platform === 'whatsapp') {
+                    shareURL = `https://api.whatsapp.com/send?text=${shareText}%20${currentURL}`;
+                } else if (platform === 'telegram') {
+                    shareURL = `https://t.me/share/url?url=${currentURL}&text=${shareText}`;
+                }
+                
+                if (shareURL) {
+                    window.open(shareURL, '_blank', 'width=600,height=400');
+                }
+            }
+
             const currentTicker = "<%= ticker %>";
             let currentTimeframe = "1d";
             let lastRenderedTimeframe = "";

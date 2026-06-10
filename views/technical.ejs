@@ -874,16 +874,16 @@
                         </div>
 
                         <!-- AI Trend Suggestion Alert Box -->
-                        <div id="ai-trend-suggestion" style="margin-bottom: 15px; padding: 12px 20px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); border: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; display: none;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 0.75rem; font-weight: 800; padding: 4px 8px; border-radius: 4px; background: rgba(38, 166, 154, 0.1); color: #26a69a; border: 1px solid rgba(38, 166, 154, 0.2); letter-spacing: 0.5px;">AI FORECAST GAUGE</span>
-                                <span id="trend-summary-text" style="font-size: 0.95rem; font-weight: bold; color: #fff;">Analyzing trend projections...</span>
+                        <div id="ai-trend-suggestion" class="trend-suggestion-box" style="display: none;">
+                            <div class="trend-left">
+                                <span class="trend-badge">AI FORECAST GAUGE</span>
+                                <span id="trend-summary-text">Analyzing trend projections...</span>
                             </div>
-                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                                <span id="ema9-projection" style="font-family: monospace; font-size: 0.82rem; font-weight: bold; color: #22d3ee; margin-right: 5px;">EMA 9: --</span>
-                                <span id="ema21-projection" style="font-family: monospace; font-size: 0.82rem; font-weight: bold; color: #818cf8; margin-right: 5px;">EMA 21: --</span>
-                                <span id="sma20-projection" style="font-family: monospace; font-size: 0.82rem; font-weight: bold; color: #38bdf8; margin-right: 5px;">SMA 20: --</span>
-                                <span id="sma50-projection" style="font-family: monospace; font-size: 0.82rem; font-weight: bold; color: #f59e0b;">SMA 50: --</span>
+                            <div class="trend-right">
+                                <span id="ema9-projection" style="color: #22d3ee;">EMA 9: --</span>
+                                <span id="ema21-projection" style="color: #818cf8;">EMA 21: --</span>
+                                <span id="sma20-projection" style="color: #38bdf8;">SMA 20: --</span>
+                                <span id="sma50-projection" style="color: #f59e0b;">SMA 50: --</span>
                             </div>
                         </div>
 
@@ -943,7 +943,7 @@
 
                     <!-- VIRTUAL TRADING TERMINAL -->
                     <div class="chart-card" id="virtual-trading-panel" style="padding: 25px; margin-bottom: 25px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;">
+                        <div class="panel-header-row">
                             <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem;">Virtual Paper Trading Terminal</h3>
                             <a href="/trade-history" style="color: #38bdf8; text-decoration: none; font-size: 0.85rem; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
                                 View Complete Portfolio & Trade History →
@@ -966,7 +966,7 @@
                                 </div>
                             </div>
                             
-                            <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; margin-top: 5px; background: rgba(13, 17, 23, 0.4); padding: 20px; border: 1px solid var(--border); border-radius: 8px;">
+                            <div class="trade-action-box">
                                 <div style="flex: 1; min-width: 150px;">
                                     <label style="display: block; font-size: 0.75rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">Order Action</label>
                                     <div style="display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #0d1117; height: 42px; box-sizing: border-box;">
@@ -1000,7 +1000,7 @@
 
                     <!-- LIVE SENTIMENT & NEWS TERMINAL -->
                     <div class="chart-card" id="sentiment-analysis-panel" style="padding: 25px; margin-bottom: 25px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px;">
+                        <div class="panel-header-row">
                             <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
                                 <span>🤖</span> AI News & Sentiment Terminal
                             </h3>

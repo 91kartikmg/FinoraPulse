@@ -914,7 +914,18 @@ async function runMacroBatchUpdate(force = false) {
                 if (!liquidityData.error) await setCache(`liquidity_${country}`, liquidityData);
             }
 
-            if (force || hasMacro === null || hasLiquidity === null) {
+            const hasHeatmap = await getCache(`heatmap_${country}`, TTL.HEATMAP);
+            if (force || hasHeatmap === null) {
+                const heatmapData = await fetchPythonData('macro_quant', 'macro_engine.py', ['heatmap', country]);
+                if (!heatmapData.error) {
+                    await setCache(`heatmap_${country}`, heatmapData);
+                    console.log(`✅ Cached Heatmap: ${country}`);
+                }
+            } else {
+                console.log(`⚡ Warm Cache for Heatmap: ${country} (Skipping Python spawn)`);
+            }
+
+            if (force || hasMacro === null || hasLiquidity === null || hasHeatmap === null) {
                 // Yield to event loop and delay slightly between active Python syncs
                 await new Promise(resolve => setTimeout(resolve, 5000));
             }
