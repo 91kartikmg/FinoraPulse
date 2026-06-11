@@ -405,68 +405,56 @@
             z-index: 9999 !important;
         }
 
-        .close-fullscreen-btn {
-            display: none;
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(239, 83, 80, 0.2);
-            color: #ef5350;
-            border: 1px solid rgba(239, 83, 80, 0.4);
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            font-size: 22px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 100000;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-            padding-bottom: 4px;
-        }
-
-        .close-fullscreen-btn:hover {
-            background: rgba(239, 83, 80, 0.4);
-            color: #fff;
-        }
-
-        /* 3-Bar / Hamburger Menu Toggle Button */
+        .close-fullscreen-btn,
         .menu-toggle-btn {
             display: none;
             position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(56, 189, 248, 0.2);
-            color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            border-radius: 8px;
-            width: 36px;
-            height: 36px;
-            font-size: 20px;
-            font-weight: bold;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
             cursor: pointer;
             z-index: 100000;
             align-items: center;
             justify-content: center;
-            line-height: 1;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .close-fullscreen-btn {
+            background: rgba(239, 83, 80, 0.15);
+            color: #ef5350;
+            border: 1px solid rgba(239, 83, 80, 0.4);
+            box-shadow: 0 4px 15px rgba(239, 83, 80, 0.2);
+        }
+
+        .close-fullscreen-btn:hover {
+            background: rgba(239, 83, 80, 0.35);
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(239, 83, 80, 0.4);
+            transform: scale(1.05);
+        }
+
+        .menu-toggle-btn {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
         }
 
         .menu-toggle-btn:hover {
-            background: rgba(56, 189, 248, 0.4);
+            background: rgba(56, 189, 248, 0.35);
             color: #fff;
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+            transform: scale(1.05);
         }
 
         .chart-card:fullscreen .close-fullscreen-btn,
         .chart-card:-webkit-full-screen .close-fullscreen-btn,
-        .rotate-mobile .close-fullscreen-btn {
-            display: flex !important;
-        }
-
+        .mobile-fullscreen .close-fullscreen-btn,
         .chart-card:fullscreen .menu-toggle-btn,
         .chart-card:-webkit-full-screen .menu-toggle-btn,
-        .rotate-mobile .menu-toggle-btn {
+        .mobile-fullscreen .menu-toggle-btn {
             display: flex !important;
         }
 
@@ -474,73 +462,219 @@
         .chart-card:-webkit-full-screen #svg-container,
         .chart-card:fullscreen #pattern-container,
         .chart-card:-webkit-full-screen #pattern-container,
+        .mobile-fullscreen #svg-container,
+        .mobile-fullscreen #pattern-container,
         .fake-fullscreen #svg-container,
         .fake-fullscreen #pattern-container {
             flex: 1 1 0 !important;
             height: auto !important;
         }
 
-        @media screen and (max-width: 768px) {
+        /* Chart Header HUD */
+        .chart-header-hud {
+            display: none;
+            width: 100%;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(13, 17, 23, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px 16px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
 
+        .chart-card:fullscreen .chart-header-hud,
+        .chart-card:-webkit-full-screen .chart-header-hud,
+        .mobile-fullscreen .chart-header-hud {
+            display: flex !important;
+        }
+
+        /* Hide the old h3 when HUD is showing */
+        .chart-card:fullscreen h3,
+        .chart-card:-webkit-full-screen h3,
+        .mobile-fullscreen h3 {
+            display: none !important;
+        }
+
+        .hud-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-ticker {
+            background: rgba(0, 229, 255, 0.1);
+            color: #00E5FF;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .hud-timeframe {
+            background: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .hud-live-dot {
+            width: 8px;
+            height: 8px;
+            background: #26a69a;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #26a69a;
+            animation: pulse-green 1.5s infinite;
+        }
+
+        .hud-live-text {
+            color: #26a69a;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hud-center {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .hud-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hud-price-label {
+            color: #64748b;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .hud-price-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+
+        @media screen and (max-width: 768px) {
             .chart-card:fullscreen .sub-chart,
             .chart-card:-webkit-full-screen .sub-chart,
+            .mobile-fullscreen .sub-chart,
             .fake-fullscreen .sub-chart {
-                height: 120px !important;
+                height: 75px !important;
+                margin-top: 6px !important;
+                padding-top: 6px !important;
             }
         }
 
-        .rotate-mobile {
+        /* Mobile Fullscreen Panel */
+        .mobile-fullscreen {
             position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            width: 100vh !important;
-            height: 100vw !important;
-            width: 100dvh !important;
-            height: 100dvw !important;
-            transform: translate(-50%, -50%) rotate(90deg) !important;
             z-index: 99999 !important;
-            padding: 12px !important;
             margin: 0 !important;
             border-radius: 0 !important;
             border: none !important;
             display: flex !important;
             flex-direction: column !important;
             background: #0d1117 !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
             box-sizing: border-box !important;
+            padding: 8px !important;
         }
 
-        /* Shift button positions in mobile rotated orientation to clear status bars, safe areas, notches, and browser URL bar overlaps */
-        .rotate-mobile .menu-toggle-btn {
-            top: 26px !important;
-            left: 26px !important;
+        /* Mobile Fullscreen Spacing & Scrolling Optimizations */
+        .mobile-fullscreen #ai-trend-suggestion {
+            display: none !important; /* Hide AI Forecast Gauge completely as requested */
         }
 
-        .rotate-mobile .close-fullscreen-btn {
-            top: 26px !important;
-            right: 26px !important;
-            left: auto !important;
-            bottom: auto !important;
-            z-index: 100000 !important;
+        .mobile-fullscreen #svg-container,
+        .mobile-fullscreen #pattern-container {
+            height: 320px !important; /* Set larger fixed height for main candlestick chart */
+            flex: none !important;
         }
 
-        .rotate-mobile h3,
-        .chart-card:fullscreen h3,
-        .chart-card:-webkit-full-screen h3 {
-            display: block !important;
-            margin: 0 !important;
-            padding-left: 70px !important;
-            /* Make room for menu button */
-            font-size: 1.1rem !important;
-            white-space: nowrap !important;
-            line-height: 36px !important;
+        .mobile-fullscreen .sub-chart {
+            height: 180px !important; /* Set layout height for sub-charts (RSI, MACD etc.) */
+            flex: none !important;
+            margin-top: 10px !important;
+            padding-top: 10px !important;
         }
 
-        .rotate-mobile h3 span,
-        .chart-card:fullscreen h3 span,
-        .chart-card:-webkit-full-screen h3 span {
-            display: none !important;
+        .mobile-fullscreen .chart-header-hud {
+            margin-bottom: 6px !important;
+            padding: 6px 12px !important;
+        }
+
+        .mobile-fullscreen .chart-title-row {
+            margin-bottom: 0px !important;
+        }
+
+        @media screen and (orientation: portrait) {
+            .mobile-fullscreen {
+                top: 50% !important;
+                left: 50% !important;
+                width: 100dvh !important;
+                height: 100dvw !important;
+                transform: translate(-50%, -50%) rotate(90deg) !important;
+                overflow-y: auto !important; /* Enable scrolling for next graph */
+                overflow-x: hidden !important;
+            }
+
+            .mobile-fullscreen .close-fullscreen-btn {
+                top: 20px !important;
+                right: 20px !important; /* Mapped Top-Right physically */
+                left: auto !important;
+                bottom: auto !important;
+            }
+
+            .mobile-fullscreen .menu-toggle-btn {
+                top: 20px !important;
+                left: 20px !important; /* Mapped Top-Left physically */
+                right: auto !important;
+                bottom: auto !important;
+            }
+        }
+
+        @media screen and (orientation: landscape) {
+            .mobile-fullscreen {
+                top: 0 !important;
+                left: 0 !important;
+                width: 100dvw !important;
+                height: 100dvh !important;
+                transform: none !important;
+                overflow-y: auto !important; /* Enable scrolling for next graph */
+                overflow-x: hidden !important;
+            }
+
+            .mobile-fullscreen .close-fullscreen-btn {
+                top: 20px !important;
+                right: 20px !important;
+                left: auto !important;
+                bottom: auto !important;
+            }
+
+            .mobile-fullscreen .menu-toggle-btn {
+                top: 20px !important;
+                left: 20px !important;
+                right: auto !important;
+                bottom: auto !important;
+            }
         }
 
         /* Sidebar styling for fullscreen: Grid Layout (Desktop) */
@@ -564,18 +698,15 @@
             overflow-y: auto !important;
             overflow-x: hidden !important;
             transform: translateX(-350px) !important;
-            /* Collapsed by default */
             transition: transform 0.3s ease !important;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
         }
 
-        /* Slide in sidebar when expanded on desktop fullscreen */
         .chart-card:fullscreen .toolbar.open,
         .chart-card:-webkit-full-screen .toolbar.open {
             transform: translateX(0) !important;
         }
 
-        /* Desktop specific sidebar element controls */
         .chart-card:fullscreen .toolbar .tool-btn,
         .chart-card:-webkit-full-screen .toolbar .tool-btn {
             width: 100% !important;
@@ -618,55 +749,44 @@
             flex-shrink: 0 !important;
         }
 
-        /* ========================================================================= */
-        /* ROTATED MOBILE SIDEBAR TOOLBAR: Fixed columns fitting screen height/width */
-        /* ========================================================================= */
-        .rotate-mobile .toolbar {
+        /* Mobile Fullscreen Toolbar: Grid-like chip panel */
+        .mobile-fullscreen .toolbar {
             position: absolute !important;
             top: 70px !important;
             left: 15px !important;
-            width: calc(100dvh - 100px) !important;
-            /* Card's width runs physically vertically */
-            height: 290px !important;
-            /* Card's height runs physically horizontally (fits within physical width) */
-            max-height: none !important;
+            width: calc(100% - 30px) !important;
+            max-height: calc(100% - 90px) !important;
             background: rgba(13, 17, 23, 0.96) !important;
             backdrop-filter: blur(15px) !important;
-            border: 1px solid var(--border) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 12px !important;
-            padding: 10px !important;
+            padding: 12px !important;
             display: flex !important;
             flex-direction: row !important;
-            /* Stack along card's X-axis -> physical vertical columns */
             flex-wrap: wrap !important;
-            /* Wrap along card's Y-axis -> physical horizontal rows */
             align-content: flex-start !important;
             justify-content: flex-start !important;
             align-items: center !important;
             gap: 6px 8px !important;
             z-index: 99999 !important;
+            overflow-y: auto !important;
             overflow-x: hidden !important;
-            overflow-y: hidden !important;
-            /* Entirely fits on screen, no scrolling needed! */
-            transform: translateY(-400px) !important;
-            /* Slides completely off-screen along card's Y-axis (physically to the right) */
-            transition: transform 0.3s ease !important;
+            transform: translateY(-150%) !important;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
         }
 
-        /* Slide in sidebar when expanded in rotated mobile view */
-        .rotate-mobile .toolbar.open {
+        .mobile-fullscreen .toolbar.open {
             transform: translateY(0) !important;
         }
 
-        /* Rotate items physically vertically using card coordinate alignment */
-        .rotate-mobile .toolbar .tool-btn,
-        .rotate-mobile .toolbar .tool-checkbox {
-            width: 120px !important;
-            /* Card's X-axis dimension -> physical height of item */
-            height: 34px !important;
-            /* Card's Y-axis dimension -> physical width of item */
-            text-align: left !important;
+        .mobile-fullscreen .toolbar .tool-btn,
+        .mobile-fullscreen .toolbar .tool-checkbox {
+            width: calc(33.33% - 6px) !important;
+            height: 38px !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #8E9BAE !important;
             padding: 4px 8px !important;
             border-radius: 6px !important;
             flex-shrink: 0 !important;
@@ -674,47 +794,56 @@
             margin: 0 !important;
             display: flex !important;
             align-items: center !important;
+            justify-content: center !important;
             font-size: 0.72rem !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease !important;
         }
 
-        .rotate-mobile .toolbar span {
+        .mobile-fullscreen .toolbar .tool-btn:hover,
+        .mobile-fullscreen .toolbar .tool-checkbox:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .mobile-fullscreen .toolbar .tool-btn.active {
+            background: rgba(56, 189, 248, 0.1) !important;
+            border-color: #38bdf8 !important;
+            color: #38bdf8 !important;
+        }
+
+        .mobile-fullscreen .toolbar span {
             width: 100% !important;
-            /* Spans full height of column, forcing a column break to start new section */
-            margin: 6px 0 !important;
-            color: #8E9BAE !important;
+            margin: 8px 0 4px 0 !important;
+            color: #38bdf8 !important;
             font-size: 0.7rem !important;
             font-weight: bold !important;
             text-transform: uppercase !important;
+            letter-spacing: 1px !important;
             display: flex !important;
-            align-items: center !important;
+            align-items: center;
         }
 
-        /* Vertical spacer separating columns physically */
-        .rotate-mobile .toolbar div[style*="width: 1px"],
-        .rotate-mobile .toolbar div[style*="width:1px"] {
+        .mobile-fullscreen .toolbar div[style*="width: 1px"],
+        .mobile-fullscreen .toolbar div[style*="width:1px"] {
             width: 100% !important;
-            /* Spans full height of column, forcing a column break to start new section */
             height: 1px !important;
-            margin: 4px 0 !important;
-            background: #30363d !important;
+            margin: 8px 0 !important;
+            background: rgba(255, 255, 255, 0.08) !important;
             flex-shrink: 0 !important;
         }
 
-        .rotate-mobile #svg-container {
-            height: calc(100vw - 24px) !important;
-            flex: none !important;
-            width: 100% !important;
-        }
-
-        .rotate-mobile #pattern-container {
+        .mobile-fullscreen #svg-container {
             flex: 1 1 0 !important;
             height: auto !important;
             width: 100% !important;
         }
 
-        .rotate-mobile .sub-chart {
-            height: 120px !important;
-            flex-shrink: 0 !important;
+        .mobile-fullscreen #pattern-container {
+            flex: 1 1 0 !important;
+            height: auto !important;
+            width: 100% !important;
         }
 
         /* Hide navbar/header and sidebar when chart is in full screen or mobile rotated view */
@@ -745,7 +874,6 @@
             filter: none !important;
         }
 
-        /* Ensure viewport scrolling is entirely locked when mobile full screen / rotated canvas is open */
         body.fullscreen-active {
             position: fixed !important;
             top: 0 !important;
@@ -754,6 +882,7 @@
             height: 100% !important;
             overflow: hidden !important;
         }
+
         @keyframes pulse-green {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(38, 166, 154, 0.7); }
             70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(38, 166, 154, 0); }
@@ -813,11 +942,31 @@
                     </div>
 
                     <div class="chart-card" style="padding-bottom: 25px;">
-                        <button class="close-fullscreen-btn" onclick="exitFullScreen(this)"
-                            title="Close Full Screen">×</button>
-                        <button class="menu-toggle-btn" onclick="toggleSidebarMenu(this)"
-                            title="Toggle Drawing Tools">☰</button>
-                        <div
+                        <button class="close-fullscreen-btn" onclick="exitFullScreen(this)" title="Close Full Screen">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                        <button class="menu-toggle-btn" onclick="toggleSidebarMenu(this)" title="Toggle Drawing Tools">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+                        </button>
+
+                        <!-- Premium Glassmorphic HUD Header -->
+                        <div class="chart-header-hud">
+                            <div class="hud-left">
+                                <span class="hud-ticker"><%= ticker %></span>
+                                <span class="hud-timeframe"><%= timeframe %></span>
+                                <span class="hud-live-dot"></span>
+                                <span class="hud-live-text">Live</span>
+                            </div>
+                            <div class="hud-center">
+                                <span class="hud-title">Advanced Technical Canvas</span>
+                            </div>
+                            <div class="hud-right">
+                                <span class="hud-price-label">Last:</span>
+                                <span class="hud-price-value">--</span>
+                            </div>
+                        </div>
+
+                        <div class="chart-title-row"
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                             <h3 style="margin: 0; color: #e2e8f0;">Advanced Technical Canvas <span
                                     style="font-size: 0.75rem; color: #64748b; font-weight: normal; margin-left: 10px;">(Hold
@@ -1062,11 +1211,31 @@
                     </div>
 
                     <div class="chart-card">
-                        <button class="close-fullscreen-btn" onclick="exitFullScreen(this)"
-                            title="Close Full Screen">×</button>
-                        <button class="menu-toggle-btn" onclick="toggleSidebarMenu(this)"
-                            title="Toggle Drawing Tools">☰</button>
-                        <div
+                        <button class="close-fullscreen-btn" onclick="exitFullScreen(this)" title="Close Full Screen">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                        <button class="menu-toggle-btn" onclick="toggleSidebarMenu(this)" title="Toggle Drawing Tools">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+                        </button>
+
+                        <!-- Premium Glassmorphic HUD Header -->
+                        <div class="chart-header-hud">
+                            <div class="hud-left">
+                                <span class="hud-ticker"><%= ticker %></span>
+                                <span class="hud-timeframe"><%= timeframe %></span>
+                                <span class="hud-live-dot"></span>
+                                <span class="hud-live-text">Live Analysis</span>
+                            </div>
+                            <div class="hud-center">
+                                <span class="hud-title">Pattern Recognition Canvas</span>
+                            </div>
+                            <div class="hud-right">
+                                <span class="hud-price-label">Last:</span>
+                                <span class="hud-price-value">--</span>
+                            </div>
+                        </div>
+
+                        <div class="chart-title-row"
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                             <h3 style="margin: 0; color: #e2e8f0;">Pattern Recognition Canvas <span
                                     style="font-size: 0.75rem; color: #64748b; font-weight: normal; margin-left: 10px;">(Hold
@@ -1161,10 +1330,10 @@
             let ohlcData = [];
 
             // State Management
-            let visibleCount = 80; let offset = 0; let dragAccumulator = 0;
+            let visibleCount = window.innerWidth <= 768 ? 40 : 80; let offset = 0; let dragAccumulator = 0;
             let chartState = { minP: 0, maxP: 0, range: 0, candleW: 0, chartH: 0, padT: 20, padB: 40, padR: 55 };
 
-            let patternVisibleCount = 80; let patternOffset = 0; let patternDragAccumulator = 0;
+            let patternVisibleCount = window.innerWidth <= 768 ? 40 : 80; let patternOffset = 0; let patternDragAccumulator = 0;
             let patternState = { minP: 0, maxP: 0, range: 0, candleW: 0, chartH: 0, padT: 20, padB: 40, padR: 55 };
 
             let verticalScrollShift = 0;
@@ -1309,7 +1478,10 @@
 
             // Controls (Mouse & Touch)
             function getLocalCoords(clientX, clientY, container) {
-                const isRotated = container.closest('.chart-card').classList.contains('rotate-mobile');
+                const card = container.closest('.chart-card');
+                const isMobileFullscreen = card.classList.contains('mobile-fullscreen');
+                const isPortrait = window.innerHeight > window.innerWidth;
+                const isRotated = isMobileFullscreen && isPortrait;
                 const rect = container.getBoundingClientRect();
                 if (isRotated) {
                     const centerX = rect.left + rect.width / 2;
@@ -1324,7 +1496,10 @@
             }
 
             const handleWheel = (e, container) => {
-                const isRotated = container.closest('.chart-card').classList.contains('rotate-mobile');
+                const card = container.closest('.chart-card');
+                const isMobileFullscreen = card.classList.contains('mobile-fullscreen');
+                const isPortrait = window.innerHeight > window.innerWidth;
+                const isRotated = isMobileFullscreen && isPortrait;
                 let deltaX = isRotated ? e.deltaY : e.deltaX;
                 let deltaY = isRotated ? -e.deltaX : e.deltaY;
 
@@ -2071,12 +2246,12 @@
                 const isMobile = window.innerWidth <= 768;
 
                 if (isMobile) {
-                    if (element.classList.contains('rotate-mobile')) {
-                        element.classList.remove('rotate-mobile');
+                    if (element.classList.contains('mobile-fullscreen')) {
+                        element.classList.remove('mobile-fullscreen');
                         document.body.style.overflow = '';
                         document.body.classList.remove('fullscreen-active');
                     } else {
-                        element.classList.add('rotate-mobile');
+                        element.classList.add('mobile-fullscreen');
                         document.body.style.overflow = 'hidden';
                         document.body.classList.add('fullscreen-active');
                     }
@@ -2100,8 +2275,8 @@
                 const element = btn.closest('.chart-card');
                 const isMobile = window.innerWidth <= 768;
 
-                if (isMobile && element.classList.contains('rotate-mobile')) {
-                    element.classList.remove('rotate-mobile');
+                if (isMobile && element.classList.contains('mobile-fullscreen')) {
+                    element.classList.remove('mobile-fullscreen');
                     document.body.style.overflow = '';
                     document.body.classList.remove('fullscreen-active');
                     setTimeout(renderAll, 100);
@@ -2122,8 +2297,8 @@
                 if (isFullscreen) {
                     document.body.classList.add('fullscreen-active');
                 } else {
-                    const hasMobileRotated = document.querySelector('.rotate-mobile');
-                    if (!hasMobileRotated) {
+                    const hasMobileFullscreen = document.querySelector('.mobile-fullscreen');
+                    if (!hasMobileFullscreen) {
                         document.body.classList.remove('fullscreen-active');
                     }
                 }
@@ -2758,6 +2933,13 @@
                 }
                 loadChartTradePortfolio();
                 loadSentimentTerminal();
+
+                // Update Live HUD price display fields
+                const priceVal = activeStockPrice || (ohlcData && ohlcData.length > 0 ? ohlcData[ohlcData.length - 1].close : null);
+                if (priceVal) {
+                    const formattedPrice = curSym + priceVal.toFixed(2);
+                    document.querySelectorAll('.hud-price-value').forEach(el => el.innerText = formattedPrice);
+                }
             };
 
             window.addEventListener('resize', renderAll);

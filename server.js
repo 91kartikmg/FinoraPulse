@@ -587,7 +587,6 @@ app.get('/privacy-policy', (req, res) => res.render('privacy_policy'));
 app.get('/terms-of-service', (req, res) => res.render('terms_of_service'));
 app.get('/disclaimer', (req, res) => res.render('disclaimer'));
 app.get('/about', (req, res) => res.render('about'));
-app.get('/contact', (req, res) => res.render('contact'));
 
 
 // ==========================================
