@@ -588,7 +588,8 @@
             margin: 0 !important;
             border-radius: 0 !important;
             border: none !important;
-            display: block !important; /* CRITICAL: Block layout, not flex */
+            display: flex !important;
+            flex-direction: column !important;
             background: #0d1117 !important;
             box-sizing: border-box !important;
             padding: 8px !important;
@@ -602,17 +603,22 @@
         .mobile-fullscreen #svg-container,
         .mobile-fullscreen #pattern-container {
             display: block !important;
-            flex: none !important;
+            flex: 1 1 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
             width: 100% !important;
         }
 
         .mobile-fullscreen .sub-chart {
             display: block !important;
-            flex: none !important;
+            flex: 0 0 80px !important;
+            height: 80px !important;
+            min-height: 80px !important;
             width: 100% !important;
-            margin-top: 15px !important;
-            padding-top: 15px !important;
-            border-top: 2px dashed #334155;
+            margin-top: 10px !important;
+            padding-top: 10px !important;
+            border-top: 2px dashed #334155 !important;
+            box-sizing: border-box !important;
         }
 
         .mobile-fullscreen .chart-header-hud {
@@ -633,23 +639,7 @@
                 height: 100vw !important;
                 height: 100dvw !important;
                 transform: translate(-50%, -50%) rotate(90deg) !important;
-                overflow-y: auto !important; /* Enable scrolling for next graph */
-                overflow-x: hidden !important;
-            }
-
-            .mobile-fullscreen #svg-container,
-            .mobile-fullscreen #pattern-container {
-                height: calc(100vw - 70px) !important;
-                height: calc(100dvw - 70px) !important;
-                min-height: calc(100vw - 70px) !important;
-                min-height: calc(100dvw - 70px) !important;
-            }
-
-            .mobile-fullscreen .sub-chart {
-                height: calc(100vw - 70px) !important;
-                height: calc(100dvw - 70px) !important;
-                min-height: calc(100vw - 70px) !important;
-                min-height: calc(100dvw - 70px) !important;
+                overflow: hidden !important; /* Prevent scroll entirely, flexbox handles sizing */
             }
 
             .mobile-fullscreen .close-fullscreen-btn {
@@ -676,23 +666,7 @@
                 height: 100vh !important;
                 height: 100dvh !important;
                 transform: none !important;
-                overflow-y: auto !important;
-                overflow-x: hidden !important;
-            }
-
-            .mobile-fullscreen #svg-container,
-            .mobile-fullscreen #pattern-container {
-                height: calc(100vh - 70px) !important;
-                height: calc(100dvh - 70px) !important;
-                min-height: calc(100vh - 70px) !important;
-                min-height: calc(100dvh - 70px) !important;
-            }
-
-            .mobile-fullscreen .sub-chart {
-                height: calc(100vh - 70px) !important;
-                height: calc(100dvh - 70px) !important;
-                min-height: calc(100vh - 70px) !important;
-                min-height: calc(100dvh - 70px) !important;
+                overflow: hidden !important;
             }
 
             .mobile-fullscreen .close-fullscreen-btn {
