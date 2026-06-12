@@ -628,7 +628,9 @@
             .mobile-fullscreen {
                 top: 50% !important;
                 left: 50% !important;
+                width: 100vh !important;
                 width: 100dvh !important;
+                height: 100vw !important;
                 height: 100dvw !important;
                 transform: translate(-50%, -50%) rotate(90deg) !important;
                 overflow-y: auto !important; /* Enable scrolling for next graph */
@@ -637,12 +639,16 @@
 
             .mobile-fullscreen #svg-container,
             .mobile-fullscreen #pattern-container {
+                height: calc(100vw - 70px) !important;
                 height: calc(100dvw - 70px) !important;
+                min-height: calc(100vw - 70px) !important;
                 min-height: calc(100dvw - 70px) !important;
             }
 
             .mobile-fullscreen .sub-chart {
+                height: calc(100vw - 70px) !important;
                 height: calc(100dvw - 70px) !important;
+                min-height: calc(100vw - 70px) !important;
                 min-height: calc(100dvw - 70px) !important;
             }
 
@@ -665,7 +671,9 @@
             .mobile-fullscreen {
                 top: 0 !important;
                 left: 0 !important;
+                width: 100vw !important;
                 width: 100dvw !important;
+                height: 100vh !important;
                 height: 100dvh !important;
                 transform: none !important;
                 overflow-y: auto !important;
@@ -674,12 +682,16 @@
 
             .mobile-fullscreen #svg-container,
             .mobile-fullscreen #pattern-container {
+                height: calc(100vh - 70px) !important;
                 height: calc(100dvh - 70px) !important;
+                min-height: calc(100vh - 70px) !important;
                 min-height: calc(100dvh - 70px) !important;
             }
 
             .mobile-fullscreen .sub-chart {
+                height: calc(100vh - 70px) !important;
                 height: calc(100dvh - 70px) !important;
+                min-height: calc(100vh - 70px) !important;
                 min-height: calc(100dvh - 70px) !important;
             }
 
@@ -863,6 +875,18 @@
         body.fullscreen-active .side-panel.right,
         body.fullscreen-active .strategy-header {
             display: none !important;
+        }
+
+        /* Hide all sibling panels in content-panel except the active fullscreen container */
+        body.fullscreen-active .content-panel > * {
+            display: none !important;
+        }
+        body.fullscreen-active .content-panel > .mobile-fullscreen {
+            display: block !important;
+        }
+        body.fullscreen-active .content-panel > :fullscreen,
+        body.fullscreen-active .content-panel > :-webkit-full-screen {
+            display: flex !important;
         }
 
         body.fullscreen-active .main-wrapper {

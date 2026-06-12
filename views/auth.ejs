@@ -538,6 +538,34 @@
         document.querySelector('.tabs').style.display = 'flex';
         document.getElementById('register-otp').value = '';
     }
+
+    document.getElementById('register-otp').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleVerifySignupOTP();
+        }
+    });
+
+    document.getElementById('forgot-otp').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleVerifyOTP();
+        }
+    });
+
+    document.getElementById('forgot-new-password').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('forgot-confirm-password').focus();
+        }
+    });
+
+    document.getElementById('forgot-confirm-password').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleResetPassword();
+        }
+    });
 </script>
 </body>
 </html>
