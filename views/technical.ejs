@@ -462,8 +462,6 @@
         .chart-card:-webkit-full-screen #svg-container,
         .chart-card:fullscreen #pattern-container,
         .chart-card:-webkit-full-screen #pattern-container,
-        .mobile-fullscreen #svg-container,
-        .mobile-fullscreen #pattern-container,
         .fake-fullscreen #svg-container,
         .fake-fullscreen #pattern-container {
             flex: 1 1 0 !important;
@@ -576,7 +574,6 @@
         @media screen and (max-width: 768px) {
             .chart-card:fullscreen .sub-chart,
             .chart-card:-webkit-full-screen .sub-chart,
-            .mobile-fullscreen .sub-chart,
             .fake-fullscreen .sub-chart {
                 height: 75px !important;
                 margin-top: 6px !important;
@@ -591,8 +588,7 @@
             margin: 0 !important;
             border-radius: 0 !important;
             border: none !important;
-            display: flex !important;
-            flex-direction: column !important;
+            display: block !important; /* CRITICAL: Block layout, not flex */
             background: #0d1117 !important;
             box-sizing: border-box !important;
             padding: 8px !important;
@@ -600,20 +596,23 @@
 
         /* Mobile Fullscreen Spacing & Scrolling Optimizations */
         .mobile-fullscreen #ai-trend-suggestion {
-            display: none !important; /* Hide AI Forecast Gauge completely as requested */
+            display: none !important;
         }
 
         .mobile-fullscreen #svg-container,
         .mobile-fullscreen #pattern-container {
-            height: 320px !important; /* Set larger fixed height for main candlestick chart */
+            display: block !important;
             flex: none !important;
+            width: 100% !important;
         }
 
         .mobile-fullscreen .sub-chart {
-            height: 180px !important; /* Set layout height for sub-charts (RSI, MACD etc.) */
+            display: block !important;
             flex: none !important;
-            margin-top: 10px !important;
-            padding-top: 10px !important;
+            width: 100% !important;
+            margin-top: 15px !important;
+            padding-top: 15px !important;
+            border-top: 2px dashed #334155;
         }
 
         .mobile-fullscreen .chart-header-hud {
@@ -634,6 +633,17 @@
                 transform: translate(-50%, -50%) rotate(90deg) !important;
                 overflow-y: auto !important; /* Enable scrolling for next graph */
                 overflow-x: hidden !important;
+            }
+
+            .mobile-fullscreen #svg-container,
+            .mobile-fullscreen #pattern-container {
+                height: calc(100dvw - 70px) !important;
+                min-height: calc(100dvw - 70px) !important;
+            }
+
+            .mobile-fullscreen .sub-chart {
+                height: calc(100dvw - 70px) !important;
+                min-height: calc(100dvw - 70px) !important;
             }
 
             .mobile-fullscreen .close-fullscreen-btn {
@@ -658,8 +668,19 @@
                 width: 100dvw !important;
                 height: 100dvh !important;
                 transform: none !important;
-                overflow-y: auto !important; /* Enable scrolling for next graph */
+                overflow-y: auto !important;
                 overflow-x: hidden !important;
+            }
+
+            .mobile-fullscreen #svg-container,
+            .mobile-fullscreen #pattern-container {
+                height: calc(100dvh - 70px) !important;
+                min-height: calc(100dvh - 70px) !important;
+            }
+
+            .mobile-fullscreen .sub-chart {
+                height: calc(100dvh - 70px) !important;
+                min-height: calc(100dvh - 70px) !important;
             }
 
             .mobile-fullscreen .close-fullscreen-btn {
@@ -834,18 +855,6 @@
             flex-shrink: 0 !important;
         }
 
-        .mobile-fullscreen #svg-container {
-            flex: 1 1 0 !important;
-            height: auto !important;
-            width: 100% !important;
-        }
-
-        .mobile-fullscreen #pattern-container {
-            flex: 1 1 0 !important;
-            height: auto !important;
-            width: 100% !important;
-        }
-
         /* Hide navbar/header and sidebar when chart is in full screen or mobile rotated view */
         body.fullscreen-active .navbar,
         body.fullscreen-active .price-ticker-wrapper,
@@ -924,7 +933,6 @@
                         </div>
                     </div>
 
-                    <!-- AI Technical Health Score Panel -->
                     <div class="tech-health-panel" id="tech-health-panel" style="display: none;">
                         <div class="tech-health-gauge">
                             <div class="tech-gauge-bg">
@@ -941,7 +949,7 @@
                         </div>
                     </div>
 
-                    <div class="chart-card" style="padding-bottom: 25px;">
+                    <div class="chart-card" id="main-chart-card" style="padding-bottom: 25px;">
                         <button class="close-fullscreen-btn" onclick="exitFullScreen(this)" title="Close Full Screen">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
@@ -949,7 +957,6 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
                         </button>
 
-                        <!-- Premium Glassmorphic HUD Header -->
                         <div class="chart-header-hud">
                             <div class="hud-left">
                                 <span class="hud-ticker"><%= ticker %></span>
@@ -1022,7 +1029,6 @@
                             </div>
                         </div>
 
-                        <!-- AI Trend Suggestion Alert Box -->
                         <div id="ai-trend-suggestion" class="trend-suggestion-box" style="display: none;">
                             <div class="trend-left">
                                 <span class="trend-badge">AI FORECAST GAUGE</span>
@@ -1090,7 +1096,6 @@
                         </div>
                     </div>
 
-                    <!-- VIRTUAL TRADING TERMINAL -->
                     <div class="chart-card" id="virtual-trading-panel" style="padding: 25px; margin-bottom: 25px;">
                         <div class="panel-header-row">
                             <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem;">Virtual Paper Trading Terminal</h3>
@@ -1147,7 +1152,6 @@
                         </div>
                     </div>
 
-                    <!-- LIVE SENTIMENT & NEWS TERMINAL -->
                     <div class="chart-card" id="sentiment-analysis-panel" style="padding: 25px; margin-bottom: 25px;">
                         <div class="panel-header-row">
                             <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
@@ -1156,11 +1160,8 @@
                             <span style="font-size: 0.8rem; color: #8e9bae; font-family: 'JetBrains Mono', monospace;" id="sentiment-last-updated">PENDING...</span>
                         </div>
 
-                        <!-- Main Grid Layout -->
                         <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
-                            <!-- Top Sentiment Summary: Gauge and Score Cards -->
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                                <!-- Sentiment Score Card -->
                                 <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
                                     <div>
                                         <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Overall Sentiment</div>
@@ -1169,16 +1170,11 @@
                                     <div id="sentiment-overall-icon" style="font-size: 2.2rem;">📡</div>
                                 </div>
 
-                                <!-- Sentiment Gauge Card -->
                                 <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 20px;">
                                     <div style="position: relative; width: 80px; height: 40px; overflow: hidden; flex-shrink: 0;">
-                                        <!-- Outer arc -->
                                         <div style="width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(from 270deg at 50% 50%, #ff0055 0deg, #f59e0b 90deg, #00FF9D 180deg, transparent 180deg); box-sizing: border-box; position: absolute; top: 0; left: 0;"></div>
-                                        <!-- Inner cutout to create semi-circle arch -->
                                         <div style="width: 60px; height: 60px; border-radius: 50%; background: #0d1117; position: absolute; top: 10px; left: 10px;"></div>
-                                        <!-- Center pin -->
                                         <div style="width: 8px; height: 8px; border-radius: 50%; background: #fff; position: absolute; bottom: 0; left: 36px; z-index: 5;"></div>
-                                        <!-- Needle -->
                                         <div id="sentiment-gauge-needle" style="width: 2px; height: 32px; background: #fff; position: absolute; bottom: 0; left: 39px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 4; box-shadow: 0 0 5px rgba(255,255,255,0.8);"></div>
                                     </div>
                                     <div>
@@ -1187,7 +1183,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Key Buzzwords Card -->
                                 <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
                                     <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Key Market Drivers</div>
                                     <div id="sentiment-drivers-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">
@@ -1196,7 +1191,6 @@
                                 </div>
                             </div>
 
-                            <!-- News Timeline List -->
                             <div style="background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
                                 <div style="font-size: 0.8rem; color: #8e9bae; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">
                                     Latest Headwinds & Catalysts
@@ -1210,7 +1204,7 @@
                         </div>
                     </div>
 
-                    <div class="chart-card">
+                    <div class="chart-card" id="pattern-chart-card">
                         <button class="close-fullscreen-btn" onclick="exitFullScreen(this)" title="Close Full Screen">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
@@ -1218,7 +1212,6 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
                         </button>
 
-                        <!-- Premium Glassmorphic HUD Header -->
                         <div class="chart-header-hud">
                             <div class="hud-left">
                                 <span class="hud-ticker"><%= ticker %></span>
@@ -1281,9 +1274,9 @@
                                 <line id="cross-h-pat" class="crosshair" x1="0" y1="0" x2="100%" y2="0" />
                                 <line id="cross-v-pat" class="crosshair" x1="0" y1="0" x2="0" y2="100%" />
                             </svg>
+                        </div>
                     </div>
 
-                    <!-- AI Technical Analyst Summary Card -->
                     <div class="chart-card" id="ai-summary-section" style="margin-top: 25px; display: none;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
@@ -1515,9 +1508,11 @@
                     if (moves !== 0) {
                         currentOff = Math.min(Math.max(currentOff - moves, 0), ohlcData.length - currentVis);
                         currentDrag -= (moves * candleW);
-                        if (isMain) { offset = currentOff; dragAccumulator = currentDrag; renderSVG(); }
-                        else { patternOffset = currentOff; patternDragAccumulator = currentDrag; renderPatternChart(); }
+                        if (isMain) { offset = currentOff; renderSVG(); }
+                        else { patternOffset = currentOff; renderPatternChart(); }
                     }
+                    if (isMain) { dragAccumulator = currentDrag; }
+                    else { patternDragAccumulator = currentDrag; }
                     return;
                 }
 
@@ -1547,8 +1542,16 @@
                 container.addEventListener('touchstart', (e) => {
                     if (e.touches.length === 1) {
                         const coords = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
-                        tStartX = coords.x;
-                        tStartY = coords.y;
+                        const card = container.closest('.chart-card');
+                        const isMobileFullscreen = card && card.classList.contains('mobile-fullscreen');
+                        const isPortrait = window.innerHeight > window.innerWidth;
+                        if (isMobileFullscreen && isPortrait) {
+                            tStartX = e.touches[0].clientX;
+                            tStartY = e.touches[0].clientY;
+                        } else {
+                            tStartX = coords.x;
+                            tStartY = coords.y;
+                        }
                         if (container === svgContainer) dragAccumulator = 0; else patternDragAccumulator = 0;
                     } else if (e.touches.length === 2) {
                         const t1 = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
@@ -1560,52 +1563,82 @@
 
                 container.addEventListener('touchmove', (e) => {
                     const isMain = container === svgContainer;
+                    const card = container.closest('.chart-card');
+                    const isMobileFullscreen = card && card.classList.contains('mobile-fullscreen');
+                    const isPortrait = window.innerHeight > window.innerWidth;
 
-                    if (e.touches.length === 1 && activeTool === 'pan') {
-                        const coords = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
-                        const dx = coords.x - tStartX;
-                        const dy = coords.y - tStartY;
-
-                        if (Math.abs(dx) > Math.abs(dy)) {
+                    if (isMobileFullscreen && isPortrait) {
+                        if (e.touches.length === 1 && activeTool === 'pan') {
                             e.preventDefault();
-                            tStartX = coords.x;
-                            tStartY = coords.y;
+                            const touchY = e.touches[0].clientY;
+                            const dy = touchY - tStartY;
+                            tStartY = touchY;
 
                             let cVis = isMain ? visibleCount : patternVisibleCount;
                             let cOff = isMain ? offset : patternOffset;
                             let cDrag = isMain ? dragAccumulator : patternDragAccumulator;
 
-                            cDrag += dx;
+                            cDrag += dy;
                             const cW = (container.clientWidth - 55) / cVis;
                             const moves = Math.trunc(cDrag / cW);
                             if (moves !== 0) {
                                 cOff = Math.min(Math.max(cOff - moves, 0), ohlcData.length - cVis);
                                 cDrag -= (moves * cW);
-                                if (isMain) { offset = cOff; dragAccumulator = cDrag; renderSVG(); }
-                                else { patternOffset = cOff; patternDragAccumulator = cDrag; renderPatternChart(); }
+                                if (isMain) { offset = cOff; renderSVG(); }
+                                else { patternOffset = cOff; renderPatternChart(); }
                             }
+                            if (isMain) { dragAccumulator = cDrag; }
+                            else { patternDragAccumulator = cDrag; }
                         }
-                    } else if (e.touches.length === 2 && initialTouchDist > 0) {
-                        e.preventDefault();
-                        const t1 = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
-                        const t2 = getLocalCoords(e.touches[1].clientX, e.touches[1].clientY, container);
-                        const dist = Math.hypot(t1.x - t2.x, t1.y - t2.y);
+                    } else {
+                        if (e.touches.length === 1 && activeTool === 'pan') {
+                            const coords = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
+                            const dx = coords.x - tStartX;
+                            const dy = coords.y - tStartY;
 
-                        if (dist > 10) {
-                            const scale = dist / initialTouchDist;
-                            const oldVis = isMain ? visibleCount : patternVisibleCount;
-                            let newVis = Math.round(initialVisCount / scale);
-                            newVis = Math.min(Math.max(newVis, 10), ohlcData.length);
+                            if (Math.abs(dx) > Math.abs(dy)) {
+                                e.preventDefault();
+                                tStartX = coords.x;
+                                tStartY = coords.y;
 
-                            if (newVis !== oldVis) {
-                                if (isMain) {
-                                    offset = Math.min(Math.max(offset + Math.floor((oldVis - newVis) / 2), 0), ohlcData.length - newVis);
-                                    visibleCount = newVis;
-                                    renderSVG();
-                                } else {
-                                    patternOffset = Math.min(Math.max(patternOffset + Math.floor((oldVis - newVis) / 2), 0), ohlcData.length - newVis);
-                                    patternVisibleCount = newVis;
-                                    renderPatternChart();
+                                let cVis = isMain ? visibleCount : patternVisibleCount;
+                                let cOff = isMain ? offset : patternOffset;
+                                let cDrag = isMain ? dragAccumulator : patternDragAccumulator;
+
+                                cDrag += dx;
+                                const cW = (container.clientWidth - 55) / cVis;
+                                const moves = Math.trunc(cDrag / cW);
+                                if (moves !== 0) {
+                                    cOff = Math.min(Math.max(cOff - moves, 0), ohlcData.length - cVis);
+                                    cDrag -= (moves * cW);
+                                    if (isMain) { offset = cOff; renderSVG(); }
+                                    else { patternOffset = cOff; renderPatternChart(); }
+                                }
+                                if (isMain) { dragAccumulator = cDrag; }
+                                else { patternDragAccumulator = cDrag; }
+                            }
+                        } else if (e.touches.length === 2 && initialTouchDist > 0) {
+                            e.preventDefault();
+                            const t1 = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
+                            const t2 = getLocalCoords(e.touches[1].clientX, e.touches[1].clientY, container);
+                            const dist = Math.hypot(t1.x - t2.x, t1.y - t2.y);
+
+                            if (dist > 10) {
+                                const scale = dist / initialTouchDist;
+                                const oldVis = isMain ? visibleCount : patternVisibleCount;
+                                let newVis = Math.round(initialVisCount / scale);
+                                newVis = Math.min(Math.max(newVis, 10), ohlcData.length);
+
+                                if (newVis !== oldVis) {
+                                    if (isMain) {
+                                        offset = Math.min(Math.max(offset + Math.floor((oldVis - newVis) / 2), 0), ohlcData.length - newVis);
+                                        visibleCount = newVis;
+                                        renderSVG();
+                                    } else {
+                                        patternOffset = Math.min(Math.max(patternOffset + Math.floor((oldVis - newVis) / 2), 0), ohlcData.length - newVis);
+                                        patternVisibleCount = newVis;
+                                        renderPatternChart();
+                                    }
                                 }
                             }
                         }
@@ -1618,6 +1651,35 @@
                     }
                 }, { passive: true });
             });
+
+            // Document-level touch event handling for mobile portrait fullscreen scrolling
+            let docTouchStartX = 0;
+            let docTouchStartY = 0;
+
+            document.addEventListener('touchstart', (e) => {
+                const activeFullscreen = document.querySelector('.mobile-fullscreen');
+                if (activeFullscreen && window.innerHeight > window.innerWidth) {
+                    docTouchStartX = e.touches[0].clientX;
+                    docTouchStartY = e.touches[0].clientY;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                const activeFullscreen = document.querySelector('.mobile-fullscreen');
+                if (activeFullscreen && window.innerHeight > window.innerWidth) {
+                    const touchX = e.touches[0].clientX;
+                    const touchY = e.touches[0].clientY;
+                    const dx = touchX - docTouchStartX;
+                    const dy = touchY - docTouchStartY;
+
+                    // Physical horizontal swipe (dx) corresponds to vertical visual scrolling of the rotated container
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        activeFullscreen.scrollTop -= dx;
+                        docTouchStartX = touchX;
+                        docTouchStartY = touchY;
+                    }
+                }
+            }, { passive: true });
 
             // Mouse Panning & Manual Drawing
             let isDragging = false, lastMouseX = 0, lastMouseY = 0, activeDragContainer = null;
@@ -1660,9 +1722,13 @@
                             const cW = (container.clientWidth - 55) / cVis;
                             const moves = Math.trunc(cDrag / cW);
                             if (moves !== 0) {
-                                cOff = Math.min(Math.max(cOff - moves, 0), ohlcData.length - cVis); cDrag -= (moves * cW);
-                                if (isMain) { offset = cOff; dragAccumulator = cDrag; renderSVG(); } else { patternOffset = cOff; patternDragAccumulator = cDrag; renderPatternChart(); }
+                                cOff = Math.min(Math.max(cOff - moves, 0), ohlcData.length - cVis);
+                                cDrag -= (moves * cW);
+                                if (isMain) { offset = cOff; renderSVG(); }
+                                else { patternOffset = cOff; renderPatternChart(); }
                             }
+                            if (isMain) { dragAccumulator = cDrag; }
+                            else { patternDragAccumulator = cDrag; }
                         } else {
                             if (activeTool === 'trend' && tempTrendline) { tempTrendline.endIdx = getIndexFromX(mx, container); tempTrendline.endPrice = getPriceFromY(my, container); renderAll(); }
                             else if (activeTool === 'fib' && tempFib) { tempFib.endIdx = getIndexFromX(mx, container); tempFib.endPrice = getPriceFromY(my, container); renderAll(); }
@@ -2307,8 +2373,8 @@
             document.addEventListener('fullscreenchange', handleStandardFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleStandardFullscreenChange);
 
-            document.getElementById('btn-fullscreen-main').onclick = () => toggleFullScreen(document.querySelectorAll('.chart-card')[0]);
-            document.getElementById('btn-fullscreen-pattern').onclick = () => toggleFullScreen(document.querySelectorAll('.chart-card')[1]);
+            document.getElementById('btn-fullscreen-main').onclick = () => toggleFullScreen(document.getElementById('main-chart-card'));
+            document.getElementById('btn-fullscreen-pattern').onclick = () => toggleFullScreen(document.getElementById('pattern-chart-card'));
 
             function updateTrendSuggestion() {
                 if (!ohlcData || ohlcData.length === 0) return;
