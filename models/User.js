@@ -26,6 +26,18 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    isVerified: {
+        type: Boolean,
+        default: true
+    },
+    signupOTP: {
+        type: String,
+        default: null
+    },
+    signupOTPExpires: {
+        type: Date,
+        default: null
+    },
     createdAt: { 
         type: Date, 
         default: Date.now 

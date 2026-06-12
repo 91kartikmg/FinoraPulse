@@ -105,24 +105,38 @@
         <button type="submit" class="btn">Access Terminal</button>
     </form>
 
-    <form id="register-form" action="/register" method="POST">
-        <div class="form-group">
-            <label>Gmail Address</label>
-            <input type="email" name="email" required placeholder="you@gmail.com">
+    <form id="register-form">
+        <div id="register-inputs">
+            <div class="form-group">
+                <label>Gmail Address</label>
+                <input type="email" name="email" required placeholder="you@gmail.com" pattern="[a-zA-Z0-9.]+@gmail\.com" title="Please enter a valid Gmail address ending with @gmail.com. Only letters, numbers, and periods are allowed before @gmail.com.">
+            </div>
+            <div class="form-group">
+                <label>User ID</label>
+                <input type="text" name="username" required placeholder="Create a unique ID">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="Create password">
+            </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" name="confirmPassword" required placeholder="Repeat password">
+            </div>
+            <button type="submit" class="btn">Create Account</button>
         </div>
-        <div class="form-group">
-            <label>User ID</label>
-            <input type="text" name="username" required placeholder="Create a unique ID">
+
+        <div id="register-otp-step" style="display: none;">
+            <div class="form-group">
+                <label>Verification OTP (6-digits)</label>
+                <input type="text" id="register-otp" placeholder="••••••" pattern="\d{6}" maxlength="6" style="text-align: center; letter-spacing: 0.5rem; font-size: 1.25rem; font-weight: 600;">
+            </div>
+            <button type="button" onclick="handleVerifySignupOTP()" class="btn" id="verify-signup-otp-btn">Verify Email</button>
+            <div style="text-align: center; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                <a href="#" onclick="resendSignupOTP(event)" id="resend-signup-otp-link" style="color: var(--accent); text-decoration: none; opacity: 0.8;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">Resend OTP</a>
+                <a href="#" onclick="cancelRegisterOTP(event)" style="color: var(--text-muted); text-decoration: none;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'">Back</a>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Password</label>
-            <input type="password" name="password" required placeholder="Create password">
-        </div>
-        <div class="form-group">
-            <label>Confirm Password</label>
-            <input type="password" name="confirmPassword" required placeholder="Repeat password">
-        </div>
-        <button type="submit" class="btn">Create Account</button>
     </form>
 
     <form id="forgot-form" style="display: none;">
@@ -389,6 +403,140 @@
             btn.textContent = originalText;
             btn.disabled = false;
         }
+    }
+
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        clearAlerts();
+        
+        const emailInput = this.querySelector('input[name="email"]');
+        const email = emailInput.value.trim();
+        const username = this.querySelector('input[name="username"]').value.trim();
+        const password = this.querySelector('input[name="password"]').value;
+        const confirmPassword = this.querySelector('input[name="confirmPassword"]').value;
+        
+        const gmailRegex = /^[a-zA-Z0-9.]+@gmail\.com$/;
+        if (!gmailRegex.test(email)) {
+            showAlert('error', 'Please enter a valid Gmail address (e.g. username@gmail.com). Only letters, numbers, and periods are allowed before @gmail.com.');
+            emailInput.focus();
+            return false;
+        }
+
+        if (password !== confirmPassword) {
+            showAlert('error', 'Passwords do not match.');
+            return false;
+        }
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating Account...';
+
+        try {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, username, password, confirmPassword })
+            });
+
+            const data = await response.json();
+            if (response.ok && data.success) {
+                if (data.verificationRequired) {
+                    showAlert('success', data.message);
+                    document.getElementById('register-inputs').style.display = 'none';
+                    document.getElementById('register-otp-step').style.display = 'block';
+                    document.querySelector('.tabs').style.display = 'none';
+                    setTimeout(() => document.getElementById('register-otp').focus(), 100);
+                } else {
+                    showAlert('success', 'Registration successful! Accessing terminal...');
+                    setTimeout(() => window.location.href = '/', 1500);
+                }
+            } else {
+                showAlert('error', data.error || 'Registration failed. Please try again.');
+            }
+        } catch (err) {
+            showAlert('error', 'Network error. Please try again.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Account';
+        }
+    });
+
+    async function handleVerifySignupOTP() {
+        clearAlerts();
+        const email = document.querySelector('#register-form input[name="email"]').value.trim();
+        const otp = document.getElementById('register-otp').value.trim();
+
+        if (!otp) {
+            showAlert('error', 'Please enter the 6-digit verification code.');
+            return;
+        }
+
+        const btn = document.getElementById('verify-signup-otp-btn');
+        btn.disabled = true;
+        btn.textContent = 'Verifying...';
+
+        try {
+            const response = await fetch('/auth/verify-signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp })
+            });
+
+            const data = await response.json();
+            if (response.ok && data.success) {
+                showAlert('success', 'Email verified! Logging in...');
+                setTimeout(() => window.location.href = '/', 1500);
+            } else {
+                showAlert('error', data.error || 'Verification failed. Try again.');
+            }
+        } catch (err) {
+            showAlert('error', 'Network error. Please try again.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Verify Email';
+        }
+    }
+
+    async function resendSignupOTP(e) {
+        if (e) e.preventDefault();
+        clearAlerts();
+        const email = document.querySelector('#register-form input[name="email"]').value.trim();
+        const resendLink = document.getElementById('resend-signup-otp-link');
+
+        resendLink.textContent = 'Resending...';
+        resendLink.style.pointerEvents = 'none';
+        resendLink.style.opacity = '0.5';
+
+        try {
+            const response = await fetch('/auth/resend-signup-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await response.json();
+            if (response.ok && data.success) {
+                showAlert('success', data.message);
+            } else {
+                showAlert('error', data.error || 'Resend failed. Try again.');
+            }
+        } catch (err) {
+            showAlert('error', 'Network error. Please try again.');
+        } finally {
+            resendLink.textContent = 'Resend OTP';
+            resendLink.style.pointerEvents = 'auto';
+            resendLink.style.opacity = '1';
+        }
+    }
+
+    function cancelRegisterOTP(e) {
+        if (e) e.preventDefault();
+        clearAlerts();
+        
+        document.getElementById('register-inputs').style.display = 'block';
+        document.getElementById('register-otp-step').style.display = 'none';
+        document.querySelector('.tabs').style.display = 'flex';
+        document.getElementById('register-otp').value = '';
     }
 </script>
 </body>

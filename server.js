@@ -162,7 +162,13 @@ app.use(async (req, res, next) => {
     if (req.session.userId) {
         try {
             const user = await User.findById(req.session.userId);
-            if (user) res.locals.user = user;
+            if (user) {
+                if (user.isVerified === false) {
+                    req.session.userId = null; // Clear unverified session
+                } else {
+                    res.locals.user = user;
+                }
+            }
         } catch (e) { }
     }
     next();
@@ -178,36 +184,160 @@ app.get('/auth', (req, res) => {
 
 app.post('/register', async (req, res) => {
     const { email, username, password, confirmPassword } = req.body;
-    if (password !== confirmPassword) return res.render('auth', { error: "Passwords do not match" });
+
+    if (!email || !username || !password || !confirmPassword) {
+        return res.status(400).json({ success: false, error: "All fields are required" });
+    }
+
+    const lowercaseEmail = email.trim().toLowerCase();
+    const gmailRegex = /^[a-z0-9.]+@gmail\.com$/;
+    if (!gmailRegex.test(lowercaseEmail)) {
+        return res.status(400).json({ success: false, error: "Registration is restricted to valid Gmail addresses (e.g. username@gmail.com). Only lowercase letters, numbers, and periods are allowed before @gmail.com." });
+    }
+
+    if (password !== confirmPassword) {
+        return res.status(400).json({ success: false, error: "Passwords do not match" });
+    }
 
     try {
-        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-        if (existingUser) return res.render('auth', { error: "User ID or Email already exists" });
+        const existingUser = await User.findOne({ $or: [{ email: lowercaseEmail }, { username }] });
+        if (existingUser) {
+            if (existingUser.isVerified === false) {
+                // Overwrite unverified account details and send new OTP
+                const hashedPassword = await bcrypt.hash(password, 10);
+                const otp = crypto.randomInt(100000, 999999).toString();
+                existingUser.password = hashedPassword;
+                existingUser.username = username;
+                existingUser.signupOTP = otp;
+                existingUser.signupOTPExpires = new Date(Date.now() + 10 * 60 * 1000);
+                await existingUser.save();
+
+                sendOTPEmail(lowercaseEmail, username, otp).then(sent => {
+                    if (!sent) console.error("❌ Sign up verification email resend failed.");
+                }).catch(err => {
+                    console.error("❌ Sign up verification email resend error:", err.message);
+                });
+
+                return res.json({
+                    success: true,
+                    verificationRequired: true,
+                    message: `A new verification code has been sent to: ${lowercaseEmail}`
+                });
+            } else {
+                return res.status(400).json({ success: false, error: "User ID or Email already exists" });
+            }
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ email, username, password: hashedPassword });
+        const otp = crypto.randomInt(100000, 999999).toString();
+        
+        const newUser = new User({ 
+            email: lowercaseEmail, 
+            username, 
+            password: hashedPassword,
+            isVerified: false,
+            signupOTP: otp,
+            signupOTPExpires: new Date(Date.now() + 10 * 60 * 1000)
+        });
         await newUser.save();
 
-        req.session.userId = newUser._id;
-        res.redirect('/');
+        sendOTPEmail(lowercaseEmail, username, otp).then(sent => {
+            if (!sent) console.error("❌ Sign up verification email failed to send.");
+        }).catch(err => {
+            console.error("❌ Sign up verification email error:", err.message);
+        });
+
+        res.json({ 
+            success: true, 
+            verificationRequired: true, 
+            message: `A 6-digit verification code has been sent to: ${lowercaseEmail}` 
+        });
     } catch (err) {
-        res.render('auth', { error: "Error creating account. Try again." });
+        console.error("Signup error:", err);
+        res.status(500).json({ success: false, error: "Error creating account. Try again." });
     }
 });
 
 app.post('/login', async (req, res) => {
     const { loginInput, password } = req.body;
     try {
-        const user = await User.findOne({ $or: [{ email: loginInput }, { username: loginInput }] });
+        const cleanLoginInput = loginInput.trim().toLowerCase();
+        const user = await User.findOne({ $or: [{ email: cleanLoginInput }, { username: loginInput }] });
         if (!user) return res.render('auth', { error: "Invalid credentials" });
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.render('auth', { error: "Invalid credentials" });
 
+        if (user.isVerified === false) {
+            return res.render('auth', { error: "This account has not been verified yet. Please register again with this email to trigger a verification code." });
+        }
+
         req.session.userId = user._id;
         res.redirect('/');
     } catch (err) {
         res.render('auth', { error: "Login failed. Please try again." });
+    }
+});
+
+app.post('/auth/verify-signup', async (req, res) => {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+        return res.status(400).json({ success: false, error: "Email and OTP are required" });
+    }
+
+    try {
+        const lowercaseEmail = email.trim().toLowerCase();
+        const user = await User.findOne({
+            email: lowercaseEmail,
+            signupOTP: otp,
+            signupOTPExpires: { $gt: new Date() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, error: "Invalid or expired verification code." });
+        }
+
+        user.isVerified = true;
+        user.signupOTP = null;
+        user.signupOTPExpires = null;
+        await user.save();
+
+        req.session.userId = user._id;
+        res.json({ success: true, message: "Account verified successfully!" });
+    } catch (err) {
+        console.error("Verification error:", err);
+        res.status(500).json({ success: false, error: "Internal server error." });
+    }
+});
+
+app.post('/auth/resend-signup-otp', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ success: false, error: "Email is required" });
+    }
+
+    try {
+        const lowercaseEmail = email.trim().toLowerCase();
+        const user = await User.findOne({ email: lowercaseEmail, isVerified: false });
+        if (!user) {
+            return res.status(404).json({ success: false, error: "No pending account found with this email." });
+        }
+
+        const otp = crypto.randomInt(100000, 999999).toString();
+        user.signupOTP = otp;
+        user.signupOTPExpires = new Date(Date.now() + 10 * 60 * 1000);
+        await user.save();
+
+        sendOTPEmail(lowercaseEmail, user.username, otp).then(sent => {
+            if (!sent) console.error("❌ Sign up verification email resend failed.");
+        }).catch(err => {
+            console.error("❌ Sign up verification email resend error:", err.message);
+        });
+
+        res.json({ success: true, message: `A fresh verification code has been sent to: ${lowercaseEmail}` });
+    } catch (err) {
+        console.error("Resend error:", err);
+        res.status(500).json({ success: false, error: "Internal server error." });
     }
 });
 
