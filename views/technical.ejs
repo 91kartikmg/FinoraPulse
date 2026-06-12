@@ -104,7 +104,7 @@
       ]
     }
     </script>
-    <script type="application/ld+json"> 
+    <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "FAQPage",
@@ -173,6 +173,9 @@
     </script>
 
     <style>
+        /* =========================================================
+   BASE CHART & GAUGE STYLES
+========================================================= */
         .chart-loading-overlay {
             position: absolute;
             top: 0;
@@ -202,17 +205,18 @@
             display: flex;
             align-items: center;
             gap: 40px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             border-left: 4px solid #8E9BAE;
             transition: opacity 0.3s;
         }
-        
+
         .tech-health-gauge {
             width: 180px;
             position: relative;
             text-align: center;
             flex-shrink: 0;
-        } 
+        }
+
         .tech-gauge-bg {
             width: 100%;
             padding-top: 50%;
@@ -220,6 +224,7 @@
             border-radius: 200px 200px 0 0;
             position: relative;
         }
+
         .tech-gauge-inner {
             position: absolute;
             top: 14px;
@@ -229,6 +234,7 @@
             background: #0d1117;
             border-radius: 200px 200px 0 0;
         }
+
         .tech-gauge-needle {
             position: absolute;
             bottom: 0;
@@ -239,8 +245,9 @@
             border-radius: 4px;
             transform-origin: bottom center;
             transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
+
         .tech-health-score-value {
             margin-top: 15px;
             font-family: 'JetBrains Mono', monospace;
@@ -249,10 +256,11 @@
             color: #fff;
             letter-spacing: -2px;
         }
-        
+
         .tech-health-text {
             flex-grow: 1;
         }
+
         .tech-health-title {
             font-size: 0.8rem;
             color: #a855f7;
@@ -261,6 +269,7 @@
             letter-spacing: 1px;
             margin-bottom: 5px;
         }
+
         .tech-health-summary {
             font-size: 1.15rem;
             color: #f8fafc;
@@ -271,15 +280,17 @@
             color: #00FF9D !important;
             font-weight: bold;
         }
+
         .highlight-bad {
             color: #ff4d4d !important;
             font-weight: bold;
         }
+
         .highlight-neutral {
             color: #f59e0b !important;
             font-weight: bold;
         }
-        
+
         @media screen and (max-width: 768px) {
             .tech-health-panel {
                 flex-direction: column;
@@ -287,11 +298,15 @@
                 gap: 15px;
                 padding: 20px;
             }
+
             .tech-health-text {
                 text-align: center;
             }
         }
 
+        /* =========================================================
+   CHART CANVAS & TOOLBAR STYLES
+========================================================= */
         .strategy-header {
             display: flex;
             justify-content: space-between;
@@ -390,21 +405,9 @@
             cursor: pointer;
         }
 
-        .chart-card:fullscreen,
-        .chart-card:-webkit-full-screen {
-            padding: 15px !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            margin: 0 !important;
-            border-radius: 0 !important;
-            border: none !important;
-            display: flex !important;
-            flex-direction: column !important;
-            background: #0d1117 !important;
-            overflow: hidden !important;
-            z-index: 9999 !important;
-        }
-
+        /* =========================================================
+   FULLSCREEN: UI ELEMENTS (CLOSE BTNS & HUD)
+========================================================= */
         .close-fullscreen-btn,
         .menu-toggle-btn {
             display: none;
@@ -458,17 +461,6 @@
             display: flex !important;
         }
 
-        .chart-card:fullscreen #svg-container,
-        .chart-card:-webkit-full-screen #svg-container,
-        .chart-card:fullscreen #pattern-container,
-        .chart-card:-webkit-full-screen #pattern-container,
-        .fake-fullscreen #svg-container,
-        .fake-fullscreen #pattern-container {
-            flex: 1 1 0 !important;
-            height: auto !important;
-        }
-
-        /* Chart Header HUD */
         .chart-header-hud {
             display: none;
             width: 100%;
@@ -490,7 +482,6 @@
             display: flex !important;
         }
 
-        /* Hide the old h3 when HUD is showing */
         .chart-card:fullscreen h3,
         .chart-card:-webkit-full-screen h3,
         .mobile-fullscreen h3 {
@@ -571,116 +562,32 @@
             color: #fff;
         }
 
-        @media screen and (max-width: 768px) {
-            .chart-card:fullscreen .sub-chart,
-            .chart-card:-webkit-full-screen .sub-chart,
-            .fake-fullscreen .sub-chart {
-                height: 75px !important;
-                margin-top: 6px !important;
-                padding-top: 6px !important;
-            }
-        }
-
-        /* Mobile Fullscreen Panel */
-        .mobile-fullscreen {
-            position: fixed !important;
-            z-index: 99999 !important;
+        /* =========================================================
+   FULLSCREEN: DESKTOP
+========================================================= */
+        .chart-card:fullscreen,
+        .chart-card:-webkit-full-screen {
+            padding: 15px !important;
+            width: 100vw !important;
+            height: 100vh !important;
             margin: 0 !important;
             border-radius: 0 !important;
             border: none !important;
             display: flex !important;
             flex-direction: column !important;
             background: #0d1117 !important;
-            box-sizing: border-box !important;
-            padding: 8px !important;
+            overflow: hidden !important;
+            z-index: 9999 !important;
         }
 
-        /* Mobile Fullscreen Spacing & Scrolling Optimizations */
-        .mobile-fullscreen #ai-trend-suggestion {
-            display: none !important;
-        }
-
-        .mobile-fullscreen #svg-container,
-        .mobile-fullscreen #pattern-container {
-            display: block !important;
+        .chart-card:fullscreen #svg-container,
+        .chart-card:-webkit-full-screen #svg-container,
+        .chart-card:fullscreen #pattern-container,
+        .chart-card:-webkit-full-screen #pattern-container,
+        .fake-fullscreen #svg-container,
+        .fake-fullscreen #pattern-container {
             flex: 1 1 0 !important;
             height: auto !important;
-            min-height: 0 !important;
-            width: 100% !important;
-        }
-
-        .mobile-fullscreen .sub-chart {
-            flex: 0 0 80px !important;
-            height: 80px !important;
-            min-height: 80px !important;
-            width: 100% !important;
-            margin-top: 10px !important;
-            padding-top: 10px !important;
-            border-top: 2px dashed #334155 !important;
-            box-sizing: border-box !important;
-        }
-
-        .mobile-fullscreen .chart-header-hud {
-            margin-bottom: 6px !important;
-            padding: 6px 12px !important;
-        }
-
-        .mobile-fullscreen .chart-title-row {
-            margin-bottom: 0px !important;
-        }
-
-        @media screen and (orientation: portrait) {
-            .mobile-fullscreen {
-                top: 50% !important;
-                left: 50% !important;
-                width: 100vh !important;
-                width: 100dvh !important;
-                height: 100vw !important;
-                height: 100dvw !important;
-                transform: translate(-50%, -50%) rotate(90deg) !important;
-                overflow: hidden !important; /* Prevent scroll entirely, flexbox handles sizing */
-            }
-
-            .mobile-fullscreen .close-fullscreen-btn {
-                top: 20px !important;
-                right: 20px !important; /* Mapped Top-Right physically */
-                left: auto !important;
-                bottom: auto !important;
-            }
-
-            .mobile-fullscreen .menu-toggle-btn {
-                top: 20px !important;
-                left: 20px !important; /* Mapped Top-Left physically */
-                right: auto !important;
-                bottom: auto !important;
-            }
-        }
-
-        @media screen and (orientation: landscape) {
-            .mobile-fullscreen {
-                top: 0 !important;
-                left: 0 !important;
-                width: 100vw !important;
-                width: 100dvw !important;
-                height: 100vh !important;
-                height: 100dvh !important;
-                transform: none !important;
-                overflow: hidden !important;
-            }
-
-            .mobile-fullscreen .close-fullscreen-btn {
-                top: 20px !important;
-                right: 20px !important;
-                left: auto !important;
-                bottom: auto !important;
-            }
-
-            .mobile-fullscreen .menu-toggle-btn {
-                top: 20px !important;
-                left: 20px !important;
-                right: auto !important;
-                bottom: auto !important;
-            }
         }
 
         /* Sidebar styling for fullscreen: Grid Layout (Desktop) */
@@ -755,7 +662,135 @@
             flex-shrink: 0 !important;
         }
 
-        /* Mobile Fullscreen Toolbar: Grid-like chip panel */
+        /* =========================================================
+   FULLSCREEN: MOBILE ROTATION FIXES (BULLETPROOF)
+========================================================= */
+
+        @media screen and (max-width: 768px) {
+
+            .chart-card:fullscreen .sub-chart,
+            .chart-card:-webkit-full-screen .sub-chart,
+            .fake-fullscreen .sub-chart {
+                height: 75px !important;
+                margin-top: 6px !important;
+                padding-top: 6px !important;
+            }
+        }
+
+        .mobile-fullscreen {
+            position: fixed !important;
+            z-index: 999999 !important;
+            /* Elevated z-index */
+            background: #0d1117 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            box-sizing: border-box !important;
+            padding: 8px !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            border: none !important;
+        }
+
+        .mobile-fullscreen #ai-trend-suggestion {
+            display: none !important;
+        }
+
+        .mobile-fullscreen .chart-title-row {
+            margin-bottom: 0px !important;
+        }
+
+        .mobile-fullscreen .chart-header-hud {
+            margin-bottom: 6px !important;
+            padding: 6px 12px !important;
+        }
+
+        /* Critical: Let the canvas expand */
+        .mobile-fullscreen #svg-container,
+        .mobile-fullscreen #pattern-container {
+            display: block !important;
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 0 !important;
+        }
+
+        .mobile-fullscreen .sub-chart {
+            flex: 0 0 80px !important;
+            height: 80px !important;
+            min-height: 80px !important;
+            width: 100% !important;
+            margin-top: 10px !important;
+            padding-top: 10px !important;
+            border-top: 2px dashed #334155 !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Portrait -> Forced Landscape View */
+        @media screen and (orientation: portrait) {
+            .mobile-fullscreen {
+                top: 50% !important;
+                left: 50% !important;
+                width: 100vh !important;
+                width: 100dvh !important;
+                height: 100vw !important;
+                height: 100dvw !important;
+
+                /* The Missing Fixes: Explicit dimension resets to prevent squishing */
+                max-width: none !important;
+                max-height: none !important;
+                min-width: 100vh !important;
+                min-height: 100vw !important;
+
+                transform: translate(-50%, -50%) rotate(90deg) !important;
+                overflow: hidden !important;
+            }
+
+            .mobile-fullscreen .close-fullscreen-btn {
+                top: 20px !important;
+                right: 20px !important;
+                left: auto !important;
+                bottom: auto !important;
+            }
+
+            .mobile-fullscreen .menu-toggle-btn {
+                top: 20px !important;
+                left: 20px !important;
+                right: auto !important;
+                bottom: auto !important;
+            }
+        }
+
+        /* Landscape -> Natural Landscape View */
+        @media screen and (orientation: landscape) {
+            .mobile-fullscreen {
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                width: 100dvw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                max-width: none !important;
+                max-height: none !important;
+                transform: none !important;
+                overflow: hidden !important;
+            }
+
+            .mobile-fullscreen .close-fullscreen-btn {
+                top: 20px !important;
+                right: 20px !important;
+                left: auto !important;
+                bottom: auto !important;
+            }
+
+            .mobile-fullscreen .menu-toggle-btn {
+                top: 20px !important;
+                left: 20px !important;
+                right: auto !important;
+                bottom: auto !important;
+            }
+        }
+
+        /* Mobile Toolbar Layout (Chip panel) */
         .mobile-fullscreen .toolbar {
             position: absolute !important;
             top: 70px !important;
@@ -840,45 +875,10 @@
             flex-shrink: 0 !important;
         }
 
-        /* Hide navbar/header and sidebar when chart is in full screen or mobile rotated view */
-        body.fullscreen-active .navbar,
-        body.fullscreen-active .price-ticker-wrapper,
-        body.fullscreen-active .ticker-sidebar,
-        body.fullscreen-active .side-panel,
-        body.fullscreen-active .side-panel.right,
-        body.fullscreen-active .strategy-header {
-            display: none !important;
-        }
 
-        /* Hide all sibling panels in content-panel except the active fullscreen container */
-        body.fullscreen-active .content-panel > * {
-            display: none !important;
-        }
-        body.fullscreen-active .content-panel > .mobile-fullscreen {
-            display: flex !important;
-        }
-        body.fullscreen-active .content-panel > :fullscreen,
-        body.fullscreen-active .content-panel > :-webkit-full-screen {
-            display: flex !important;
-        }
-
-        body.fullscreen-active .main-wrapper {
-            display: block !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            height: 100vh !important;
-            width: 100vw !important;
-        }
-
-        body.fullscreen-active .content-panel {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            overflow: visible !important;
-            backdrop-filter: none !important;
-            filter: none !important;
-        }
+        /* =========================================================
+   BODY STACKING CONTEXT & SIBLING NUKING (BULLETPROOF)
+========================================================= */
 
         body.fullscreen-active {
             position: fixed !important;
@@ -889,14 +889,79 @@
             overflow: hidden !important;
         }
 
-        @keyframes pulse-green {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(38, 166, 154, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(38, 166, 154, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(38, 166, 154, 0); }
+        body.fullscreen-active .navbar,
+        body.fullscreen-active .price-ticker-wrapper,
+        body.fullscreen-active .ticker-sidebar,
+        body.fullscreen-active .side-panel,
+        body.fullscreen-active .side-panel.right,
+        body.fullscreen-active .strategy-header {
+            display: none !important;
         }
+
+        /* Stacking Context Resets */
+        body.fullscreen-active,
+        body.fullscreen-active .main-wrapper,
+        body.fullscreen-active .content-panel {
+            transform: none !important;
+            filter: none !important;
+            backdrop-filter: none !important;
+            perspective: none !important;
+            will-change: auto !important;
+            contain: none !important;
+            z-index: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Nuke All Siblings except the active fullscreen container */
+        body.fullscreen-active .content-panel>*:not(.mobile-fullscreen):not(:fullscreen):not(:-webkit-full-screen) {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+        }
+
+        body.fullscreen-active .content-panel>.mobile-fullscreen,
+        body.fullscreen-active .content-panel> :fullscreen,
+        body.fullscreen-active .content-panel> :-webkit-full-screen {
+            display: flex !important;
+        }
+
+        /* =========================================================
+   ANIMATIONS
+========================================================= */
+        @keyframes pulse-green {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(38, 166, 154, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 6px rgba(38, 166, 154, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(38, 166, 154, 0);
+            }
+        }
+
         @keyframes blink {
-            from, to { border-color: transparent }
-            50% { border-color: #38bdf8; }
+
+            from,
+            to {
+                border-color: transparent
+            }
+
+            50% {
+                border-color: #38bdf8;
+            }
         }
     </style>
 </head>
@@ -924,9 +989,12 @@
                                 </strong></p>
                         </div>
                         <div class="tf-btn-group">
-                            <button class="tf-btn <%= timeframe === '5m' ? 'active' : '' %>" onclick="changeTimeframe('5m', this)">5 Min</button>
-                            <button class="tf-btn <%= timeframe === '1d' ? 'active' : '' %>" onclick="changeTimeframe('1d', this)">1 Day</button>
-                            <button class="tf-btn <%= timeframe === '1wk' ? 'active' : '' %>" onclick="changeTimeframe('1wk', this)">1 Week</button>
+                            <button class="tf-btn <%= timeframe === '5m' ? 'active' : '' %>"
+                                onclick="changeTimeframe('5m', this)">5 Min</button>
+                            <button class="tf-btn <%= timeframe === '1d' ? 'active' : '' %>"
+                                onclick="changeTimeframe('1d', this)">1 Day</button>
+                            <button class="tf-btn <%= timeframe === '1wk' ? 'active' : '' %>"
+                                onclick="changeTimeframe('1wk', this)">1 Week</button>
                         </div>
                     </div>
 
@@ -948,16 +1016,31 @@
 
                     <div class="chart-card" id="main-chart-card" style="padding-bottom: 25px;">
                         <button class="close-fullscreen-btn" onclick="exitFullScreen(this)" title="Close Full Screen">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
                         </button>
                         <button class="menu-toggle-btn" onclick="toggleSidebarMenu(this)" title="Toggle Drawing Tools">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="4" y1="6" x2="20" y2="6"></line>
+                                <line x1="4" y1="12" x2="20" y2="12"></line>
+                                <line x1="4" y1="18" x2="20" y2="18"></line>
+                            </svg>
                         </button>
 
                         <div class="chart-header-hud">
                             <div class="hud-left">
-                                <span class="hud-ticker"><%= ticker %></span>
-                                <span class="hud-timeframe"><%= timeframe %></span>
+                                <span class="hud-ticker">
+                                    <%= ticker %>
+                                </span>
+                                <span class="hud-timeframe">
+                                    <%= timeframe %>
+                                </span>
                                 <span class="hud-live-dot"></span>
                                 <span class="hud-live-text">Live</span>
                             </div>
@@ -1095,54 +1178,89 @@
 
                     <div class="chart-card" id="virtual-trading-panel" style="padding: 25px; margin-bottom: 25px;">
                         <div class="panel-header-row">
-                            <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem;">Virtual Paper Trading Terminal</h3>
-                            <a href="/trade-history" style="color: #38bdf8; text-decoration: none; font-size: 0.85rem; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                            <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem;">Virtual Paper Trading Terminal
+                            </h3>
+                            <a href="/trade-history"
+                                style="color: #38bdf8; text-decoration: none; font-size: 0.85rem; font-weight: 600;"
+                                onmouseover="this.style.textDecoration='underline'"
+                                onmouseout="this.style.textDecoration='none'">
                                 View Complete Portfolio & Trade History →
                             </a>
                         </div>
-                        
+
                         <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
-                                    <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Available Cash</div>
-                                    <div id="virtual-cash-display" style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">$100,000.00</div>
+                            <div
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div
+                                    style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
+                                    <div
+                                        style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">
+                                        Available Cash</div>
+                                    <div id="virtual-cash-display"
+                                        style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">
+                                        $100,000.00</div>
                                 </div>
-                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
-                                    <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Position in <%= ticker %></div>
-                                    <div id="virtual-holding-display" style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">0 Shares</div>
+                                <div
+                                    style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
+                                    <div
+                                        style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">
+                                        Position in <%= ticker %>
+                                    </div>
+                                    <div id="virtual-holding-display"
+                                        style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">
+                                        0 Shares</div>
                                 </div>
-                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
-                                    <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Average Buy Price</div>
-                                    <div id="virtual-avg-price-display" style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">$0.00</div>
+                                <div
+                                    style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
+                                    <div
+                                        style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">
+                                        Average Buy Price</div>
+                                    <div id="virtual-avg-price-display"
+                                        style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">
+                                        $0.00</div>
                                 </div>
                             </div>
-                            
+
                             <div class="trade-action-box">
                                 <div style="flex: 1; min-width: 150px;">
-                                    <label style="display: block; font-size: 0.75rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">Order Action</label>
-                                    <div style="display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #0d1117; height: 42px; box-sizing: border-box;">
-                                        <button type="button" id="trade-btn-buy" onclick="setChartTradeAction('BUY')" style="flex: 1; border: none; background: #26a69a; color: #000; font-weight: bold; cursor: pointer; transition: all 0.2s;">BUY</button>
-                                        <button type="button" id="trade-btn-sell" onclick="setChartTradeAction('SELL')" style="flex: 1; border: none; background: transparent; color: #8E9BAE; font-weight: bold; cursor: pointer; transition: all 0.2s;">SELL</button>
+                                    <label
+                                        style="display: block; font-size: 0.75rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">Order
+                                        Action</label>
+                                    <div
+                                        style="display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #0d1117; height: 42px; box-sizing: border-box;">
+                                        <button type="button" id="trade-btn-buy" onclick="setChartTradeAction('BUY')"
+                                            style="flex: 1; border: none; background: #26a69a; color: #000; font-weight: bold; cursor: pointer; transition: all 0.2s;">BUY</button>
+                                        <button type="button" id="trade-btn-sell" onclick="setChartTradeAction('SELL')"
+                                            style="flex: 1; border: none; background: transparent; color: #8E9BAE; font-weight: bold; cursor: pointer; transition: all 0.2s;">SELL</button>
                                     </div>
                                 </div>
-                                
+
                                 <div style="flex: 1; min-width: 120px;">
-                                    <label style="display: block; font-size: 0.75rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">Quantity</label>
-                                    <input type="number" id="trade-qty-input" value="1" min="1" step="1" oninput="recalcChartTradeEstimate()" style="width: 100%; height: 42px; padding: 10px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: bold; outline: none; box-sizing: border-box;">
+                                    <label
+                                        style="display: block; font-size: 0.75rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">Quantity</label>
+                                    <input type="number" id="trade-qty-input" value="1" min="1" step="1"
+                                        oninput="recalcChartTradeEstimate()"
+                                        style="width: 100%; height: 42px; padding: 10px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: bold; outline: none; box-sizing: border-box;">
                                 </div>
-                                
+
                                 <div style="flex: 1.5; min-width: 180px;">
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">
+                                    <div
+                                        style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 8px;">
                                         <span>Estimated Cost</span>
                                         <span id="chart-trade-currency" style="color: #64748b;">USD</span>
                                     </div>
-                                    <div style="background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 0 15px; height: 42px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
-                                        <span id="chart-trade-estimate-price" style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #8E9BAE;">$0.00 each</span>
-                                        <span id="chart-trade-estimate-total" style="font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #fff; font-size: 1rem;">$0.00</span>
+                                    <div
+                                        style="background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 0 15px; height: 42px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+                                        <span id="chart-trade-estimate-price"
+                                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #8E9BAE;">$0.00
+                                            each</span>
+                                        <span id="chart-trade-estimate-total"
+                                            style="font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #fff; font-size: 1rem;">$0.00</span>
                                     </div>
                                 </div>
-                                
-                                <button type="button" id="chart-trade-submit-btn" onclick="executeChartTrade()" style="height: 42px; padding: 0 25px; background: #26a69a; border: none; border-radius: 6px; color: #000; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; box-shadow: 0 4px 15px rgba(38,166,154,0.3);">
+
+                                <button type="button" id="chart-trade-submit-btn" onclick="executeChartTrade()"
+                                    style="height: 42px; padding: 0 25px; background: #26a69a; border: none; border-radius: 6px; color: #000; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; box-shadow: 0 4px 15px rgba(38,166,154,0.3);">
                                     BUY <%= ticker %>
                                 </button>
                             </div>
@@ -1151,48 +1269,77 @@
 
                     <div class="chart-card" id="sentiment-analysis-panel" style="padding: 25px; margin-bottom: 25px;">
                         <div class="panel-header-row">
-                            <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                            <h3
+                                style="margin: 0; color: #f8fafc; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
                                 <span>🤖</span> AI News & Sentiment Terminal
                             </h3>
-                            <span style="font-size: 0.8rem; color: #8e9bae; font-family: 'JetBrains Mono', monospace;" id="sentiment-last-updated">PENDING...</span>
+                            <span style="font-size: 0.8rem; color: #8e9bae; font-family: 'JetBrains Mono', monospace;"
+                                id="sentiment-last-updated">PENDING...</span>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
+                            <div
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div
+                                    style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
                                     <div>
-                                        <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Overall Sentiment</div>
-                                        <div id="sentiment-overall-label" style="font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 800; color: #8e9bae;">LOADING...</div>
+                                        <div
+                                            style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">
+                                            Overall Sentiment</div>
+                                        <div id="sentiment-overall-label"
+                                            style="font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 800; color: #8e9bae;">
+                                            LOADING...</div>
                                     </div>
                                     <div id="sentiment-overall-icon" style="font-size: 2.2rem;">📡</div>
                                 </div>
 
-                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 20px;">
-                                    <div style="position: relative; width: 80px; height: 40px; overflow: hidden; flex-shrink: 0;">
-                                        <div style="width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(from 270deg at 50% 50%, #ff0055 0deg, #f59e0b 90deg, #00FF9D 180deg, transparent 180deg); box-sizing: border-box; position: absolute; top: 0; left: 0;"></div>
-                                        <div style="width: 60px; height: 60px; border-radius: 50%; background: #0d1117; position: absolute; top: 10px; left: 10px;"></div>
-                                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #fff; position: absolute; bottom: 0; left: 36px; z-index: 5;"></div>
-                                        <div id="sentiment-gauge-needle" style="width: 2px; height: 32px; background: #fff; position: absolute; bottom: 0; left: 39px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 4; box-shadow: 0 0 5px rgba(255,255,255,0.8);"></div>
+                                <div
+                                    style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 20px;">
+                                    <div
+                                        style="position: relative; width: 80px; height: 40px; overflow: hidden; flex-shrink: 0;">
+                                        <div
+                                            style="width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(from 270deg at 50% 50%, #ff0055 0deg, #f59e0b 90deg, #00FF9D 180deg, transparent 180deg); box-sizing: border-box; position: absolute; top: 0; left: 0;">
+                                        </div>
+                                        <div
+                                            style="width: 60px; height: 60px; border-radius: 50%; background: #0d1117; position: absolute; top: 10px; left: 10px;">
+                                        </div>
+                                        <div
+                                            style="width: 8px; height: 8px; border-radius: 50%; background: #fff; position: absolute; bottom: 0; left: 36px; z-index: 5;">
+                                        </div>
+                                        <div id="sentiment-gauge-needle"
+                                            style="width: 2px; height: 32px; background: #fff; position: absolute; bottom: 0; left: 39px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 4; box-shadow: 0 0 5px rgba(255,255,255,0.8);">
+                                        </div>
                                     </div>
                                     <div>
-                                        <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Sentiment Index</div>
-                                        <div id="sentiment-index-val" style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">0.00</div>
+                                        <div
+                                            style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">
+                                            Sentiment Index</div>
+                                        <div id="sentiment-index-val"
+                                            style="font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 800; color: #fff;">
+                                            0.00</div>
                                     </div>
                                 </div>
 
-                                <div style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
-                                    <div style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Key Market Drivers</div>
-                                    <div id="sentiment-drivers-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">
+                                <div
+                                    style="background: #0d1117; border: 1px solid var(--border); padding: 15px; border-radius: 8px;">
+                                    <div
+                                        style="font-size: 0.7rem; color: #8E9BAE; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">
+                                        Key Market Drivers</div>
+                                    <div id="sentiment-drivers-container"
+                                        style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">
                                         <span style="font-size: 0.75rem; color: #64748b;">No active drivers</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div style="background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
-                                <div style="font-size: 0.8rem; color: #8e9bae; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">
+                            <div
+                                style="background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
+                                <div
+                                    style="font-size: 0.8rem; color: #8e9bae; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">
                                     Latest Headwinds & Catalysts
                                 </div>
-                                <div id="sentiment-news-list" style="display: flex; flex-direction: column; gap: 15px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
+                                <div id="sentiment-news-list"
+                                    style="display: flex; flex-direction: column; gap: 15px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
                                     <div style="text-align: center; color: #64748b; padding: 20px; font-size: 0.9rem;">
                                         Analyzing news articles...
                                     </div>
@@ -1203,16 +1350,31 @@
 
                     <div class="chart-card" id="pattern-chart-card">
                         <button class="close-fullscreen-btn" onclick="exitFullScreen(this)" title="Close Full Screen">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
                         </button>
                         <button class="menu-toggle-btn" onclick="toggleSidebarMenu(this)" title="Toggle Drawing Tools">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="4" y1="6" x2="20" y2="6"></line>
+                                <line x1="4" y1="12" x2="20" y2="12"></line>
+                                <line x1="4" y1="18" x2="20" y2="18"></line>
+                            </svg>
                         </button>
 
                         <div class="chart-header-hud">
                             <div class="hud-left">
-                                <span class="hud-ticker"><%= ticker %></span>
-                                <span class="hud-timeframe"><%= timeframe %></span>
+                                <span class="hud-ticker">
+                                    <%= ticker %>
+                                </span>
+                                <span class="hud-timeframe">
+                                    <%= timeframe %>
+                                </span>
                                 <span class="hud-live-dot"></span>
                                 <span class="hud-live-text">Live Analysis</span>
                             </div>
@@ -1275,22 +1437,31 @@
                     </div>
 
                     <div class="chart-card" id="ai-summary-section" style="margin-top: 25px; display: none;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <h3 style="margin: 0; color: #e2e8f0; display: flex; align-items: center; gap: 8px;">
                                     <span style="color: #38bdf8;">🤖</span> AI Technical Analyst Executive Summary
                                 </h3>
-                                <div style="display: flex; align-items: center; gap: 5px; background: rgba(38, 166, 154, 0.1); border: 1px solid rgba(38, 166, 154, 0.2); padding: 3px 8px; border-radius: 4px;">
-                                    <span style="width: 6px; height: 6px; background: #26a69a; border-radius: 50%; display: inline-block; animation: pulse-green 1.5s infinite;"></span>
-                                    <span style="font-size: 0.65rem; color: #26a69a; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">Live Quant Analysis</span>
+                                <div
+                                    style="display: flex; align-items: center; gap: 5px; background: rgba(38, 166, 154, 0.1); border: 1px solid rgba(38, 166, 154, 0.2); padding: 3px 8px; border-radius: 4px;">
+                                    <span
+                                        style="width: 6px; height: 6px; background: #26a69a; border-radius: 50%; display: inline-block; animation: pulse-green 1.5s infinite;"></span>
+                                    <span
+                                        style="font-size: 0.65rem; color: #26a69a; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">Live
+                                        Quant Analysis</span>
                                 </div>
                             </div>
-                            <button id="copy-summary-btn" onclick="copySummaryText()" style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; border-radius: 6px;">
+                            <button id="copy-summary-btn" onclick="copySummaryText()"
+                                style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; border-radius: 6px;">
                                 📋 Copy Report
                             </button>
                         </div>
-                        <div id="ai-summary-content" style="font-family: 'Inter', sans-serif; font-size: 0.95rem; line-height: 1.7; color: #cbd5e1; background: rgba(13, 17, 23, 0.5); border: 1px solid #1e293b; padding: 25px; border-radius: 12px; min-height: 120px; max-height: 400px; overflow-y: auto; position: relative;">
-                            <div id="ai-summary-text" style="font-family: 'Inter', sans-serif; font-size: 0.95rem; line-height: 1.7; color: #e2e8f0; white-space: pre-line;">Generating technical analysis script...</div>
+                        <div id="ai-summary-content"
+                            style="font-family: 'Inter', sans-serif; font-size: 0.95rem; line-height: 1.7; color: #cbd5e1; background: rgba(13, 17, 23, 0.5); border: 1px solid #1e293b; padding: 25px; border-radius: 12px; min-height: 120px; max-height: 400px; overflow-y: auto; position: relative;">
+                            <div id="ai-summary-text"
+                                style="font-family: 'Inter', sans-serif; font-size: 0.95rem; line-height: 1.7; color: #e2e8f0; white-space: pre-line;">
+                                Generating technical analysis script...</div>
                         </div>
                     </div>
 
@@ -2471,7 +2642,7 @@
                 }
 
                 textEl.innerText = overallText;
-                
+
                 const badge = suggestionEl.querySelector('span');
                 if (badge) {
                     badge.style.background = badgeColor;
@@ -2577,7 +2748,7 @@
             function typeWriterEffect(elementId, text) {
                 const element = document.getElementById(elementId);
                 if (!element) return;
-                
+
                 if (typingTimer) {
                     clearInterval(typingTimer);
                 }
@@ -2587,7 +2758,7 @@
                     .replace(/\n/g, '<br>');
 
                 element.innerHTML = '';
-                
+
                 let index = 0;
                 typingTimer = setInterval(() => {
                     if (index >= formattedText.length) {
@@ -2595,7 +2766,7 @@
                         element.innerHTML = formattedText;
                         return;
                     }
-                    
+
                     if (formattedText[index] === '<') {
                         const closeIdx = formattedText.indexOf('>', index);
                         if (closeIdx !== -1) {
@@ -2606,7 +2777,7 @@
                     } else {
                         index += 3;
                     }
-                    
+
                     element.innerHTML = formattedText.substring(0, index) + '<span style="border-right: 2px solid #38bdf8; animation: blink 0.75s step-end infinite;">&nbsp;</span>';
                 }, 10);
             }
@@ -2615,7 +2786,7 @@
                 const element = document.getElementById('ai-summary-text');
                 if (!element) return;
                 const text = element.innerText;
-                
+
                 navigator.clipboard.writeText(text).then(() => {
                     const btn = document.getElementById('copy-summary-btn');
                     const originalHTML = btn.innerHTML;
@@ -2646,19 +2817,19 @@
                 const ticker = currentTicker;
                 const timeframe = currentTimeframe;
                 const currentPrice = lastHist.close;
-                
+
                 const rsi = lastHist.rsi;
                 const macd = lastHist.macd;
                 const macdSignal = lastHist.signal;
                 const macdHist = lastHist.hist;
-                
+
                 const sma20Hist = lastHist.sma20;
                 const sma50Hist = lastHist.sma50;
                 const ema9Hist = lastHist.ema9;
                 const ema9Fut = lastFut.ema9;
                 const ema21Hist = lastHist.ema21;
                 const ema21Fut = lastFut.ema21;
-                
+
                 const metaCandle = ohlcData[ohlcData.length - 1];
                 const patterns = metaCandle.patterns || [];
                 const sr_levels = metaCandle.sr_levels;
@@ -2699,7 +2870,7 @@
                         oscScript += `RSI is currently neutral at **${rsi.toFixed(2)}**, indicating balanced buying and selling pressure. `;
                     }
                 }
-                
+
                 if (macd != null && macdSignal != null && macdHist != null) {
                     const isCrossover = macd > macdSignal;
                     if (isCrossover && macdHist > 0) {
@@ -2721,7 +2892,7 @@
                         levelsScript += `On the downside, structural support floors are established at: **${sr_levels.support.map(s => s.toFixed(2)).join(', ')}**. `;
                     }
                 }
-                
+
                 if (patterns && patterns.length > 0) {
                     const pattern = patterns[0];
                     levelsScript += `Additionally, a **${pattern.name}** chart formation has been detected by the pattern engine, projecting a bias towards ${pattern.name.includes('Bullish') ? 'upward breakout' : (pattern.name.includes('Bearish') ? 'downward breakdown' : 'range-bound consolidation')}.`;
@@ -2732,9 +2903,9 @@
                     const finalFutPrice = lastFut.close;
                     const netChange = finalFutPrice - currentPrice;
                     const pctChange = (netChange / currentPrice) * 100;
-                    
+
                     outlookScript = `\n\n**AI Quantitative Forecast:**\nOver the next 10 predicted candles, the AI forecasting model projects the price of ${ticker} to move from ${currentPrice.toFixed(2)} towards a target of **${finalFutPrice.toFixed(2)}** (${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(2)}%). `;
-                    
+
                     if (pctChange > 0.5) {
                         outlookScript += `The predictive model advises a **BULLISH** stance, indicating potential long setups with entry zones near support floors, keeping target profit levels aligned with the forecasted targets.`;
                     } else if (pctChange < -0.5) {
@@ -2985,7 +3156,7 @@
 
             // Hook into the OHLC fetch to get price on load
             const originalFetchOHLCData = fetchOHLCData;
-            fetchOHLCData = async function() {
+            fetchOHLCData = async function () {
                 await originalFetchOHLCData();
                 if (ohlcData && ohlcData.length > 0) {
                     const histData = ohlcData.filter(d => !d.is_future);
