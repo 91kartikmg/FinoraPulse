@@ -1757,6 +1757,30 @@
                             }
                             if (isMain) { dragAccumulator = cDrag; }
                             else { patternDragAccumulator = cDrag; }
+                        } else if (e.touches.length === 2 && initialTouchDist > 0) {
+                            e.preventDefault();
+                            const t1 = getLocalCoords(e.touches[0].clientX, e.touches[0].clientY, container);
+                            const t2 = getLocalCoords(e.touches[1].clientX, e.touches[1].clientY, container);
+                            const dist = Math.hypot(t1.x - t2.x, t1.y - t2.y);
+
+                            if (dist > 10) {
+                                const scale = dist / initialTouchDist;
+                                const oldVis = isMain ? visibleCount : patternVisibleCount;
+                                let newVis = Math.round(initialVisCount / scale);
+                                newVis = Math.min(Math.max(newVis, 10), ohlcData.length);
+
+                                if (newVis !== oldVis) {
+                                    if (isMain) {
+                                        offset = Math.min(Math.max(offset + Math.floor((oldVis - newVis) / 2), 0), ohlcData.length - newVis);
+                                        visibleCount = newVis;
+                                        renderSVG();
+                                    } else {
+                                        patternOffset = Math.min(Math.max(patternOffset + Math.floor((oldVis - newVis) / 2), 0), ohlcData.length - newVis);
+                                        patternVisibleCount = newVis;
+                                        renderPatternChart();
+                                    }
+                                }
+                            }
                         }
                     } else {
                         if (e.touches.length === 1 && activeTool === 'pan') {
