@@ -1,24 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <title>Macro Economic Explorer: <%= country %> Economic Indicators | FinoraPulse</title>
     <meta name="title" content="Macro Economic Explorer: <%= country %> Economic Indicators | FinoraPulse">
-    <meta name="description" content="Explore institutional liquidity flows, GDP growth trends, inflation index, unemployment rates, government bond yields, and net capital flows for <%= country %> on the FinoraPulse economic terminal.">
-    <meta name="keywords" content="<%= country %> macro economics, <%= country %> GDP, <%= country %> inflation, economic indicator tracker, liquidity matrix, bond yield, FinoraPulse, institutional flow">
+    <meta name="description"
+        content="Explore institutional liquidity flows, GDP growth trends, inflation index, unemployment rates, government bond yields, and net capital flows for <%= country %> on the FinoraPulse economic terminal.">
+    <meta name="keywords"
+        content="<%= country %> macro economics, <%= country %> GDP, <%= country %> inflation, economic indicator tracker, liquidity matrix, bond yield, FinoraPulse, institutional flow">
     <meta name="author" content="Kartik M G (FinoraPulse.com)">
     <meta name="robots" content="index, follow">
     <meta name="language" content="English">
-    
+
     <link rel="canonical" href="https://finorapulse.com/macro?country=<%= country %>">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://finorapulse.com/macro?country=<%= country %>">
     <meta property="og:title" content="Macro Economic Explorer: <%= country %> Economic Indicators">
-    <meta property="og:description" content="Analyze GDP growth, inflation, unemployment, Gov bond yields, liquidity matrix, and export leaders for <%= country %> in real-time.">
+    <meta property="og:description"
+        content="Analyze GDP growth, inflation, unemployment, Gov bond yields, liquidity matrix, and export leaders for <%= country %> in real-time.">
     <meta property="og:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
     <meta property="og:site_name" content="FinoraPulse">
     <meta property="og:locale" content="en_US">
@@ -27,15 +31,20 @@
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://finorapulse.com/macro?country=<%= country %>">
     <meta property="twitter:title" content="Macro Economic Explorer: <%= country %> | FinoraPulse">
-    <meta property="twitter:description" content="Analyze GDP growth, inflation, unemployment, Gov bond yields, liquidity matrix, and export leaders for <%= country %> in real-time.">
+    <meta property="twitter:description"
+        content="Analyze GDP growth, inflation, unemployment, Gov bond yields, liquidity matrix, and export leaders for <%= country %> in real-time.">
     <meta property="twitter:image" content="https://finorapulse.com/images/finorapulse-og-banner.jpg">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/css/home.css" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link rel="icon" type="image/x-icon" href="/favicon.png">
-
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9322873035906803"
+        crossorigin="anonymous"></script>
+    <meta name="google-adsense-account" content="ca-pub-9322873035906803">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -99,7 +108,7 @@
       ]
     }
     </script>
-    <script type="application/ld+json"> 
+    <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "FAQPage",
@@ -167,46 +176,183 @@
     }
     </script>
     <style>
-        .macro-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; transition: opacity 0.3s; }
+        .macro-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+            transition: opacity 0.3s;
+        }
+
         .chart-box {
-            background: var(--card-bg, #1e293b); padding: 20px; border-radius: 16px;
-            border: 1px solid var(--border, #334155); height: 350px; display: flex; flex-direction: column;
+            background: var(--card-bg, #1e293b);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border, #334155);
+            height: 350px;
+            display: flex;
+            flex-direction: column;
         }
+
         .search-bar input {
-            background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border, #334155); color: white;
-            padding: 10px 15px; border-radius: 8px; font-family: 'Inter', sans-serif; outline: none;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border, #334155);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
         }
-        .search-bar input:focus { border-color: var(--accent, #38bdf8); }
-        .btn { background: var(--accent, #38bdf8); color: var(--bg-dark, #041027); border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        
+
+        .search-bar input:focus {
+            border-color: var(--accent, #38bdf8);
+        }
+
+        .btn {
+            background: var(--accent, #38bdf8);
+            color: var(--bg-dark, #041027);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         /* NEW SCREENER UI */
         .screener-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
         }
+
         .screener-card {
-            background: #0f172a; border: 1px solid var(--border); padding: 15px; border-radius: 12px;
-            display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: transform 0.2s;
         }
-        .screener-card:hover { border-color: var(--accent); transform: translateY(-3px); }
-        .screener-sector { font-size: 0.7rem; color: #a855f7; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
-        .screener-company { font-size: 1rem; font-weight: 700; color: #f8fafc; margin-bottom: 10px; }
-        .screener-data { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+
+        .screener-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+        }
+
+        .screener-sector {
+            font-size: 0.7rem;
+            color: #a855f7;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .screener-company {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 10px;
+        }
+
+        .screener-data {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
     </style>
 
     <style>
         /* AI Health Score Styles */
-        .health-panel { background: #0d1117; border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 25px; display: flex; align-items: center; gap: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border-left: 4px solid #00FF9D; transition: opacity 0.3s; }
-        
-        .health-gauge { width: 180px; position: relative; text-align: center; flex-shrink: 0; } 
-        .gauge-bg { width: 100%; padding-top: 50%; background: conic-gradient(from 270deg at 50% 100%, #ff4d4d 0deg, #f59e0b 90deg, #00FF9D 180deg, transparent 180deg); border-radius: 200px 200px 0 0; position: relative; }
-        .gauge-inner { position: absolute; top: 14px; left: 14px; right: 14px; bottom: 0; background: #0d1117; border-radius: 200px 200px 0 0; }
-        .gauge-needle { position: absolute; bottom: 0; left: calc(50% - 2px); width: 4px; height: 90%; background: #fff; border-radius: 4px; transform-origin: bottom center; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
-        .health-score-value { margin-top: 15px; font-family: 'JetBrains Mono', monospace; font-size: 2.2rem; font-weight: 900; color: #fff; letter-spacing: -2px; }
-        
-        .health-text { flex-grow: 1; }
-        .health-title { font-size: 0.8rem; color: #a855f7; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; }
-        .health-summary { font-size: 1.15rem; color: #f8fafc; line-height: 1.6; }
+        .health-panel {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #00FF9D;
+            transition: opacity 0.3s;
+        }
+
+        .health-gauge {
+            width: 180px;
+            position: relative;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .gauge-bg {
+            width: 100%;
+            padding-top: 50%;
+            background: conic-gradient(from 270deg at 50% 100%, #ff4d4d 0deg, #f59e0b 90deg, #00FF9D 180deg, transparent 180deg);
+            border-radius: 200px 200px 0 0;
+            position: relative;
+        }
+
+        .gauge-inner {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            right: 14px;
+            bottom: 0;
+            background: #0d1117;
+            border-radius: 200px 200px 0 0;
+        }
+
+        .gauge-needle {
+            position: absolute;
+            bottom: 0;
+            left: calc(50% - 2px);
+            width: 4px;
+            height: 90%;
+            background: #fff;
+            border-radius: 4px;
+            transform-origin: bottom center;
+            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .health-score-value {
+            margin-top: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: -2px;
+        }
+
+        .health-text {
+            flex-grow: 1;
+        }
+
+        .health-title {
+            font-size: 0.8rem;
+            color: #a855f7;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .health-summary {
+            font-size: 1.15rem;
+            color: #f8fafc;
+            line-height: 1.6;
+        }
 
         /* ✨ MOBILE RESPONSIVE FIXES & SCROLL WRAPPERS ✨ */
         .scroll-wrapper {
@@ -215,388 +361,492 @@
             -webkit-overflow-scrolling: touch;
             padding-bottom: 10px;
         }
-        
-        .scroll-wrapper::-webkit-scrollbar { height: 6px; }
-        .scroll-wrapper::-webkit-scrollbar-track { background: #080a0c; border-radius: 10px; }
-        .scroll-wrapper::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+        .scroll-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .scroll-wrapper::-webkit-scrollbar-track {
+            background: #080a0c;
+            border-radius: 10px;
+        }
+
+        .scroll-wrapper::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
 
         @media screen and (max-width: 768px) {
-            .main-wrapper { padding: 0 !important; gap: 0 !important; }
-            .content-panel { padding: 15px !important; border-radius: 0 !important; }
-            
-            .macro-header { flex-direction: column; align-items: flex-start; gap: 15px; margin-bottom: 20px; }
-            .search-bar { width: 100%; }
-            .search-bar input { flex-grow: 1; width: auto !important; }
-            
+            .main-wrapper {
+                padding: 0 !important;
+                gap: 0 !important;
+            }
+
+            .content-panel {
+                padding: 15px !important;
+                border-radius: 0 !important;
+            }
+
+            .macro-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
+
+            .search-bar input {
+                flex-grow: 1;
+                width: auto !important;
+            }
+
             /* Stack charts vertically on mobile */
-            .charts-grid { grid-template-columns: 1fr; gap: 15px; }
-            
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
             /* Full bleed edge-to-edge for panels */
-            .chart-box, .health-panel, .stat-card {
-                margin-left: -15px; 
-                margin-right: -15px; 
-                border-radius: 0 !important; 
-                border-left: none !important; 
-                border-right: none !important; 
+            .chart-box,
+            .health-panel,
+            .stat-card {
+                margin-left: -15px;
+                margin-right: -15px;
+                border-radius: 0 !important;
+                border-left: none !important;
+                border-right: none !important;
             }
 
             /* ⚠️ GRAPH FIXES ⚠️ */
             /* 1. Let normal Line Charts shrink to fit the screen */
-            .chart-box .scroll-wrapper > div { min-width: 100% !important; }
-            
+            .chart-box .scroll-wrapper>div {
+                min-width: 100% !important;
+            }
+
             /* 2. FORCE Correlation Matrix to stay wide so it triggers the left/right swipe */
-            #correlation-chart { min-width: 600px !important; }
-            
+            #correlation-chart {
+                min-width: 600px !important;
+            }
+
             /* Stack gauge and text */
-            .health-panel { flex-direction: column; text-align: center; gap: 15px; padding: 20px; }
-            .health-text { text-align: center; }
-            
+            .health-panel {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+                padding: 20px;
+            }
+
+            .health-text {
+                text-align: center;
+            }
+
             /* Fix Liquidity Matrix alignment */
-            .liquidity-header-flex { flex-direction: column; align-items: flex-start !important; gap: 10px; }
-            .liquidity-row { flex-wrap: wrap; justify-content: space-between; margin-bottom: 15px; }
-            .liquidity-label { width: 45% !important; font-size: 0.9rem !important; }
-            .liquidity-val { width: 50% !important; text-align: right; font-size: 1rem !important; }
-            .liquidity-bar-wrapper { flex: 0 0 100% !important; order: 3; margin-top: 8px; }
+            .liquidity-header-flex {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 10px;
+            }
+
+            .liquidity-row {
+                flex-wrap: wrap;
+                justify-content: space-between;
+                margin-bottom: 15px;
+            }
+
+            .liquidity-label {
+                width: 45% !important;
+                font-size: 0.9rem !important;
+            }
+
+            .liquidity-val {
+                width: 50% !important;
+                text-align: right;
+                font-size: 1rem !important;
+            }
+
+            .liquidity-bar-wrapper {
+                flex: 0 0 100% !important;
+                order: 3;
+                margin-top: 8px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-   <%- include('partials/header') %>
+    <%- include('partials/header') %>
 
-    <div class="main-wrapper">
-        <aside class="ticker-sidebar">
-            <%- include('partials/global') %>
-        </aside>
+        <div class="main-wrapper">
+            <aside class="ticker-sidebar">
+                <%- include('partials/global') %>
+            </aside>
 
-        <main class="content-panel">
-            <div class="macro-header">
-                <% 
-                    let inputCountry = country.toUpperCase().trim();
-                    const nameToCode = {
-                        "INDIA": "IN", "UNITED STATES": "US", "USA": "US", "AMERICA": "US",
-                        "CHINA": "CN", "JAPAN": "JP", "SOUTH KOREA": "KR", "KOREA": "KR",
-                        "AUSTRALIA": "AU", "SINGAPORE": "SG", "INDONESIA": "ID", "CANADA": "CA",
-                        "BRAZIL": "BR", "MEXICO": "MX", "GERMANY": "DE", "UNITED KINGDOM": "GB",
-                        "UK": "GB", "FRANCE": "FR", "ITALY": "IT"
-                    };
-                    let validCode = nameToCode[inputCountry] || inputCountry;
-
-                    const codeToName = {
-                        "IN": "India", "US": "United States", "CN": "China", "JP": "Japan", 
-                        "KR": "South Korea", "AU": "Australia", "SG": "Singapore", "ID": "Indonesia", 
-                        "CA": "Canada", "BR": "Brazil", "MX": "Mexico", "DE": "Germany", 
-                        "GB": "United Kingdom", "FR": "France", "IT": "Italy"
-                    };
-                    const fullName = codeToName[validCode] || validCode;
-                %>
-                <div>
-                    <h1 style="margin:0; font-size: 2.2rem;">Macro Explorer: <span class="accent"><%= fullName %></span></h1>
-                    <p style="color:var(--text-muted); margin-top:5px;">Economic Health & Sector Screener</p>
-                </div>
-                <form action="/macro" method="GET" class="search-bar" style="display: flex; gap: 10px;">
-                    <input type="text" name="country" placeholder="Country Name or Code..." value="<%= country %>" style="width: 180px;">
-                    <button type="submit" class="btn">Search</button>
-                </form>
-            </div>
-
-            <div class="stat-card" style="background: var(--card-bg); padding:25px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: opacity 0.3s;">
-                <div class="liquidity-header-flex" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                    <div>
-                        <h3 style="margin:0; color:var(--text-main); font-size: 1.4rem;">Institutional Liquidity Matrix</h3>
-                        <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">Live estimated capital flow for the <strong class="accent"><%= fullName %></strong> benchmark equity market.</p>
-                    </div>
-                    <div id="liquidity-status" style="padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; background: rgba(30, 41, 59, 0.5); color: #8E9BAE; border: 1px solid #334155;">
-                        Calculating...
-                    </div>
-                </div>
-
-                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
-                    <div class="liquidity-row" style="display: flex; align-items: center; gap: 15px;">
-                        <div id="label-foreign" class="liquidity-label" style="width: 140px; font-weight: bold; color: #f8fafc; font-size: 0.85rem;">Foreign Flow</div>
-                        <div class="liquidity-bar-wrapper" style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
-                            <div id="bar-foreign" style="height: 100%; width: 0%; transition: all 1s ease-out;"></div>
+            <main class="content-panel">
+                <div class="macro-header">
+                    <% let inputCountry=country.toUpperCase().trim(); const nameToCode={ "INDIA" : "IN"
+                        , "UNITED STATES" : "US" , "USA" : "US" , "AMERICA" : "US" , "CHINA" : "CN" , "JAPAN" : "JP"
+                        , "SOUTH KOREA" : "KR" , "KOREA" : "KR" , "AUSTRALIA" : "AU" , "SINGAPORE" : "SG" , "INDONESIA"
+                        : "ID" , "CANADA" : "CA" , "BRAZIL" : "BR" , "MEXICO" : "MX" , "GERMANY" : "DE"
+                        , "UNITED KINGDOM" : "GB" , "UK" : "GB" , "FRANCE" : "FR" , "ITALY" : "IT" }; let
+                        validCode=nameToCode[inputCountry] || inputCountry; const codeToName={ "IN" : "India" , "US"
+                        : "United States" , "CN" : "China" , "JP" : "Japan" , "KR" : "South Korea" , "AU" : "Australia"
+                        , "SG" : "Singapore" , "ID" : "Indonesia" , "CA" : "Canada" , "BR" : "Brazil" , "MX" : "Mexico"
+                        , "DE" : "Germany" , "GB" : "United Kingdom" , "FR" : "France" , "IT" : "Italy" }; const
+                        fullName=codeToName[validCode] || validCode; %>
+                        <div>
+                            <h1 style="margin:0; font-size: 2.2rem;">Macro Explorer: <span class="accent">
+                                    <%= fullName %>
+                                </span></h1>
+                            <p style="color:var(--text-muted); margin-top:5px;">Economic Health & Sector Screener</p>
                         </div>
-                        <div id="val-foreign" class="liquidity-val" style="width: 130px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">--</div>
-                    </div>
+                        <form action="/macro" method="GET" class="search-bar" style="display: flex; gap: 10px;">
+                            <input type="text" name="country" placeholder="Country Name or Code..."
+                                value="<%= country %>" style="width: 180px;">
+                            <button type="submit" class="btn">Search</button>
+                        </form>
+                </div>
 
-                    <div class="liquidity-row" style="display: flex; align-items: center; gap: 15px;">
-                        <div id="label-domestic" class="liquidity-label" style="width: 140px; font-weight: bold; color: #f8fafc; font-size: 0.85rem;">Local Flow</div>
-                        <div class="liquidity-bar-wrapper" style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
-                            <div id="bar-domestic" style="height: 100%; width: 0%; transition: all 1s ease-out;"></div>
+                <div class="stat-card"
+                    style="background: var(--card-bg); padding:25px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: opacity 0.3s;">
+                    <div class="liquidity-header-flex"
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                        <div>
+                            <h3 style="margin:0; color:var(--text-main); font-size: 1.4rem;">Institutional Liquidity
+                                Matrix</h3>
+                            <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">Live estimated
+                                capital flow for the <strong class="accent">
+                                    <%= fullName %>
+                                </strong> benchmark equity market.</p>
                         </div>
-                        <div id="val-domestic" class="liquidity-val" style="width: 130px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">--</div>
+                        <div id="liquidity-status"
+                            style="padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; background: rgba(30, 41, 59, 0.5); color: #8E9BAE; border: 1px solid #334155;">
+                            Calculating...
+                        </div>
                     </div>
 
-                    <div style="border-top: 1px dashed #334155; margin: 10px 0;"></div>
+                    <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
+                        <div class="liquidity-row" style="display: flex; align-items: center; gap: 15px;">
+                            <div id="label-foreign" class="liquidity-label"
+                                style="width: 140px; font-weight: bold; color: #f8fafc; font-size: 0.85rem;">Foreign
+                                Flow</div>
+                            <div class="liquidity-bar-wrapper"
+                                style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
+                                <div id="bar-foreign" style="height: 100%; width: 0%; transition: all 1s ease-out;">
+                                </div>
+                            </div>
+                            <div id="val-foreign" class="liquidity-val"
+                                style="width: 130px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">
+                                --</div>
+                        </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: #8E9BAE; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Net Market Flow</span>
-                        <span id="val-net" style="font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 900; color: #fff;">--</span>
-                    </div>
-                </div>
-            </div>
+                        <div class="liquidity-row" style="display: flex; align-items: center; gap: 15px;">
+                            <div id="label-domestic" class="liquidity-label"
+                                style="width: 140px; font-weight: bold; color: #f8fafc; font-size: 0.85rem;">Local Flow
+                            </div>
+                            <div class="liquidity-bar-wrapper"
+                                style="flex-grow: 1; height: 16px; background: #0f172a; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid #334155;">
+                                <div id="bar-domestic" style="height: 100%; width: 0%; transition: all 1s ease-out;">
+                                </div>
+                            </div>
+                            <div id="val-domestic" class="liquidity-val"
+                                style="width: 130px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: #8E9BAE;">
+                                --</div>
+                        </div>
 
-            <div class="health-panel" id="macro-health-panel" style="display: none;">
-                <div class="health-gauge">
-                    <div class="gauge-bg">
-                        <div class="gauge-inner"></div>
-                        <div id="health-needle" class="gauge-needle" style="transform: rotate(0deg);"></div>
-                    </div>
-                    <div class="health-score-value" id="health-score-text">0/100</div>
-                </div>
-                <div class="health-text">
-                    <div class="health-title">✨ AI Macro Evaluation</div>
-                    <div class="health-summary" id="health-summary-text">
-                        Analyzing economic indicators...
-                    </div>
-                </div>
-            </div>
-            
-            <div class="charts-grid">
-                <div class="chart-box">
-                    <h3 style="margin-top:0; color:var(--text-muted);">Total GDP (USD)</h3>
-                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
-                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="gdpTotalChart"></canvas></div>
-                    </div>
-                </div>
-                <div class="chart-box">
-                    <h3 style="margin-top:0; color:var(--text-muted);">Growth vs. Inflation (%)</h3>
-                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
-                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="historyChart"></canvas></div>
-                    </div>
-                </div>
-            </div>
+                        <div style="border-top: 1px dashed #334155; margin: 10px 0;"></div>
 
-            <div class="charts-grid">
-                <div class="chart-box">
-                    <h3 style="margin-top:0; color:var(--text-muted);">Unemployment Rate (%)</h3>
-                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
-                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="unemploymentChart"></canvas></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span
+                                style="color: #8E9BAE; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Net
+                                Market Flow</span>
+                            <span id="val-net"
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 900; color: #fff;">--</span>
+                        </div>
                     </div>
                 </div>
-                <div class="chart-box">
-                    <h3 style="margin-top:0; color:var(--text-muted);">10-Year Gov Bond Yield (%)</h3>
-                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
-                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="bondChart"></canvas></div>
+
+                <div class="health-panel" id="macro-health-panel" style="display: none;">
+                    <div class="health-gauge">
+                        <div class="gauge-bg">
+                            <div class="gauge-inner"></div>
+                            <div id="health-needle" class="gauge-needle" style="transform: rotate(0deg);"></div>
+                        </div>
+                        <div class="health-score-value" id="health-score-text">0/100</div>
+                    </div>
+                    <div class="health-text">
+                        <div class="health-title">✨ AI Macro Evaluation</div>
+                        <div class="health-summary" id="health-summary-text">
+                            Analyzing economic indicators...
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="charts-grid">
-                <div class="chart-box">
-                    <h3 style="margin-top:0; color:var(--text-muted);">Currency Strength <br><span id="currency-pair-label" style="font-size:0.8rem; color:#a855f7;"></span></h3>
-                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
-                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="currencyChart"></canvas></div>
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:var(--text-muted);">Total GDP (USD)</h3>
+                        <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                            <div style="position: relative; height: 100%; min-width: 500px;"><canvas
+                                    id="gdpTotalChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:var(--text-muted);">Growth vs. Inflation (%)</h3>
+                        <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                            <div style="position: relative; height: 100%; min-width: 500px;"><canvas
+                                    id="historyChart"></canvas></div>
+                        </div>
                     </div>
                 </div>
-                <div class="chart-box">
-                    <h3 style="margin-top:0; color:var(--text-muted);">Detailed Export Sectors</h3>
-                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
-                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="advancedExportChart"></canvas></div>
+
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:var(--text-muted);">Unemployment Rate (%)</h3>
+                        <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                            <div style="position: relative; height: 100%; min-width: 500px;"><canvas
+                                    id="unemploymentChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:var(--text-muted);">10-Year Gov Bond Yield (%)</h3>
+                        <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                            <div style="position: relative; height: 100%; min-width: 500px;"><canvas
+                                    id="bondChart"></canvas></div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-             <div class="charts-grid">
-                <div class="chart-box">
-                    <h3 style="margin-top:0; color:var(--text-muted);">Central Bank Interest Rate (%)</h3>
-                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
-                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="interestRateChart"></canvas></div>
+
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:var(--text-muted);">Currency Strength <br><span
+                                id="currency-pair-label" style="font-size:0.8rem; color:#a855f7;"></span></h3>
+                        <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                            <div style="position: relative; height: 100%; min-width: 500px;"><canvas
+                                    id="currencyChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:var(--text-muted);">Detailed Export Sectors</h3>
+                        <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                            <div style="position: relative; height: 100%; min-width: 500px;"><canvas
+                                    id="advancedExportChart"></canvas></div>
+                        </div>
                     </div>
                 </div>
-                <div class="chart-box">
-                    <h3 style="margin-top:0; color:var(--text-muted);">Govt Debt to GDP (%)</h3>
-                    <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
-                        <div style="position: relative; height: 100%; min-width: 500px;"><canvas id="debtChart"></canvas></div>
+
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:var(--text-muted);">Central Bank Interest Rate (%)</h3>
+                        <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                            <div style="position: relative; height: 100%; min-width: 500px;"><canvas
+                                    id="interestRateChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:var(--text-muted);">Govt Debt to GDP (%)</h3>
+                        <div class="scroll-wrapper" style="flex-grow: 1; width: 100%;">
+                            <div style="position: relative; height: 100%; min-width: 500px;"><canvas
+                                    id="debtChart"></canvas></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="stat-card" style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: opacity 0.3s;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
-                    <div>
-                        <h3 style="margin:0; color:var(--text-main);">Cross-Asset Correlation Matrix</h3>
-                        <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">Measures how global assets move together. <strong style="color:#00FF9D">+1.0</strong> means they move perfectly together.</p>
+                <div class="stat-card"
+                    style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: opacity 0.3s;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+                        <div>
+                            <h3 style="margin:0; color:var(--text-main);">Cross-Asset Correlation Matrix</h3>
+                            <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">Measures how global
+                                assets move together. <strong style="color:#00FF9D">+1.0</strong> means they move
+                                perfectly together.</p>
+                        </div>
+                    </div>
+                    <div id="correlation-loader" style="color:var(--text-muted); font-style: italic; padding: 20px 0;">
+                        Crunching 1-Year Historical Data...</div>
+
+                    <div class="scroll-wrapper" style="padding-bottom: 15px;">
+                        <div id="correlation-chart" style="min-height: 350px; min-width: 600px;"></div>
                     </div>
                 </div>
-                <div id="correlation-loader" style="color:var(--text-muted); font-style: italic; padding: 20px 0;">Crunching 1-Year Historical Data...</div>
-                
-                <div class="scroll-wrapper" style="padding-bottom: 15px;">
-                    <div id="correlation-chart" style="min-height: 350px; min-width: 600px;"></div>
+
+                <div class="stat-card"
+                    style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border); transition: opacity 0.3s;">
+                    <h3 style="margin:0; color:var(--text-main);">Export Leaders (Live Screener)</h3>
+                    <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">These publicly traded
+                        companies dominate the top export sectors driving this country's GDP.</p>
+                    <div class="screener-grid" id="screener-target">
+                        <div style="color:var(--text-muted); font-style: italic;">Scanning market for leading stocks...
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="stat-card" style="background: var(--card-bg); padding:20px; border-radius:16px; border: 1px solid var(--border); transition: opacity 0.3s;">
-                <h3 style="margin:0; color:var(--text-main);">Export Leaders (Live Screener)</h3>
-                <p style="color:var(--text-muted); font-size: 0.85rem; margin-top:5px;">These publicly traded companies dominate the top export sectors driving this country's GDP.</p>
-                <div class="screener-grid" id="screener-target">
-                    <div style="color:var(--text-muted); font-style: italic;">Scanning market for leading stocks...</div>
-                </div>
-            </div>
-           
-            <%- include('partials/footer') %>
-        </main>
+                <%- include('partials/footer') %>
+            </main>
 
-        <aside class="side-panel right">
-            <div class="sidebar-header" style="padding: 0 0 15px 0; border-bottom: none;">Sponsors</div>
-            <div class="ad-placeholder" style="background: rgba(0,0,0,0.2);"><span>Ad Slot</span><span style="font-size: 0.65rem; margin-top: 5px;">300 x 250</span></div>
-        </aside>
-    </div>
+            <aside class="side-panel right">
+                <div class="sidebar-header" style="padding: 0 0 15px 0; border-bottom: none;">Sponsors</div>
+                <div class="ad-placeholder" style="background: rgba(0,0,0,0.2);"><span>Ad Slot</span><span
+                        style="font-size: 0.65rem; margin-top: 5px;">300 x 250</span></div>
+            </aside>
+        </div>
 
-    <script>
-        const targetCountry = "<%= validCode %>";
+        <script>
+            const targetCountry = "<%= validCode %>";
 
-        async function loadMacro() {
-            try {
-                const response = await fetch(`/api/macro-explorer?country=${targetCountry}`);
-                const data = await response.json();
+            async function loadMacro() {
+                try {
+                    const response = await fetch(`/api/macro-explorer?country=${targetCountry}`);
+                    const data = await response.json();
 
-                // ==========================================
-                // THE COLD START PROTECTOR (POLLING LOGIC)
-                // ==========================================
-                if (response.status === 202 || data.status === "building") {
-                    let loader = document.getElementById('macro-cold-start-loader');
-                    
-                    if (!loader) {
-                        loader = document.createElement('div');
-                        loader.id = 'macro-cold-start-loader';
-                        loader.innerHTML = `
+                    // ==========================================
+                    // THE COLD START PROTECTOR (POLLING LOGIC)
+                    // ==========================================
+                    if (response.status === 202 || data.status === "building") {
+                        let loader = document.getElementById('macro-cold-start-loader');
+
+                        if (!loader) {
+                            loader = document.createElement('div');
+                            loader.id = 'macro-cold-start-loader';
+                            loader.innerHTML = `
                             <div style="text-align: center; padding: 40px; background: var(--card-bg, #1e293b); border: 1px solid var(--accent, #38bdf8); border-radius: 16px; margin-bottom: 25px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);">
                                 <h2 style="color: var(--accent); margin: 0 0 10px 0;">⏳ ${data.message || 'Building Macro Dashboard...'}</h2>
                                 <p style="color: var(--text-muted); margin: 0;">Establishing connection to the World Bank. This takes about 5-8 seconds on the first run...</p>
                             </div>
                         `;
-                        document.querySelector('.macro-header').insertAdjacentElement('afterend', loader);
-                        
-                        // Dim the rest of the dashboard
-                        document.querySelectorAll('.charts-grid, .health-panel, .stat-card').forEach(el => el.style.opacity = '0.1');
-                    } else {
-                        loader.querySelector('h2').innerText = `⏳ ${data.message || 'Building Macro Dashboard...'}`;
-                    }
-                    
-                    // Poll again in 3 seconds
-                    setTimeout(loadMacro, 3000);
-                    return; 
-                }
+                            document.querySelector('.macro-header').insertAdjacentElement('afterend', loader);
 
-                // Remove loader and restore opacity when data is ready
-                const loader = document.getElementById('macro-cold-start-loader');
-                if (loader) loader.remove();
-                document.querySelectorAll('.charts-grid, .health-panel, .stat-card').forEach(el => el.style.opacity = '1');
-
-                if (data.error) { alert("Error loading data. Check country code."); return; }
-
-                // --- 1. AI MACRO HEALTH ENGINE ---
-                if (data.gdp_trend && data.inflation_trend && data.unemployment_trend && data.gdp_trend.length > 0) {
-                    const getLatestValid = (arr) => {
-                        for (let i = arr.length - 1; i >= 0; i--) {
-                            if (arr[i] !== 0 && arr[i] !== null) return arr[i];
+                            // Dim the rest of the dashboard
+                            document.querySelectorAll('.charts-grid, .health-panel, .stat-card').forEach(el => el.style.opacity = '0.1');
+                        } else {
+                            loader.querySelector('h2').innerText = `⏳ ${data.message || 'Building Macro Dashboard...'}`;
                         }
-                        return 0; 
-                    };
 
-                    const latestGDP = getLatestValid(data.gdp_trend);
-                    const latestInf = getLatestValid(data.inflation_trend);
-                    const latestUnemp = getLatestValid(data.unemployment_trend);
-                    
-                    let score = 50; 
-                    score += (latestGDP * 5); 
-                    score -= (Math.abs(latestInf - 2) * 3); 
-                    score -= (latestUnemp * 2); 
-                    score = Math.max(0, Math.min(100, Math.round(score)));
+                        // Poll again in 3 seconds
+                        setTimeout(loadMacro, 3000);
+                        return;
+                    }
 
-                    const degrees = ((score / 100) * 180) - 90;
-                    document.getElementById('health-needle').style.transform = `rotate(${degrees}deg)`;
-                    document.getElementById('health-score-text').innerText = `${score}/100`;
+                    // Remove loader and restore opacity when data is ready
+                    const loader = document.getElementById('macro-cold-start-loader');
+                    if (loader) loader.remove();
+                    document.querySelectorAll('.charts-grid, .health-panel, .stat-card').forEach(el => el.style.opacity = '1');
 
-                    const gdpClass = latestGDP > 2.5 ? 'highlight-good' : (latestGDP < 0 ? 'highlight-bad' : 'highlight-neutral');
-                    const infClass = (latestInf > 1 && latestInf < 3.5) ? 'highlight-good' : (latestInf > 6 ? 'highlight-bad' : 'highlight-neutral');
-                    const unempClass = latestUnemp < 5 ? 'highlight-good' : (latestUnemp > 7 ? 'highlight-bad' : 'highlight-neutral');
-                    const statusWord = score > 70 ? "robust" : (score > 40 ? "stabilizing" : "struggling");
+                    if (data.error) { alert("Error loading data. Check country code."); return; }
 
-                    document.getElementById('health-summary-text').innerHTML = `
+                    // --- 1. AI MACRO HEALTH ENGINE ---
+                    if (data.gdp_trend && data.inflation_trend && data.unemployment_trend && data.gdp_trend.length > 0) {
+                        const getLatestValid = (arr) => {
+                            for (let i = arr.length - 1; i >= 0; i--) {
+                                if (arr[i] !== 0 && arr[i] !== null) return arr[i];
+                            }
+                            return 0;
+                        };
+
+                        const latestGDP = getLatestValid(data.gdp_trend);
+                        const latestInf = getLatestValid(data.inflation_trend);
+                        const latestUnemp = getLatestValid(data.unemployment_trend);
+
+                        let score = 50;
+                        score += (latestGDP * 5);
+                        score -= (Math.abs(latestInf - 2) * 3);
+                        score -= (latestUnemp * 2);
+                        score = Math.max(0, Math.min(100, Math.round(score)));
+
+                        const degrees = ((score / 100) * 180) - 90;
+                        document.getElementById('health-needle').style.transform = `rotate(${degrees}deg)`;
+                        document.getElementById('health-score-text').innerText = `${score}/100`;
+
+                        const gdpClass = latestGDP > 2.5 ? 'highlight-good' : (latestGDP < 0 ? 'highlight-bad' : 'highlight-neutral');
+                        const infClass = (latestInf > 1 && latestInf < 3.5) ? 'highlight-good' : (latestInf > 6 ? 'highlight-bad' : 'highlight-neutral');
+                        const unempClass = latestUnemp < 5 ? 'highlight-good' : (latestUnemp > 7 ? 'highlight-bad' : 'highlight-neutral');
+                        const statusWord = score > 70 ? "robust" : (score > 40 ? "stabilizing" : "struggling");
+
+                        document.getElementById('health-summary-text').innerHTML = `
                         The AI evaluates this economy as <strong>${statusWord}</strong>. 
                         Economic growth is currently <span class="${gdpClass}">${latestGDP}%</span>, 
                         while inflation is measuring at <span class="${infClass}">${latestInf}%</span>. 
                         The labor market shows an unemployment rate of <span class="${unempClass}">${latestUnemp}%</span>.
                     `;
 
-                    document.getElementById('macro-health-panel').style.display = 'flex';
-                }
+                        document.getElementById('macro-health-panel').style.display = 'flex';
+                    }
 
-                // --- 2. CORE CHARTS ---
-                if(data.gdp_total_trend && data.gdp_total_trend.length > 0) {
-                    new Chart(document.getElementById('gdpTotalChart').getContext('2d'), {
-                        type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Total GDP (USD)', data: data.gdp_total_trend, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { let value = context.parsed.y; if (value >= 1e12) return 'Total GDP: $' + (value / 1e12).toFixed(2) + 'T'; if (value >= 1e9) return 'Total GDP: $' + (value / 1e9).toFixed(2) + 'B'; return 'Total GDP: $' + value; }}}}, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: function(value) { if (value >= 1e12) return '$' + (value / 1e12).toFixed(1) + 'T'; if (value >= 1e9) return '$' + (value / 1e9).toFixed(1) + 'B'; return '$' + value; }}}} }
-                    });
-                }
+                    // --- 2. CORE CHARTS ---
+                    if (data.gdp_total_trend && data.gdp_total_trend.length > 0) {
+                        new Chart(document.getElementById('gdpTotalChart').getContext('2d'), {
+                            type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Total GDP (USD)', data: data.gdp_total_trend, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }] },
+                            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (context) { let value = context.parsed.y; if (value >= 1e12) return 'Total GDP: $' + (value / 1e12).toFixed(2) + 'T'; if (value >= 1e9) return 'Total GDP: $' + (value / 1e9).toFixed(2) + 'B'; return 'Total GDP: $' + value; } } } }, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: function (value) { if (value >= 1e12) return '$' + (value / 1e12).toFixed(1) + 'T'; if (value >= 1e9) return '$' + (value / 1e9).toFixed(1) + 'B'; return '$' + value; } } } } }
+                        });
+                    }
 
-                if(data.gdp_trend && data.inflation_trend) {
-                    new Chart(document.getElementById('historyChart').getContext('2d'), {
-                        type: 'line', data: { labels: data.history_years, datasets: [ { label: 'GDP Growth (%)', data: data.gdp_trend, borderColor: '#22c55e', borderWidth: 3, tension: 0.3, fill: false, pointRadius: 4 }, { label: 'Inflation (%)', data: data.inflation_trend, borderColor: '#ef4444', borderWidth: 3, borderDash: [5, 5], tension: 0.3, fill: false, pointRadius: 4 } ]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
-                    });
-                }
+                    if (data.gdp_trend && data.inflation_trend) {
+                        new Chart(document.getElementById('historyChart').getContext('2d'), {
+                            type: 'line', data: { labels: data.history_years, datasets: [{ label: 'GDP Growth (%)', data: data.gdp_trend, borderColor: '#22c55e', borderWidth: 3, tension: 0.3, fill: false, pointRadius: 4 }, { label: 'Inflation (%)', data: data.inflation_trend, borderColor: '#ef4444', borderWidth: 3, borderDash: [5, 5], tension: 0.3, fill: false, pointRadius: 4 }] },
+                            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
 
-                if(data.unemployment_trend && data.unemployment_trend.length > 0) {
-                    new Chart(document.getElementById('unemploymentChart').getContext('2d'), {
-                        type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Unemployment Rate (%)', data: data.unemployment_trend, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
-                    });
-                }
+                    if (data.unemployment_trend && data.unemployment_trend.length > 0) {
+                        new Chart(document.getElementById('unemploymentChart').getContext('2d'), {
+                            type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Unemployment Rate (%)', data: data.unemployment_trend, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }] },
+                            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
 
-                if(data.bond_trend && data.bond_trend.length > 0 && data.bond_trend.some(val => val !== null)) {
-                    new Chart(document.getElementById('bondChart').getContext('2d'), {
-                        type: 'line', data: { labels: data.history_years, datasets: [{ label: '10-Year Bond Yield (%)', data: data.bond_trend, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
-                    });
-                }
+                    if (data.bond_trend && data.bond_trend.length > 0 && data.bond_trend.some(val => val !== null)) {
+                        new Chart(document.getElementById('bondChart').getContext('2d'), {
+                            type: 'line', data: { labels: data.history_years, datasets: [{ label: '10-Year Bond Yield (%)', data: data.bond_trend, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }] },
+                            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
 
-                if(data.interest_rate_trend && data.interest_rate_trend.length > 0) {
-                    new Chart(document.getElementById('interestRateChart').getContext('2d'), {
-                        type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Interest Rate (%)', data: data.interest_rate_trend, borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
-                    });
-                }
+                    if (data.interest_rate_trend && data.interest_rate_trend.length > 0) {
+                        new Chart(document.getElementById('interestRateChart').getContext('2d'), {
+                            type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Interest Rate (%)', data: data.interest_rate_trend, borderColor: '#fbbf24', backgroundColor: 'rgba(251, 191, 36, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }] },
+                            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
 
-                if(data.debt_trend && data.debt_trend.length > 0) {
-                    new Chart(document.getElementById('debtChart').getContext('2d'), {
-                        type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Debt to GDP (%)', data: data.debt_trend, borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
-                    });
-                }
+                    if (data.debt_trend && data.debt_trend.length > 0) {
+                        new Chart(document.getElementById('debtChart').getContext('2d'), {
+                            type: 'line', data: { labels: data.history_years, datasets: [{ label: 'Debt to GDP (%)', data: data.debt_trend, borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }] },
+                            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
 
-                if(data.currency_trend && data.currency_trend.length > 0) {
-                    document.getElementById('currency-pair-label').innerText = "(" + data.currency_pair + ")";
-                    new Chart(document.getElementById('currencyChart').getContext('2d'), {
-                        type: 'line', data: { labels: data.history_years, datasets: [{ label: data.currency_pair, data: data.currency_trend, borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }]},
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
-                    });
-                }
+                    if (data.currency_trend && data.currency_trend.length > 0) {
+                        document.getElementById('currency-pair-label').innerText = "(" + data.currency_pair + ")";
+                        new Chart(document.getElementById('currencyChart').getContext('2d'), {
+                            type: 'line', data: { labels: data.history_years, datasets: [{ label: data.currency_pair, data: data.currency_trend, borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)', borderWidth: 3, tension: 0.3, fill: true, pointRadius: 4 }] },
+                            options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }, x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } } } }
+                        });
+                    }
 
-                if(data.advanced_exports && data.advanced_exports.length > 0) {
-                    const expLabels = data.advanced_exports.map(e => e.sector);
-                    const expValues = data.advanced_exports.map(e => e.pct);
-                    
-                    new Chart(document.getElementById('advancedExportChart').getContext('2d'), {
-                        type: 'bar', data: { labels: expLabels, datasets: [{ label: '% of Total Exports', data: expValues, backgroundColor: '#38bdf8', borderRadius: 4 }] },
-                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { weight: 'bold' } } } } }
-                    });
-                }
+                    if (data.advanced_exports && data.advanced_exports.length > 0) {
+                        const expLabels = data.advanced_exports.map(e => e.sector);
+                        const expValues = data.advanced_exports.map(e => e.pct);
 
-                const screenerTarget = document.getElementById('screener-target');
-                if(data.screener && data.screener.length > 0) {
-                    screenerTarget.innerHTML = ''; 
-                    const sym = (targetCountry === 'IN') ? '₹' : (targetCountry === 'JP' ? '¥' : '$');
-                    
-                    data.screener.forEach(stock => {
-                        const isUp = stock.change >= 0;
-                        const colorClass = isUp ? 'up' : 'down';
-                        const sign = isUp ? '+' : '';
-                        
-                        screenerTarget.innerHTML += `
+                        new Chart(document.getElementById('advancedExportChart').getContext('2d'), {
+                            type: 'bar', data: { labels: expLabels, datasets: [{ label: '% of Total Exports', data: expValues, backgroundColor: '#38bdf8', borderRadius: 4 }] },
+                            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: val => Number(val).toFixed(2) + '%' } }, y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { weight: 'bold' } } } } }
+                        });
+                    }
+
+                    const screenerTarget = document.getElementById('screener-target');
+                    if (data.screener && data.screener.length > 0) {
+                        screenerTarget.innerHTML = '';
+                        const sym = (targetCountry === 'IN') ? '₹' : (targetCountry === 'JP' ? '¥' : '$');
+
+                        data.screener.forEach(stock => {
+                            const isUp = stock.change >= 0;
+                            const colorClass = isUp ? 'up' : 'down';
+                            const sign = isUp ? '+' : '';
+
+                            screenerTarget.innerHTML += `
                             <div class="screener-card" onclick="window.location.href='/predict?ticker=${stock.ticker}'">
                                 <div class="screener-sector">${stock.sector}</div>
                                 <div class="screener-company">${stock.company}</div>
@@ -609,145 +859,146 @@
                                 </div>
                             </div>
                         `;
-                    });
-                } else {
-                    screenerTarget.innerHTML = `<div style="color:var(--text-muted);">Could not fetch live market data at this moment.</div>`;
-                }
+                        });
+                    } else {
+                        screenerTarget.innerHTML = `<div style="color:var(--text-muted);">Could not fetch live market data at this moment.</div>`;
+                    }
 
-            } catch (err) { console.error(err); }
-        }
-        
-        loadMacro();
+                } catch (err) { console.error(err); }
+            }
 
-        // Safe Fallback for header top-bar (since we removed the heavy background loop)
-        function updateHeaderMarketWatch() {
-            fetch('/api/market').then(res => {
-                if(!res.ok) throw new Error("Skipped");
-                return res.json();
-            }).then(data => {
-                // Feature currently disabled to save RAM, so this will quietly bypass
-            }).catch(err => { /* Quiet failure to keep console clean */ });
-        }
-        
-        // Global hamburger menu logic is now handled in header.ejs
-    </script>
+            loadMacro();
 
-    <script>
-        // --- 6. CROSS-ASSET CORRELATION MATRIX ---
-        async function loadCorrelationMatrix() {
-            try {
-                const response = await fetch('/api/correlation');
-                const data = await response.json();
-                
-                document.getElementById('correlation-loader').style.display = 'none';
-                
-                if (data.error) {
-                    document.getElementById('correlation-chart').innerHTML = `<div style="color:#ff4d4d;">Data unavailable.</div>`;
-                    return;
-                }
+            // Safe Fallback for header top-bar (since we removed the heavy background loop)
+            function updateHeaderMarketWatch() {
+                fetch('/api/market').then(res => {
+                    if (!res.ok) throw new Error("Skipped");
+                    return res.json();
+                }).then(data => {
+                    // Feature currently disabled to save RAM, so this will quietly bypass
+                }).catch(err => { /* Quiet failure to keep console clean */ });
+            }
 
-                const options = {
-                    series: data.series,
-                    chart: { height: 380, type: 'heatmap', background: 'transparent', toolbar: { show: false } },
-                    dataLabels: { enabled: true, style: { colors: ['#fff'], fontSize: '12px', fontFamily: 'JetBrains Mono' } },
-                    colors: ['#008FFB'],
-                    plotOptions: {
-                        heatmap: {
-                            shadeIntensity: 0.5, radius: 4, useFillColorAsStroke: false,
-                            colorScale: {
-                                ranges: [
-                                    { from: -1.0, to: -0.3, color: '#FF007F', name: 'Inverse (Hedge)' },
-                                    { from: -0.29, to: 0.29, color: '#1e293b', name: 'Uncorrelated' },
-                                    { from: 0.3, to: 1.0, color: '#00FF9D', name: 'Correlated (Risk)' }
-                                ]
+            // Global hamburger menu logic is now handled in header.ejs
+        </script>
+
+        <script>
+            // --- 6. CROSS-ASSET CORRELATION MATRIX ---
+            async function loadCorrelationMatrix() {
+                try {
+                    const response = await fetch('/api/correlation');
+                    const data = await response.json();
+
+                    document.getElementById('correlation-loader').style.display = 'none';
+
+                    if (data.error) {
+                        document.getElementById('correlation-chart').innerHTML = `<div style="color:#ff4d4d;">Data unavailable.</div>`;
+                        return;
+                    }
+
+                    const options = {
+                        series: data.series,
+                        chart: { height: 380, type: 'heatmap', background: 'transparent', toolbar: { show: false } },
+                        dataLabels: { enabled: true, style: { colors: ['#fff'], fontSize: '12px', fontFamily: 'JetBrains Mono' } },
+                        colors: ['#008FFB'],
+                        plotOptions: {
+                            heatmap: {
+                                shadeIntensity: 0.5, radius: 4, useFillColorAsStroke: false,
+                                colorScale: {
+                                    ranges: [
+                                        { from: -1.0, to: -0.3, color: '#FF007F', name: 'Inverse (Hedge)' },
+                                        { from: -0.29, to: 0.29, color: '#1e293b', name: 'Uncorrelated' },
+                                        { from: 0.3, to: 1.0, color: '#00FF9D', name: 'Correlated (Risk)' }
+                                    ]
+                                }
                             }
-                        }
-                    },
-                    stroke: { width: 1, colors: ['#0d1117'] },
-                    xaxis: { labels: { style: { colors: '#8E9BAE', fontSize: '11px', fontWeight: 600 } }, axisBorder: { show: false }, axisTicks: { show: false } },
-                    yaxis: { labels: { style: { colors: '#8E9BAE', fontSize: '11px', fontWeight: 600 } } },
-                    theme: { mode: 'dark' }
-                };
+                        },
+                        stroke: { width: 1, colors: ['#0d1117'] },
+                        xaxis: { labels: { style: { colors: '#8E9BAE', fontSize: '11px', fontWeight: 600 } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                        yaxis: { labels: { style: { colors: '#8E9BAE', fontSize: '11px', fontWeight: 600 } } },
+                        theme: { mode: 'dark' }
+                    };
 
-                const chart = new ApexCharts(document.querySelector("#correlation-chart"), options);
-                chart.render();
+                    const chart = new ApexCharts(document.querySelector("#correlation-chart"), options);
+                    chart.render();
 
-                // Snap scroll to right for matrix if needed
-                setTimeout(() => {
-                    const scrollWrappers = document.querySelectorAll('.scroll-wrapper');
-                    scrollWrappers.forEach(w => w.scrollLeft = w.scrollWidth);
-                }, 200);
+                    // Snap scroll to right for matrix if needed
+                    setTimeout(() => {
+                        const scrollWrappers = document.querySelectorAll('.scroll-wrapper');
+                        scrollWrappers.forEach(w => w.scrollLeft = w.scrollWidth);
+                    }, 200);
 
-            } catch (err) {
-                console.error("Correlation Error:", err);
-            }
-        }
-        
-        loadCorrelationMatrix();
-    </script>
-    <script>
-        // --- 7. GLOBAL LIQUIDITY MATRIX ---
-        async function loadGlobalLiquidity() {
-            try {
-                const response = await fetch(`/api/global-liquidity?country=${targetCountry}`);
-                const data = await response.json();
-
-                if(data.error) return;
-
-                const fmt = (num) => new Intl.NumberFormat('en-US').format(Math.abs(num));
-                
-                document.getElementById('label-foreign').innerText = data.foreign_label;
-                document.getElementById('label-domestic').innerText = data.domestic_label;
-
-                const fVal = document.getElementById('val-foreign');
-                const dVal = document.getElementById('val-domestic');
-                const nVal = document.getElementById('val-net');
-                const fBar = document.getElementById('bar-foreign');
-                const dBar = document.getElementById('bar-domestic');
-                const statusBox = document.getElementById('liquidity-status');
-
-                const cur = data.currency;
-
-                fVal.innerText = (data.foreign_val >= 0 ? "+" : "-") + fmt(data.foreign_val) + " " + cur;
-                fVal.style.color = data.foreign_val >= 0 ? "#00FF9D" : "#FF007F";
-                
-                dVal.innerText = (data.domestic_val >= 0 ? "+" : "-") + fmt(data.domestic_val) + " " + cur;
-                dVal.style.color = data.domestic_val >= 0 ? "#00FF9D" : "#FF007F";
-
-                nVal.innerText = (data.net >= 0 ? "+" : "-") + fmt(data.net) + " " + cur;
-                nVal.style.color = data.net >= 0 ? "#00FF9D" : "#FF007F";
-
-                statusBox.innerText = data.status;
-                if(data.status.includes("Bullish")) {
-                    statusBox.style.color = "#00FF9D";
-                    statusBox.style.borderColor = "rgba(0, 255, 157, 0.4)";
-                    statusBox.style.backgroundColor = "rgba(0, 255, 157, 0.1)";
-                } else if(data.status.includes("Bearish")) {
-                    statusBox.style.color = "#FF007F";
-                    statusBox.style.borderColor = "rgba(255, 0, 127, 0.4)";
-                    statusBox.style.backgroundColor = "rgba(255, 0, 127, 0.1)";
-                } else {
-                    statusBox.style.color = "#8E9BAE";
-                    statusBox.style.borderColor = "#334155";
-                    statusBox.style.backgroundColor = "rgba(30, 41, 59, 0.5)";
+                } catch (err) {
+                    console.error("Correlation Error:", err);
                 }
-
-                const maxVal = Math.max(Math.abs(data.foreign_val), Math.abs(data.domestic_val), 100); 
-                
-                fBar.style.width = `${(Math.abs(data.foreign_val) / maxVal) * 100}%`;
-                fBar.style.backgroundColor = data.foreign_val >= 0 ? "#00FF9D" : "#FF007F";
-                fBar.style.boxShadow = data.foreign_val >= 0 ? "0 0 10px rgba(0, 255, 157, 0.5)" : "0 0 10px rgba(255, 0, 127, 0.5)";
-
-                dBar.style.width = `${(Math.abs(data.domestic_val) / maxVal) * 100}%`;
-                dBar.style.backgroundColor = data.domestic_val >= 0 ? "#00FF9D" : "#FF007F";
-                dBar.style.boxShadow = data.domestic_val >= 0 ? "0 0 10px rgba(0, 255, 157, 0.5)" : "0 0 10px rgba(255, 0, 127, 0.5)";
-
-            } catch (err) {
-                console.error("Liquidity Error:", err);
             }
-        }
 
-        loadGlobalLiquidity();
-    </script>
+            loadCorrelationMatrix();
+        </script>
+        <script>
+            // --- 7. GLOBAL LIQUIDITY MATRIX ---
+            async function loadGlobalLiquidity() {
+                try {
+                    const response = await fetch(`/api/global-liquidity?country=${targetCountry}`);
+                    const data = await response.json();
+
+                    if (data.error) return;
+
+                    const fmt = (num) => new Intl.NumberFormat('en-US').format(Math.abs(num));
+
+                    document.getElementById('label-foreign').innerText = data.foreign_label;
+                    document.getElementById('label-domestic').innerText = data.domestic_label;
+
+                    const fVal = document.getElementById('val-foreign');
+                    const dVal = document.getElementById('val-domestic');
+                    const nVal = document.getElementById('val-net');
+                    const fBar = document.getElementById('bar-foreign');
+                    const dBar = document.getElementById('bar-domestic');
+                    const statusBox = document.getElementById('liquidity-status');
+
+                    const cur = data.currency;
+
+                    fVal.innerText = (data.foreign_val >= 0 ? "+" : "-") + fmt(data.foreign_val) + " " + cur;
+                    fVal.style.color = data.foreign_val >= 0 ? "#00FF9D" : "#FF007F";
+
+                    dVal.innerText = (data.domestic_val >= 0 ? "+" : "-") + fmt(data.domestic_val) + " " + cur;
+                    dVal.style.color = data.domestic_val >= 0 ? "#00FF9D" : "#FF007F";
+
+                    nVal.innerText = (data.net >= 0 ? "+" : "-") + fmt(data.net) + " " + cur;
+                    nVal.style.color = data.net >= 0 ? "#00FF9D" : "#FF007F";
+
+                    statusBox.innerText = data.status;
+                    if (data.status.includes("Bullish")) {
+                        statusBox.style.color = "#00FF9D";
+                        statusBox.style.borderColor = "rgba(0, 255, 157, 0.4)";
+                        statusBox.style.backgroundColor = "rgba(0, 255, 157, 0.1)";
+                    } else if (data.status.includes("Bearish")) {
+                        statusBox.style.color = "#FF007F";
+                        statusBox.style.borderColor = "rgba(255, 0, 127, 0.4)";
+                        statusBox.style.backgroundColor = "rgba(255, 0, 127, 0.1)";
+                    } else {
+                        statusBox.style.color = "#8E9BAE";
+                        statusBox.style.borderColor = "#334155";
+                        statusBox.style.backgroundColor = "rgba(30, 41, 59, 0.5)";
+                    }
+
+                    const maxVal = Math.max(Math.abs(data.foreign_val), Math.abs(data.domestic_val), 100);
+
+                    fBar.style.width = `${(Math.abs(data.foreign_val) / maxVal) * 100}%`;
+                    fBar.style.backgroundColor = data.foreign_val >= 0 ? "#00FF9D" : "#FF007F";
+                    fBar.style.boxShadow = data.foreign_val >= 0 ? "0 0 10px rgba(0, 255, 157, 0.5)" : "0 0 10px rgba(255, 0, 127, 0.5)";
+
+                    dBar.style.width = `${(Math.abs(data.domestic_val) / maxVal) * 100}%`;
+                    dBar.style.backgroundColor = data.domestic_val >= 0 ? "#00FF9D" : "#FF007F";
+                    dBar.style.boxShadow = data.domestic_val >= 0 ? "0 0 10px rgba(0, 255, 157, 0.5)" : "0 0 10px rgba(255, 0, 127, 0.5)";
+
+                } catch (err) {
+                    console.error("Liquidity Error:", err);
+                }
+            }
+
+            loadGlobalLiquidity();
+        </script>
 </body>
+
 </html>

@@ -704,13 +704,13 @@
             padding: 6px 12px !important;
         }
 
-        /* Critical: Let the canvas expand */
+        /* Critical: Let the canvas expand but not shrink */
         .mobile-fullscreen #svg-container,
         .mobile-fullscreen #pattern-container {
             display: block !important;
-            flex: 1 1 100% !important;
+            flex: 0 0 calc(100% - 40px) !important;
             width: 100% !important;
-            height: 100% !important;
+            height: calc(100% - 40px) !important;
             min-height: 0 !important;
         }
 
@@ -1589,6 +1589,14 @@
                     const c = colors[type];
                     activeBtn.style.borderColor = c + ' 0.4)'; activeBtn.style.background = c + ' 0.1)'; activeBtn.classList.add('active');
                     document.getElementById(type.toLowerCase() + '-container').style.display = 'block';
+
+                    // Auto-scroll to show sub-chart on mobile fullscreen
+                    setTimeout(() => {
+                        const activeFullscreen = document.querySelector('.mobile-fullscreen');
+                        if (activeFullscreen && window.innerHeight > window.innerWidth) {
+                            activeFullscreen.scrollTo({ top: activeFullscreen.scrollHeight, behavior: 'smooth' });
+                        }
+                    }, 50);
                 } else {
                     const offBtn = document.getElementById('tab-none');
                     offBtn.style.borderColor = colors['OFF'] + ' 0.4)'; offBtn.style.background = colors['OFF'] + ' 0.1)'; offBtn.classList.add('active');

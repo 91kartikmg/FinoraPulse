@@ -11,7 +11,7 @@ const User = require('./models/User');
 const Admin = require('./models/Admin'); // <-- Isolated Admin Model
 const Suggestion = require('./models/Suggestion');
 const crypto = require('crypto');
-const { sendOTPEmail } = require('./utils/mailer');
+const { sendOTPEmail, sendWelcomeEmail } = require('./utils/mailer');
 const axios = require('axios');
 const cron = require('node-cron');
 const { Mutex } = require('async-mutex');
@@ -303,6 +303,11 @@ app.post('/auth/verify-signup', async (req, res) => {
         await user.save();
 
         req.session.userId = user._id;
+        
+        sendWelcomeEmail(user.email, user.username).catch(err => {
+            console.error("❌ Failed to send welcome email:", err.message);
+        });
+
         res.json({ success: true, message: "Account verified successfully!" });
     } catch (err) {
         console.error("Verification error:", err);
@@ -668,6 +673,31 @@ app.get('/api/admin/suggestions', async (req, res) => {
     } catch (err) {
         console.error("Admin Suggestions Error:", err);
         res.status(500).json({ success: false, error: "Failed to fetch suggestions" });
+    }
+});
+
+// ==========================================
+// USER MANAGEMENT ROUTES (ADMIN)
+// ==========================================
+app.get('/api/admin/users', async (req, res) => {
+    if (!req.session.adminId) return res.status(403).json({ error: "Unauthorized" });
+    try {
+        const users = await User.find({}, '-password').sort({ createdAt: -1 });
+        res.json({ success: true, users });
+    } catch (err) {
+        console.error("Admin Users Error:", err);
+        res.status(500).json({ success: false, error: "Failed to fetch users" });
+    }
+});
+
+app.delete('/api/admin/users/:id', async (req, res) => {
+    if (!req.session.adminId) return res.status(403).json({ error: "Unauthorized" });
+    try {
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: "User deleted successfully" });
+    } catch (err) {
+        console.error("Failed to delete user", err);
+        res.status(500).json({ success: false, error: "Failed to delete user" });
     }
 });
 

@@ -191,6 +191,26 @@
                 </table>
             </div>
         </div>
+
+        <div class="dashboard-panel" style="margin-top: 10px;">
+            <h3 style="margin: 0 0 20px 0; color: #f8fafc; font-size: 1.4rem;">User Management</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; color: #cbd5e1; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #334155;">
+                            <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">Join Date</th>
+                            <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">Username</th>
+                            <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">Email</th>
+                            <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">Status</th>
+                            <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="5" style="padding: 12px; text-align: center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -305,6 +325,51 @@
             }
         }
 
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/users');
+                const data = await response.json();
+                const tbody = document.getElementById('usersTableBody');
+                if (data.success && data.users.length > 0) {
+                    tbody.innerHTML = data.users.map(u => `
+                        <tr style="border-bottom: 1px solid rgba(51, 65, 85, 0.5);">
+                            <td style="padding: 12px; white-space: nowrap;">${new Date(u.createdAt).toLocaleDateString()}</td>
+                            <td style="padding: 12px; white-space: nowrap; color: #38bdf8; font-weight: bold;">${u.username}</td>
+                            <td style="padding: 12px;">${u.email}</td>
+                            <td style="padding: 12px;">
+                                <span style="background: ${u.isVerified ? 'rgba(0, 255, 157, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; color: ${u.isVerified ? '#00FF9D' : '#f59e0b'}; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; border: 1px solid ${u.isVerified ? 'rgba(0, 255, 157, 0.3)' : 'rgba(245, 158, 11, 0.3)'};">
+                                    ${u.isVerified ? 'Verified' : 'Pending'}
+                                </span>
+                            </td>
+                            <td style="padding: 12px; text-align: right;">
+                                <button onclick="deleteUser('${u._id}')" style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; transition: all 0.2s;">🗑️ Remove</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding: 12px; text-align: center;">No users found.</td></tr>';
+                }
+            } catch (err) {
+                console.error("Failed to load users", err);
+            }
+        }
+
+        async function deleteUser(id) {
+            if(!confirm("⚠️ WARNING: Are you sure you want to permanently delete this user account? This action cannot be undone.")) return;
+            try {
+                const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if(data.success) {
+                    loadUsers();
+                    loadAdminAnalytics(); // Update user count
+                } else {
+                    alert("Failed to delete user.");
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
         function showMessage(msg, isError = false) {
             const el = document.getElementById('ops-message');
             el.innerText = msg;
@@ -345,6 +410,7 @@
         
         loadAdminAnalytics();
         loadSuggestions();
+        loadUsers();
     </script>
 
     
