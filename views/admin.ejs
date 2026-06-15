@@ -136,6 +136,10 @@
                 <span class="metric-label">Total API Requests</span>
                 <span class="metric-value" id="val-api">--</span>
             </div>
+            <div class="metric-card" style="border-left-color: #a855f7;">
+                <span class="metric-label">API Requests (Current Hour)</span>
+                <span class="metric-value" id="val-api-hour">--</span>
+            </div>
             <div class="metric-card" style="border-left-color: #00FF9D;">
                 <span class="metric-label">Server Uptime</span>
                 <div style="display: flex; align-items: baseline; gap: 8px;">
@@ -161,6 +165,47 @@
             <h3 style="margin: 0 0 20px 0; color: #f8fafc; font-size: 1.4rem;">Platform Activity Overview</h3>
             <div style="position: relative; height: 400px; width: 100%;">
                 <canvas id="activityChart"></canvas>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-top: 10px;">
+            <div class="dashboard-panel">
+                <h3 style="margin: 0 0 20px 0; color: #f8fafc; font-size: 1.4rem;">Hourly API Requests (Last 24 Hours)</h3>
+                <div style="position: relative; height: 350px; width: 100%;">
+                    <canvas id="apiHourlyChart"></canvas>
+                </div>
+            </div>
+            <div class="dashboard-panel">
+                <h3 style="margin: 0 0 20px 0; color: #f8fafc; font-size: 1.4rem;">Most Called Endpoints</h3>
+                <div style="overflow-x: auto; max-height: 350px;">
+                    <table style="width: 100%; border-collapse: collapse; color: #cbd5e1; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #334155;">
+                                <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">Method & Route</th>
+                                <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; text-align: right;">Total Requests</th>
+                            </tr>
+                        </thead>
+                        <tbody id="apiEndpointsTableBody">
+                            <tr><td colspan="2" style="padding: 12px; text-align: center; color: #94a3b8;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="dashboard-panel">
+                <h3 style="margin: 0 0 20px 0; color: #f8fafc; font-size: 1.4rem;">Most Visited Tickers</h3>
+                <div style="overflow-x: auto; max-height: 350px;">
+                    <table style="width: 100%; border-collapse: collapse; color: #cbd5e1; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #334155;">
+                                <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase;">Ticker Symbol</th>
+                                <th style="padding: 12px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; text-align: right;">Page Visits</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tickerVisitsTableBody">
+                            <tr><td colspan="2" style="padding: 12px; text-align: center; color: #94a3b8;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -215,6 +260,7 @@
 
     <script>
         let activityChartInstance = null;
+        let apiHourlyChartInstance = null;
 
         async function loadAdminAnalytics() {
             try {
@@ -226,6 +272,7 @@
                     
                     if(document.getElementById('val-views')) document.getElementById('val-views').innerText = data.totalPageViews;
                     if(document.getElementById('val-api')) document.getElementById('val-api').innerText = data.totalApiRequests;
+                    if(document.getElementById('val-api-hour')) document.getElementById('val-api-hour').innerText = data.currentHourApiRequests;
                     
                     // Update active models
                     if(document.getElementById('val-models')) document.getElementById('val-models').innerText = "4"; 
@@ -235,6 +282,64 @@
                     if(document.getElementById('val-cache-files')) document.getElementById('val-cache-files').innerText = data.cacheCount;
 
                     initChart(data.chartData.labels, data.chartData.data);
+                    
+                    if(data.hourlyApiChartData) {
+                        initHourlyApiChart(data.hourlyApiChartData.labels, data.hourlyApiChartData.data);
+                    }
+
+                    // Render popular API endpoints table
+                    const popularEndpoints = data.popularEndpoints || [];
+                    const tbody = document.getElementById('apiEndpointsTableBody');
+                    if (tbody) {
+                        if (popularEndpoints.length > 0) {
+                            tbody.innerHTML = popularEndpoints.map(e => {
+                                const parts = e.endpoint.split(' ');
+                                const method = parts[0] || 'GET';
+                                const route = parts[1] || e.endpoint;
+                                
+                                let methodColor = '#38bdf8'; // sky-blue for GET
+                                if (method === 'POST') methodColor = '#00FF9D'; // green
+                                else if (method === 'DELETE') methodColor = '#f43f5e'; // red
+                                else if (method === 'PUT') methodColor = '#f59e0b'; // orange
+
+                                return `
+                                    <tr style="border-bottom: 1px solid rgba(51, 65, 85, 0.5);">
+                                        <td style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                                            <span style="color: ${methodColor}; font-weight: bold; margin-right: 8px;">[${method}]</span>
+                                            <span style="color: #cbd5e1;">${route}</span>
+                                        </td>
+                                        <td style="padding: 12px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #f8fafc;">
+                                            ${e.count}
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('');
+                        } else {
+                            tbody.innerHTML = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #94a3b8;">No API requests logged yet.</td></tr>';
+                        }
+                    }
+
+                    // Render popular stock tickers table
+                    const popularTickers = data.popularTickers || [];
+                    const tickerTbody = document.getElementById('tickerVisitsTableBody');
+                    if (tickerTbody) {
+                        if (popularTickers.length > 0) {
+                            tickerTbody.innerHTML = popularTickers.map(t => {
+                                return `
+                                    <tr style="border-bottom: 1px solid rgba(51, 65, 85, 0.5);">
+                                        <td style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: bold; color: #38bdf8;">
+                                            ${t.ticker}
+                                        </td>
+                                        <td style="padding: 12px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #f8fafc;">
+                                            ${t.count}
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('');
+                        } else {
+                            tickerTbody.innerHTML = '<tr><td colspan="2" style="padding: 12px; text-align: center; color: #94a3b8;">No ticker visits logged yet.</td></tr>';
+                        }
+                    }
                 }
             } catch (err) {
                 console.error("Dashboard error:", err);
@@ -275,6 +380,54 @@
                     scales: {
                         y: { 
                             grid: { color: 'rgba(51, 65, 85, 0.5)', drawBorder: false }, 
+                            ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' }, stepSize: 1 } 
+                        },
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { color: '#94a3b8', font: { weight: 'bold' } } 
+                        }
+                    }
+                }
+            });
+        }
+
+        function initHourlyApiChart(labels, data) {
+            const ctx = document.getElementById('apiHourlyChart').getContext('2d');
+            
+            let gradient = ctx.createLinearGradient(0, 0, 0, 350);
+            gradient.addColorStop(0, '#38bdf8');   
+            gradient.addColorStop(1, 'rgba(56, 189, 248, 0.05)');
+
+            if (apiHourlyChartInstance) {
+                apiHourlyChartInstance.destroy();
+            }
+
+            apiHourlyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Requests',
+                        data: data,
+                        backgroundColor: gradient,
+                        borderColor: '#38bdf8',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#38bdf8',
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#1e293b', titleColor: '#38bdf8', bodyFont: { size: 14 } }
+                    },
+                    scales: {
+                        y: { 
+                            grid: { color: 'rgba(51, 65, 85, 0.3)', drawBorder: false }, 
                             ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' }, stepSize: 1 } 
                         },
                         x: { 

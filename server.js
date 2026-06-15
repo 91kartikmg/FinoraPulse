@@ -547,6 +547,47 @@ app.get('/api/admin/analytics', async (req, res) => {
 
         const chartLabels = past7Days.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' }));
 
+        // Fetch hourly API requests for the last 24 hours
+        const hourlyLabels = [];
+        const hourlyKeys = [];
+        for (let i = 23; i >= 0; i--) {
+            const d = new Date();
+            d.setHours(d.getHours() - i);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hour = String(d.getHours()).padStart(2, '0');
+            
+            const key = `${year}-${month}-${day} ${hour}:00`;
+            hourlyKeys.push(key);
+            hourlyLabels.push(`${hour}:00`);
+        }
+
+        const hourlyStats = await mongoose.connection.db.collection('site_analytics')
+            .find({ metric: 'hourly_api_requests', hourStr: { $in: hourlyKeys } })
+            .toArray();
+
+        const hourlyData = hourlyKeys.map(key => {
+            const stat = hourlyStats.find(s => s.hourStr === key);
+            return stat ? stat.count : 0;
+        });
+
+        const currentHourApiRequests = hourlyData[hourlyData.length - 1];
+
+        // Fetch top 10 most called endpoints
+        const popularEndpoints = await mongoose.connection.db.collection('site_analytics')
+            .find({ metric: 'api_endpoint_requests' })
+            .sort({ count: -1 })
+            .limit(10)
+            .toArray();
+
+        // Fetch top 10 most visited tickers
+        const popularTickers = await mongoose.connection.db.collection('site_analytics')
+            .find({ metric: 'ticker_visits' })
+            .sort({ count: -1 })
+            .limit(10)
+            .toArray();
+
         // Node process statistics
         const memoryUsage = (process.memoryUsage().rss / 1024 / 1024).toFixed(1) + " MB";
 
@@ -562,10 +603,14 @@ app.get('/api/admin/analytics', async (req, res) => {
             totalSignups: totalUsers,
             totalPageViews: totalViews,
             totalApiRequests: totalApiRequests,
+            currentHourApiRequests: currentHourApiRequests,
             serverUptime: Math.floor(process.uptime() / 3600) + " Hours",
             memoryUsage: memoryUsage,
             cacheCount: cacheCount + " Files",
-            chartData: { labels: chartLabels, data: chartData }
+            chartData: { labels: chartLabels, data: chartData },
+            hourlyApiChartData: { labels: hourlyLabels, data: hourlyData },
+            popularEndpoints: popularEndpoints.map(e => ({ endpoint: e.endpoint, count: e.count })),
+            popularTickers: popularTickers.map(t => ({ ticker: t.ticker, count: t.count }))
         });
     } catch (error) {
         res.status(500).json({ success: false, error: "Analytics fetch failed" });
@@ -611,29 +656,69 @@ app.delete('/api/admin/suggestions/:id', async (req, res) => {
 
 // --- TRAFFIC TRACKING MIDDLEWARE ---
 app.use(async (req, res, next) => {
-    // Only track GET requests (ignore CSS, JS, or images)
-    if (req.method === 'GET' && !req.url.includes('.')) {
-        try {
-            const today = new Date().toISOString().split('T')[0];
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const path = req.path;
 
-            // IF it's a normal page visit (not an API call)
-            if (!req.url.startsWith('/api')) {
-                await mongoose.connection.db.collection('site_analytics').updateOne(
-                    { metric: 'total_views' }, { $inc: { count: 1 } }, { upsert: true }
-                );
-                await mongoose.connection.db.collection('site_analytics').updateOne(
-                    { metric: 'daily_views', date: today }, { $inc: { count: 1 } }, { upsert: true }
-                );
-            }
-            // IF it IS an API call (but ignore the admin dashboard polling itself)
-            else if (req.url.startsWith('/api') && !req.url.includes('/admin/analytics')) {
+        // Check if it is an API request (starts with /api)
+        if (path.startsWith('/api')) {
+            // Ignore admin dashboard polling endpoints to prevent self-polling from skewing stats
+            if (!path.includes('/admin/analytics') && !path.includes('/admin/suggestions') && !path.includes('/admin/users')) {
+                // Increment total API requests
                 await mongoose.connection.db.collection('site_analytics').updateOne(
                     { metric: 'total_api_requests' }, { $inc: { count: 1 } }, { upsert: true }
                 );
+
+                // Track requests hourly
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hour = String(now.getHours()).padStart(2, '0');
+                const hourStr = `${year}-${month}-${day} ${hour}:00`;
+
+                await mongoose.connection.db.collection('site_analytics').updateOne(
+                    { metric: 'hourly_api_requests', hourStr: hourStr },
+                    { $inc: { count: 1 } },
+                    { upsert: true }
+                );
+
+                // Track requests by endpoint kind (HTTP method + route path)
+                const endpointKey = `${req.method} ${path}`;
+                await mongoose.connection.db.collection('site_analytics').updateOne(
+                    { metric: 'api_endpoint_requests', endpoint: endpointKey },
+                    { $inc: { count: 1 } },
+                    { upsert: true }
+                );
             }
-        } catch (e) {
-            console.error("Tracking Error:", e.message);
         }
+        // Otherwise, it's a page view if it's GET and has no file extension (.css, .js, .png, etc.)
+        else if (req.method === 'GET' && !req.url.includes('.')) {
+            await mongoose.connection.db.collection('site_analytics').updateOne(
+                { metric: 'total_views' }, { $inc: { count: 1 } }, { upsert: true }
+            );
+            await mongoose.connection.db.collection('site_analytics').updateOne(
+                { metric: 'daily_views', date: today }, { $inc: { count: 1 } }, { upsert: true }
+            );
+
+            // Track ticker visits for page routes (non-API)
+            let ticker = req.query.ticker;
+            if (!ticker && ['/predict', '/technical', '/chart-view', '/pattern-test'].includes(path)) {
+                ticker = 'RELIANCE.NS';
+            }
+            if (ticker) {
+                const cleanTicker = ticker.trim().toUpperCase();
+                if (cleanTicker && cleanTicker.length <= 15) {
+                    await mongoose.connection.db.collection('site_analytics').updateOne(
+                        { metric: 'ticker_visits', ticker: cleanTicker },
+                        { $inc: { count: 1 } },
+                        { upsert: true }
+                    );
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Tracking Error:", e.message);
     }
     next();
 });
